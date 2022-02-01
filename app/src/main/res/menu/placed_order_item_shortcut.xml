@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/up"
+        android:title="Up"/>
+    <item android:id="@+id/down"
+        android:title="Down"/>
+    <item android:id="@+id/down_half"
+        android:title="Down 1/2"/>
+    <item android:id="@+id/merge"
+        android:title="Merge"/>
+    <item android:id="@+id/sell_10000"
+        android:title="Sell 10,000"/>
+    <item android:id="@+id/sell_50000"
+        android:title="Sell 50,000"/>
+    <item android:id="@+id/cancel"
+        android:title="Cancel"/>
+</menu>
