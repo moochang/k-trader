@@ -22,7 +22,6 @@ import android.widget.PopupMenu;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.example.k_trader.bitthumb.lib.Api_Client;
 import com.example.k_trader.base.OrderManager;
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.base.TradeDataManager;
@@ -34,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -156,7 +154,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
                                             , cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
 
                             Listviewitem listItem = new Listviewitem(0, text);
-                            float baseUnits = (float) ((int) ((MainPage.ONE_TIME_PRICE / (double)data.getPrice()) * 10000) / 10000.0);
+                            float baseUnits = (float) ((int) ((MainActivity.UNIT_PRICE / (double)data.getPrice()) * 10000) / 10000.0);
 
                             // merge가 필요하거나 down이 필요한 item은 다른 색깔로 보여준다.
                             if (data.getUnits() < (baseUnits / 2.0) || data.getUnits() > (baseUnits * 1.5) || placedOrderManager.getByPrice(SELL, data.getPrice()).size() > 1)
@@ -255,7 +253,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
                             public void run() {
                                 TradeData data = list.get(position).getData();
                                 OrderManager orderManager = new OrderManager();
-                                float movingUnits = (float)((int)(((float)MainPage.ONE_TIME_PRICE / data.getPrice()) * 10000) / 10000.0);
+                                float movingUnits = (float)((int)(((float)MainActivity.UNIT_PRICE / data.getPrice()) * 10000) / 10000.0);
 
                                 // 옮긴 이후에 애매하게 남을거 같으면 다 옮긴다.
                                 if (movingUnits * 1.5 > data.getUnits()) {
@@ -312,7 +310,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
             public void run() {
                 OrderManager orderManager = new OrderManager();
                 // ONE_TIME_PRICE 어치 시장가 매수
-                float units = (float) ((int) ((MainPage.ONE_TIME_PRICE / (double)TradeJobService.currentPrice) * 10000) / 10000.0);
+                float units = (float) ((int) ((MainActivity.UNIT_PRICE / (double)TradeJobService.currentPrice) * 10000) / 10000.0);
                 JSONObject result = orderManager.addOrderWithMarketPrice("시장가 수동 매수 +" + profit, BUY, units);
                 if (result == null) {
                     log_info("시장가 수동 매수 실패");
@@ -378,7 +376,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
                     public void run() {
                         TradeData data = list.get(g_position).getData();
                         OrderManager orderManager = new OrderManager();
-                        float movingUnits = (float)((int)(((float)MainPage.ONE_TIME_PRICE / data.getPrice()) * 10000) / 10000.0);
+                        float movingUnits = (float)((int)(((float)MainActivity.UNIT_PRICE / data.getPrice()) * 10000) / 10000.0);
 
                         // 옮긴 이후에 애매하게 남을거 같으면 다 옮긴다.
                         if (movingUnits * 1.5 > data.getUnits()) {
@@ -605,7 +603,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
             public void run() {
                 TradeData data = list.get(g_position).getData();
                 OrderManager orderManager = new OrderManager();
-                float movingUnits = (float)((int)(((float)MainPage.ONE_TIME_PRICE / data.getPrice()) * 10000) / 10000.0);
+                float movingUnits = (float)((int)(((float)MainActivity.UNIT_PRICE / data.getPrice()) * 10000) / 10000.0);
 
                 // server 정책 체크
                 if ((TradeJobService.currentPrice * 2 - 1000000) < (data.getPrice())) {

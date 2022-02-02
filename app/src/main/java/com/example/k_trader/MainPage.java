@@ -21,16 +21,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ScrollView;
 
 import com.example.k_trader.base.OrderManager;
-import com.example.k_trader.bitthumb.lib.Api_Client;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.util.HashMap;
-import java.util.Locale;
 
 /**
  * Created by 김무창 on 2017-12-20.
@@ -38,11 +36,7 @@ import java.util.Locale;
 
 public class MainPage extends Fragment {
 
-    public static final String API_KEY = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-    public static final String API_SECRET = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-
     public static final String BROADCAST_LOG_MESSAGE = "TRADE_LOG";
-    public static final int ONE_TIME_PRICE = (1000 * 1000);          // 투자금의 1/100
 
     public static final int JOB_ID_FIRST = 1;
     public static final int JOB_ID_REGULAR = 2;
@@ -55,6 +49,7 @@ public class MainPage extends Fragment {
     Button btnStartTrading;
     Button btnStopTrading;
     Button btnScrollToBottom;
+    ImageButton btnPreference;
     ScrollView scrollView;
     CheckBox checkBox;
 
@@ -72,6 +67,7 @@ public class MainPage extends Fragment {
         btnStartTrading = layout.findViewById(R.id.button);
         btnStopTrading = layout.findViewById(R.id.button2);
         btnScrollToBottom = layout.findViewById(R.id.button3);
+        btnPreference = layout.findViewById(R.id.imageButtonPreference);
         scrollView = (ScrollView)layout.findViewById(R.id.scrollView1);
         checkBox = (CheckBox)layout.findViewById(R.id.checkBox);
 
@@ -110,6 +106,7 @@ public class MainPage extends Fragment {
                     }
                 }.start();
 
+                // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
                 JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
                         .setMinimumLatency(1000) // 1000 ms
                         .build();
@@ -146,6 +143,12 @@ public class MainPage extends Fragment {
                         scrollView.fullScroll(View.FOCUS_DOWN);
                     }
                 });
+            }
+        });
+
+        btnPreference.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                startActivity(new Intent(mainActivity, SettingActivity.class));
             }
         });
 

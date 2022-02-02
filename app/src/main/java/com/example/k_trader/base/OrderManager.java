@@ -25,7 +25,7 @@ public class OrderManager {
     private static long safeIntervalInSec = 1;
 
     public boolean cancelOrder(String tag, TradeData data) {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result;
 
         HashMap<String, String> rgParams = new HashMap<String, String>();
@@ -67,7 +67,7 @@ public class OrderManager {
     }
 
     public boolean cancelAllOrders() {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result = api.callApi("/info/orders", null);
         int cancelCount = 0;
 
@@ -96,7 +96,7 @@ public class OrderManager {
     }
 
     public JSONObject addOrder(String tag, TradeDataManager.Type type, float units, int price) {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result;
         long requestTime = Calendar.getInstance().getTimeInMillis();
 
@@ -175,7 +175,7 @@ public class OrderManager {
     }
 
     public JSONObject addOrderWithMarketPrice(String tag, TradeDataManager.Type type, float units) {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result;
         long requestTime = Calendar.getInstance().getTimeInMillis();
 
@@ -238,7 +238,7 @@ public class OrderManager {
     }
 
     public JSONObject getBalance(String tag) {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result = null;
 
         try {
@@ -268,7 +268,7 @@ public class OrderManager {
     }
 
     public JSONObject getCurrentPrice(String tag) {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result = null;
 
         try {
@@ -299,7 +299,7 @@ public class OrderManager {
     }
 
     public JSONObject getPlacedOrderList(String tag) {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result = null;
 
         try {
@@ -340,7 +340,7 @@ public class OrderManager {
     }
 
     public JSONObject getProcessedOrderList(String tag, int offset, String count) {
-        Api_Client api = new Api_Client(MainPage.API_KEY, MainPage.API_SECRET);
+        Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result = null;
 
         try {

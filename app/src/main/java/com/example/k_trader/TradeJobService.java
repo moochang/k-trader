@@ -18,7 +18,6 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.example.k_trader.bitthumb.lib.Api_Client;
 import com.example.k_trader.base.OrderManager;
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.base.TradeDataManager;
@@ -431,7 +430,7 @@ public class TradeJobService extends JobService {
                             }
 
                             // add buy request for lower bound
-                            float unit = (float) ((int) (((float) MainPage.ONE_TIME_PRICE / lowerBoundPrice) * 10000) / 10000.0);
+                            float unit = (float) ((int) (((float) MainActivity.UNIT_PRICE / lowerBoundPrice) * 10000) / 10000.0);
                             JSONObject result = orderManager.addOrder("저점", BUY, unit, lowerBoundPrice);
                             if (result == null) {
                                 // 서버 오류등의 상황에서도 다음 턴 체크를 계속 진행한다.

@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.support.v4.app.Fragment;
@@ -30,6 +31,10 @@ public class MainActivity extends AppCompatActivity {
     Fragment cur_fragment = new Fragment();
     ViewPager viewPager;
 
+    public static String API_KEY;
+    public static String API_SECRET;
+    public static int UNIT_PRICE;
+
     public static final String BROADCAST_PROGRESS_MESSAGE = "PROGRESS_MESSAGE";
     private static Timer mTimer;
     private static ProgressDialog dialog;
@@ -49,6 +54,19 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter theFilter = new IntentFilter();
         theFilter.addAction(BROADCAST_PROGRESS_MESSAGE);
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(new MyReceiver(), theFilter);
+
+        // Load app settings (data/data/(package_name)/shared_prefs/SharedPreference)
+        SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
+        UNIT_PRICE = sharedPreferences.getInt("UNIT_PRICE", 0);
+        API_KEY = sharedPreferences.getString("API_KEY", "");
+        API_SECRET = sharedPreferences.getString("API_SECRET", "");
+
+//        if (UNIT_PRICE == 0 || API_KEY.isEmpty() || API_SECRET.isEmpty()) {
+//            // Launch setting activity
+//            SharedPreferences.Editor editor = sharedPreferences.edit();
+//            editor.putInt("UNIT_PRICE", 1 * 1000 * 1000);
+//            editor.commit();
+//        }
     }
 
     @Override
@@ -123,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
             mTimer.schedule(new MyTask(), 0, progress);
 
             dialog = ProgressDialog.show(MainActivity.this, "Wait",
-                    "´ÙÀ½ Request°¡ Çã¿ëµÉ ¶§±îÁö ´ë±â.. ÃÖ´ë 10ÃÊ", true);
+                    "ë‹¤ìŒ Requestê°€ í—ˆìš©ë  ë•Œê¹Œì§€ ëŒ€ê¸°.. ìµœëŒ€ 10ì´ˆ", true);
         }
     }
 
@@ -140,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 //        Toast.makeText(this, "Back button pressed.", Toast.LENGTH_SHORT).show();
-        // ¹é±×¶ó¿îµå ¾ÛÀ¸·Î ÀüÈ¯ÇÑ´Ù.
+        // ï¿½ï¿½×¶ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
         moveTaskToBack(true);
     }
 }
