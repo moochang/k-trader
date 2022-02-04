@@ -49,15 +49,15 @@ BitThumb 거래소용 Bitcoin 자동 매매 Android app 프로그램입니다.
 
 * UI 구성
 1. 메인 화면
-<img src="/doc/main_screen.png" width="150" height="300"/>
+<img src="/doc/main_screen.jpg" width="150" height="300"/>
 2. 거래 대기 목록 화면
    - 리스트 최상위에는 매수 대기 item 1개와 그 하위에는 매도 대기 item의 list로 구성
-<img src="/doc/order_screen.png" width="150" height="300"/>
+<img src="/doc/order_screen.jpg" width="150" height="300"/>
 3. 거래 완료 목록 화면
    - 기간별 누적 거래량과 수수료 총합을 볼 수 있게 구성
-<img src="/doc/history_screen.png" width="150" height="300"/>
+<img src="/doc/history_screen.jpg" width="150" height="300"/>
 4. 세팅 화면
    - API secret, key, unit price를 설정할 수 있도록 구성
-<img src="/doc/setting_screen.png" width="150" height="300"/>
+<img src="/doc/setting_screen.jpg" width="150" height="300"/>
 
 이상입니다.

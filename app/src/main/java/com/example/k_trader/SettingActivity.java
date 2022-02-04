@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.example.k_trader.base.NumberTextWatcherForThousand;
+
 public class SettingActivity extends AppCompatActivity {
     Button btnSave;
     EditText txtApiKey;
@@ -25,6 +27,7 @@ public class SettingActivity extends AppCompatActivity {
         txtApiKey = findViewById(R.id.editTextApiKey);
         txtApiSecret = findViewById(R.id.editTextApiSecret);
         txtApiUnitPrice = findViewById(R.id.editTextUnitPrice);
+        txtApiUnitPrice.addTextChangedListener(new NumberTextWatcherForThousand(txtApiUnitPrice));
 
         // Load app settings (data/data/(package_name)/shared_prefs/SharedPreference)
         SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
@@ -40,12 +43,12 @@ public class SettingActivity extends AppCompatActivity {
 //                Toast.makeText(SettingActivity.this, txtApiKey.getText().toString(), Toast.LENGTH_SHORT).show();
                 prefsEditr.putString("API_KEY", txtApiKey.getText().toString());
                 prefsEditr.putString("API_SECRET", txtApiSecret.getText().toString());
-                prefsEditr.putInt("UNIT_PRICE", Integer.parseInt(txtApiUnitPrice.getText().toString()));
+                prefsEditr.putInt("UNIT_PRICE", Integer.parseInt(txtApiUnitPrice.getText().toString().replaceAll(",", "")));
                 prefsEditr.apply();
 
                 MainActivity.API_KEY = txtApiKey.getText().toString();
                 MainActivity.API_SECRET = txtApiSecret.getText().toString();
-                MainActivity.UNIT_PRICE = Integer.parseInt(txtApiUnitPrice.getText().toString());
+                MainActivity.UNIT_PRICE = Integer.parseInt(txtApiUnitPrice.getText().toString().replaceAll(",", ""));
 
                 finish();
             }
