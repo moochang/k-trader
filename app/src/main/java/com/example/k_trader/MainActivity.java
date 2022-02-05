@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         UNIT_PRICE = sharedPreferences.getInt("UNIT_PRICE", 1*1000*1000);
         API_KEY = sharedPreferences.getString("API_KEY", "");
         API_SECRET = sharedPreferences.getString("API_SECRET", "");
-        TRADE_INTERVAL = sharedPreferences.getInt("UNIT_PRICE", 60);
+        TRADE_INTERVAL = sharedPreferences.getInt("TRADE_INTERVAL", 60);
 
         if (API_KEY.isEmpty() || API_SECRET.isEmpty()) {
             Toast.makeText(this, "거래를 위해서는 Key와 Secret값 설정이 필요합니다.", Toast.LENGTH_SHORT).show();

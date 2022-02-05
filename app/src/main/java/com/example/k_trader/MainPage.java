@@ -112,7 +112,7 @@ public class MainPage extends Fragment {
                         .build();
 
                 JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
-                        .setMinimumLatency(60 * 1000) // 1 minute
+                        .setMinimumLatency(MainActivity.TRADE_INTERVAL * 1000)
                         .build();
 
                 mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
