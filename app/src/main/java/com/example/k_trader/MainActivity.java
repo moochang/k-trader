@@ -20,6 +20,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     public static String API_KEY;
     public static String API_SECRET;
     public static int UNIT_PRICE;
+    public static int TRADE_INTERVAL;
 
     public static final String BROADCAST_PROGRESS_MESSAGE = "PROGRESS_MESSAGE";
     private static Timer mTimer;
@@ -57,16 +59,16 @@ public class MainActivity extends AppCompatActivity {
 
         // Load app settings (data/data/(package_name)/shared_prefs/SharedPreference)
         SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
-        UNIT_PRICE = sharedPreferences.getInt("UNIT_PRICE", 0);
+        UNIT_PRICE = sharedPreferences.getInt("UNIT_PRICE", 1*1000*1000);
         API_KEY = sharedPreferences.getString("API_KEY", "");
         API_SECRET = sharedPreferences.getString("API_SECRET", "");
+        TRADE_INTERVAL = sharedPreferences.getInt("UNIT_PRICE", 60);
 
-//        if (UNIT_PRICE == 0 || API_KEY.isEmpty() || API_SECRET.isEmpty()) {
-//            // Launch setting activity
-//            SharedPreferences.Editor editor = sharedPreferences.edit();
-//            editor.putInt("UNIT_PRICE", 1 * 1000 * 1000);
-//            editor.commit();
-//        }
+        if (API_KEY.isEmpty() || API_SECRET.isEmpty()) {
+            Toast.makeText(this, "거래를 위해서는 Key와 Secret값 설정이 필요합니다.", Toast.LENGTH_SHORT).show();
+            // Launch setting activity
+            startActivity(new Intent(this, SettingActivity.class));
+        }
     }
 
     @Override

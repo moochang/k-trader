@@ -15,6 +15,7 @@ public class SettingActivity extends AppCompatActivity {
     EditText txtApiKey;
     EditText txtApiSecret;
     EditText txtApiUnitPrice;
+    EditText txtApiTradeInterval;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,13 +29,15 @@ public class SettingActivity extends AppCompatActivity {
         txtApiSecret = findViewById(R.id.editTextApiSecret);
         txtApiUnitPrice = findViewById(R.id.editTextUnitPrice);
         txtApiUnitPrice.addTextChangedListener(new NumberTextWatcherForThousand(txtApiUnitPrice));
+        txtApiTradeInterval = findViewById(R.id.editTextTradeInterval);
 
         // Load app settings (data/data/(package_name)/shared_prefs/SharedPreference)
         SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
 
         txtApiKey.setText(sharedPreferences.getString("API_KEY", ""));
         txtApiSecret.setText(sharedPreferences.getString("API_SECRET", ""));
-        txtApiUnitPrice.setText(Integer.toString(sharedPreferences.getInt("UNIT_PRICE", 0)));
+        txtApiUnitPrice.setText(Integer.toString(sharedPreferences.getInt("UNIT_PRICE", 1*1000*1000)));
+        txtApiTradeInterval.setText(Integer.toString(sharedPreferences.getInt("TRADE_INTERVAL", 60)));
 
         btnSave.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -44,11 +47,13 @@ public class SettingActivity extends AppCompatActivity {
                 prefsEditr.putString("API_KEY", txtApiKey.getText().toString());
                 prefsEditr.putString("API_SECRET", txtApiSecret.getText().toString());
                 prefsEditr.putInt("UNIT_PRICE", Integer.parseInt(txtApiUnitPrice.getText().toString().replaceAll(",", "")));
+                prefsEditr.putInt("TRADE_INTERVAL", Integer.parseInt(txtApiTradeInterval.getText().toString().replaceAll(",", "")));
                 prefsEditr.apply();
 
                 MainActivity.API_KEY = txtApiKey.getText().toString();
                 MainActivity.API_SECRET = txtApiSecret.getText().toString();
                 MainActivity.UNIT_PRICE = Integer.parseInt(txtApiUnitPrice.getText().toString().replaceAll(",", ""));
+                MainActivity.TRADE_INTERVAL = Integer.parseInt(txtApiTradeInterval.getText().toString().replaceAll(",", ""));
 
                 finish();
             }

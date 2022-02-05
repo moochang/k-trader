@@ -197,6 +197,9 @@ public class MainPage extends Fragment {
         }
     }
 
+    // 주어진 가격에 대한 1% 이익금을 리턴한다.
+    // 매도리스트를 0.5% 가격 단위로 discrete하게 만들기 위해 주어진 가격에서 가장 앞자리만 남기고 절사한 금액의 1%를 계산한다.
+    // 예를 들어 주어진 가격이 4,325만원이라면 4,000으로 절사하고 그 1%인 40만원을 리턴
     public static int getProfitPrice(int basePrice) {
         int index = 0;
 

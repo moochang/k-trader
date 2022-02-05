@@ -48,13 +48,8 @@ public class TradeJobService extends JobService {
     private static final int PRICE_SAVING_QUEUE_COUNT = 60;  // 1시간 분량의 시장가를 저장해 두고 분석에 사용한다.
     private static final int BUY_RETRY_COUNT = 3; // 3 단계 아래까지 매수점을 찾아본다.
     private static final int SELL_RETRY_COUNT = 3; // 3 단계 위까지 매도점을 찾아본다.
-    private static final int JOB_TIME_INTERVAL = 60*1000; // 60초 마다 실행
-//    private static final int JOB_TIME_INTERVAL = 30*1000; // 30초 마다 실행
 
     private double krwBalance;
-    private double btcBalance;                     // 현재 보유중인 비트코인 총량
-    private double earningRateTotal;              // 전체 금액 대비 수익률
-    private double earningRateInvestment;        // 투자된 금액 대비 수익률
 
     public static int currentPrice;                  // 비트코인 현재 시장가
     public static int profitPrice;                  // currentPrice에 기반한 거래당 이익 퍼센티지, 현재가의 1%
@@ -107,7 +102,6 @@ public class TradeJobService extends JobService {
 
                     JSONObject dataObj = (JSONObject)result.get("data");
                     krwBalance = Double.parseDouble((String)dataObj.get("total_krw"));
-                    btcBalance = Double.parseDouble((String)dataObj.get("total_btc"));
                     availableBtcBalance = Double.parseDouble((String)dataObj.get("available_btc"));
                 }
 
@@ -131,12 +125,8 @@ public class TradeJobService extends JobService {
                             profitPrice = MainPage.getProfitPrice(currentPrice);
                             intervalPrice = profitPrice / 2;
                         }
-                        //currentPrice = (int)Double.parseDouble((String)dataObj.get("buy_price"));
-//                        earningRateTotal = (krwBalance + currentPrice * btcBalance) / (double)MainPage.ORIGINAL_BALANCE;
-//                        earningRateInvestment = (currentPrice * btcBalance) / (MainPage.ORIGINAL_BALANCE - krwBalance);
+
                         log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
-//                        Log.d("KTrader", "수익률 : " + String.format(Locale.getDefault(), "전액기준(%,.1f%%)", (earningRateTotal - 1) * 100)
-//                                  + ", " + String.format(Locale.getDefault(), "투자금기준(%,.1f%%)", (earningRateInvestment - 1) * 100));
 
                         // defensive code, 서버에서 가격이 업데이트 되지 않는 경우 계속 매수 되는 경우를 방지하지 위해서 skip한다.
                         if (priceQueue.size() > 0) {
@@ -190,7 +180,7 @@ public class TradeJobService extends JobService {
                     }
                 }
 
-                // 현재 Order가 전부 처리되었을 때 예상 잔고
+                // 현재 매도 걸려 있는 order들이 전부 매도 완료되었을 때 예상 잔고
                 log_info("예상잔고 : " + String.format(Locale.getDefault(), "%,d"
                         , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableBtcBalance * currentPrice)));
 
@@ -231,17 +221,6 @@ public class TradeJobService extends JobService {
                                         .setProcessedTime(processedTimeInMillis));
                             }
                         }
-
-//                    Log.d("KTrader", "-----------------------------------------------");
-//                    Log.d("KTrader", "완료 정보 : \n");
-//                    String log = processedOrderManager.toString();
-//                        for(int i = 0; i <= log.length() / 1000; i++) {
-//                            int start = i * 1000;
-//                            int end = (i+1) * 1000;
-//                            end = end > log.length() ? log.length() : end;
-//                            Log.v("KTrader", log.substring(start, end));
-//                        }
-//                    Log.d("KTrader", "-----------------------------------------------");
                     }
                 }
 
@@ -319,7 +298,7 @@ public class TradeJobService extends JobService {
                             // 매수된 내용이 있다면 3단계 위까지 찾아보고 가능한 높은 빈칸에 매도하도록 한다.
                             boolean isSold = false;
                             for (int i = 0; i<SELL_RETRY_COUNT; i++) {
-                                // intervalPrice가 바뀌는 경게값일 때 문제를 해결하기 위해서 매도할 때의 interval은 현재가가 아니라 매수가를 기준으로 산정한다.
+                                // intervalPrice가 바뀌는 경계값일 때 문제를 해결하기 위해서 매도할 때의 interval은 현재가가 아니라 매수가를 기준으로 산정한다.
                                 int sellIntervalPrice = MainPage.getProfitPrice(data.getPrice()) / 2;
                                 int newPrice = data.getPrice() + MainPage.getProfitPrice(data.getPrice()) + (sellIntervalPrice * (SELL_RETRY_COUNT - 1 - i));
                                 if ((data.getPrice() % sellIntervalPrice) != 0)
@@ -380,36 +359,8 @@ public class TradeJobService extends JobService {
 
                 // 매수 요청 발행
                 {
-                    // 검증 필요
-//                    // 매도 요청 위 3개 칸 중 빈 칸이 있다면 시장가로 바로 구매해서 바로 채운다.
-//                    for (int i = 0; i<SELL_RETRY_COUNT; i++) {
-//                        int newPrice = currentPrice + MainPage.PROFIT_PRICE + (MainPage.BUY_INTERVAL_PRICE * (SELL_RETRY_COUNT - 1 - i));
-//                        if ((currentPrice % MainPage.BUY_INTERVAL_PRICE) != 0)
-//                            newPrice = (currentPrice - (currentPrice % MainPage.BUY_INTERVAL_PRICE) + MainPage.BUY_INTERVAL_PRICE) + MainPage.PROFIT_PRICE + (MainPage.BUY_INTERVAL_PRICE * (SELL_RETRY_COUNT - 1 - i));
-//
-//                        if (placedOrderManager.findByPrice(SELL, newPrice) == null) {
-//                            float unit = (float) ((int) (((float) MainPage.ONE_TIME_PRICE / currentPrice) * 10000) / 10000.0);
-//                            JSONObject result = orderManager.addOrderWithMarketPrice("시장가 매수", BUY, unit);
-//                            if (result == null) {
-//                                // 서버 오류등의 상황에서도 다음 턴 체크를 계속 진행한다.
-//                                if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
-//                                    scheduleRefresh();
-//                                jobFinished(jobParameters, false);
-//                                return;
-//                            }
-//
-//                            // 시장가 매수가 되었다면 이후 매수 로직을 건너뛰고 바로 리턴한다.
-//                            reservedSellPrice = newPrice;
-//                            if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
-//                                scheduleRefresh();
-//                            jobFinished(jobParameters, false);
-//                            return;
-//                        }
-//                        reservedSellPrice = 0;
-//                    }
-
                     for (int i = 0; i<BUY_RETRY_COUNT; i++) {
-                        // 이미 대기중인 매수가 있다면 skip
+                        // 해당 가격에 이미 대기중인 매수가 있다면 skip
                         if (placedOrderManager.findByPrice(BUY, lowerBoundPrice) != null)
                             break;
 
@@ -479,7 +430,7 @@ public class TradeJobService extends JobService {
 
         /* For Android N and Upper Versions */
         mJobBuilder
-                .setMinimumLatency(JOB_TIME_INTERVAL)
+                .setMinimumLatency(MainActivity.TRADE_INTERVAL * 1000)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
 
         if (mJobScheduler != null && mJobScheduler.schedule(mJobBuilder.build()) <= JobScheduler.RESULT_FAILURE) {
@@ -524,7 +475,7 @@ public class TradeJobService extends JobService {
         notificationChannel.setDescription("Channel description");
         notificationChannel.enableLights(true);
         notificationChannel.setLightColor(Color.RED);
-        //notificationChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+        // 거래 체결시 진동 소리만으로도 다른 Android noti와 구분할 수 있도록 전용 진동 패턴을 사용한다.
         notificationChannel.setVibrationPattern(new long[]{0, 100, 100, 100, 100, 100});
         notificationChannel.enableVibration(true);
         nm.createNotificationChannel(notificationChannel);

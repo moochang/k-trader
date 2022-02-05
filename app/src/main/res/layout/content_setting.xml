@@ -82,7 +82,7 @@
 
             <EditText
                 android:id="@+id/editTextUnitPriceLabel"
-                android:layout_width="109dp"
+                android:layout_width="141dp"
                 android:layout_height="40dp"
                 android:layout_marginEnd="12dp"
                 android:clickable="false"
@@ -92,7 +92,7 @@
                 android:focusable="false"
                 android:focusableInTouchMode="false"
                 android:inputType="textPersonName"
-                android:text="1회 거래 금액" />
+                android:text="1회 거래 금액(원)" />
 
             <EditText
                 android:id="@+id/editTextUnitPrice"
@@ -104,6 +104,37 @@
                 android:inputType="numberDecimal"
                 android:singleLine="true" />
 
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/editTextUnitPriceLabel2"
+                android:layout_width="94dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="12dp"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:contextClickable="false"
+                android:editable="false"
+                android:ems="10"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:inputType="textPersonName"
+                android:text="거래 주기(초)" />
+
+            <EditText
+                android:id="@+id/editTextTradeInterval"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:editable="true"
+                android:ems="10"
+                android:inputType="numberDecimal"
+                android:singleLine="true" />
         </LinearLayout>
 
         <LinearLayout
