@@ -145,7 +145,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
                             cal.setTimeInMillis(data.getPlacedTime());
                             text = data.getType().toString()
                                     + (data.getType() == SELL ? (" (" + sellIndex-- + ") : ") : " : ")   // 남아 있는 Sell count를 쉽게 알 수 있게 보여준다.
-                                    + data.getUnits()
+                                    + String.format(Locale.getDefault(), "%.4f", data.getUnits())
                                     + " : "
                                     + String.format(Locale.getDefault(), "%,d", data.getPrice())
                                     + " : "
