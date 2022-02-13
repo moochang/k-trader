@@ -95,6 +95,7 @@ public class TradeJobService extends JobService {
                     JSONObject result = orderManager.getBalance("");
                     if (result == null) {
                         if (accumulatedErrCnt++ >= 10) {
+                            accumulatedErrCnt = 0;
                             // 연속 에러인 경우 빠른 인지를 위해 Noti 발송
                             // App을 재실행해도 문제가 해결되지 않는 네트웍 문제인 경우 Phone 리부팅시 해결됨
                             notificationTrade("체크 필요", "연속 에러 발생");
