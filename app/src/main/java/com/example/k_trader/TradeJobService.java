@@ -58,7 +58,6 @@ public class TradeJobService extends JobService {
     public static double availableBtcBalance;       // 현재 판매 가능한 비트코인 총량 = 현재 보유중인 비트코인 총량 - 매도 중인 비트코인 총량
     public static int lowerBoundPrice;               // 다음 매수 예정가
     public static int reservedSellPrice;             // 시장가 매수 후 매도할 예약 가격, 시장가 매수시에만 0이 아닌 값 유지
-    private static int accumulatedErrCnt;           // 누적 에러 카운트
 
     private int lastBuyPrice;                      // 마지막 매수가
     private int lastSellPrice;                     // 마지막 매도가
@@ -94,20 +93,12 @@ public class TradeJobService extends JobService {
                 {
                     JSONObject result = orderManager.getBalance("");
                     if (result == null) {
-                        if (accumulatedErrCnt++ >= 10) {
-                            accumulatedErrCnt = 0;
-                            // 연속 에러인 경우 빠른 인지를 위해 Noti 발송
-                            // App을 재실행해도 문제가 해결되지 않는 네트웍 문제인 경우 Phone 리부팅시 해결됨
-                            notificationTrade("체크 필요", "연속 에러 발생");
-                        }
                         // 서버 오류등의 상황에서도 다음 턴 체크를 계속 진행한다.
                         if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
                             scheduleRefresh();
                         jobFinished(jobParameters, false);
                         return;
                     }
-                    // Reset 에러 카운트
-                    accumulatedErrCnt = 0;
 
                     JSONObject dataObj = (JSONObject)result.get("data");
                     krwBalance = Double.parseDouble((String)dataObj.get("total_krw"));
