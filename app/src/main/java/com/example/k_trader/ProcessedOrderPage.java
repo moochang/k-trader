@@ -182,7 +182,10 @@ public class ProcessedOrderPage extends Fragment {
                                 } else
                                     continue;
 
-                                text += data.getUnits() + " : " + String.format(Locale.getDefault(), "%,d", data.getPrice()) + " : " + date + " : " + (int)data.getFeeEvaluated();
+                                text += String.format(Locale.getDefault(), "%.4f", data.getUnits())
+                                        + " : " + String.format(Locale.getDefault(), "%,d", data.getPrice())
+                                        + " : " + date
+                                        + " : " + (int)data.getFeeEvaluated();
 
                                 Listviewitem listItem = new Listviewitem(0, text);
                                 list.add(listItem);
