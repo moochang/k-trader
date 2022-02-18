@@ -46,8 +46,8 @@ import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 public class TradeJobService extends JobService {
 
     private static final int PRICE_SAVING_QUEUE_COUNT = 60;  // 1시간 분량의 시장가를 저장해 두고 분석에 사용한다.
-    private static final int BUY_RETRY_COUNT = 3; // 3 단계 아래까지 매수점을 찾아본다.
-    private static final int SELL_RETRY_COUNT = 3; // 3 단계 위까지 매도점을 찾아본다.
+    private static final int BUY_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 아래까지 매수점을 찾아본다.
+    private static final int SELL_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 위까지 매도점을 찾아본다.
 
     private double krwBalance;
 
@@ -303,12 +303,12 @@ public class TradeJobService extends JobService {
 
                             // 매수된 내용이 있다면 3단계 위까지 찾아보고 가능한 높은 빈칸에 매도하도록 한다.
                             boolean isSold = false;
-                            for (int i = 0; i<SELL_RETRY_COUNT; i++) {
+                            for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                                 // intervalPrice가 바뀌는 경계값일 때 문제를 해결하기 위해서 매도할 때의 interval은 현재가가 아니라 매수가를 기준으로 산정한다.
                                 int sellIntervalPrice = MainPage.getProfitPrice(data.getPrice()) / 2;
-                                int newPrice = data.getPrice() + MainPage.getProfitPrice(data.getPrice()) + (sellIntervalPrice * (SELL_RETRY_COUNT - 1 - i));
+                                int newPrice = data.getPrice() + MainPage.getProfitPrice(data.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
                                 if ((data.getPrice() % sellIntervalPrice) != 0)
-                                    newPrice = (data.getPrice() - (data.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(data.getPrice()) + (sellIntervalPrice * (SELL_RETRY_COUNT - 1 - i));
+                                    newPrice = (data.getPrice() - (data.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(data.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
 
                                 if (placedOrderManager.findByPrice(SELL, newPrice) == null) {
                                     JSONObject result = orderManager.addOrder("매수 발생 대응 매도", SELL, unit, newPrice);
@@ -365,7 +365,7 @@ public class TradeJobService extends JobService {
 
                 // 매수 요청 발행
                 {
-                    for (int i = 0; i<BUY_RETRY_COUNT; i++) {
+                    for (int i = 0; i< BUY_SLOT_LOOK_ASIDE_MAX; i++) {
                         // 해당 가격에 이미 대기중인 매수가 있다면 skip
                         if (placedOrderManager.findByPrice(BUY, lowerBoundPrice) != null)
                             break;
