@@ -272,25 +272,25 @@ public class TradeJobService extends JobService {
                     List<TradeData> newList = mergeSamePrice(list);
 
                     // 각 항목에 대해 Noti 처리한다.
-                    for (TradeData data : newList) {
+                    for (TradeData pData : newList) {
                         Calendar time = Calendar.getInstance();
-                        time.setTimeInMillis(data.getProcessedTime());
+                        time.setTimeInMillis(pData.getProcessedTime());
 
-                        if (data.getType() == BUY) {
-                            log_info("매수 발생 : " + String.format(Locale.getDefault(), "%,d", data.getPrice()));
-                            notificationTrade("매수 발생", "매수 : " + String.format(Locale.getDefault(), "%,d", data.getPrice()) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
+                        if (pData.getType() == BUY) {
+                            log_info("매수 발생 : " + String.format(Locale.getDefault(), "%,d", pData.getPrice()));
+                            notificationTrade("매수 발생", "매수 : " + String.format(Locale.getDefault(), "%,d", pData.getPrice()) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
                                     , time.get(Calendar.MONTH) + 1, time.get(Calendar.DATE)
                                     , time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE)));
 
                             // 매도 오더 발행 : 마지막 매수 오더가 완료되었다면 +INTERVAL_PRICE 가격에 매도 오더를 발행한다.
                             // 매수되었던 unit이 소수점 4자리 이하 일수도 있으니 다시 4자리로 regulation 한다.
-                            float unit = (float)((int)(data.getUnits() * 10000) / 10000.0);
+                            float unit = (float)((int)(pData.getUnits() * 10000) / 10000.0);
 
                             // 0.00005~9 만큼 남는다면 반올림한다.
-                            if ((data.getUnits() - unit) > 0.00005) {
+                            if ((pData.getUnits() - unit) > 0.00005) {
                                 if ((availableBtcBalance - unit) > 0.0001) {
-                                    unit = (float)(Math.round(data.getUnits() * 10000d) / 10000d);
-                                    log_info(String.format(Locale.getDefault(), "매도 보정1 : %f -> %f", data.getUnits(), unit));
+                                    unit = (float)(Math.round(pData.getUnits() * 10000d) / 10000d);
+                                    log_info(String.format(Locale.getDefault(), "매도 보정1 : %f -> %f", pData.getUnits(), unit));
                                 }
                             }
 
@@ -305,12 +305,14 @@ public class TradeJobService extends JobService {
                             boolean isSold = false;
                             for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                                 // intervalPrice가 바뀌는 경계값일 때 문제를 해결하기 위해서 매도할 때의 interval은 현재가가 아니라 매수가를 기준으로 산정한다.
-                                int sellIntervalPrice = MainPage.getProfitPrice(data.getPrice()) / 2;
-                                int newPrice = data.getPrice() + MainPage.getProfitPrice(data.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
-                                if ((data.getPrice() % sellIntervalPrice) != 0)
-                                    newPrice = (data.getPrice() - (data.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(data.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
+                                int sellIntervalPrice = MainPage.getProfitPrice(pData.getPrice()) / 2;
+                                int newPrice = pData.getPrice() + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
+                                if ((pData.getPrice() % sellIntervalPrice) != 0)
+                                    newPrice = (pData.getPrice() - (pData.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
 
-                                if (placedOrderManager.findByPrice(SELL, newPrice) == null) {
+                                TradeData oData = placedOrderManager.findByPrice(SELL, newPrice);
+                                if (oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
+                                        (oData != null && isSameSlotOrder(oData, pData, newPrice))) { // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
                                     JSONObject result = orderManager.addOrder("매수 발생 대응 매도", SELL, unit, newPrice);
                                     if (result == null) {
                                         // 서버 오류등의 상황에서도 다음 턴 체크를 계속 진행한다.
@@ -331,23 +333,23 @@ public class TradeJobService extends JobService {
                                             .setPlacedTime(0));
                                     break;
                                 }
-//                                log_info("Skip 매도 : " + String.format(Locale.getDefault(), "%,d", newPrice));
+//                              log_info("Skip 매도 : " + String.format(Locale.getDefault(), "%,d", newPrice));
                             }
                             if (!isSold) {
                                 notificationTrade("매도 실패", "매도시도 : "
-                                        + String.format(Locale.getDefault(), "%,d", data.getPrice()));
+                                        + String.format(Locale.getDefault(), "%,d", pData.getPrice()));
                             }
-                        } else if (data.getType() == SELL) {
-                            log_info("매도 발생 : " + String.format(Locale.getDefault(), "%,d", data.getPrice()));
-                            notificationTrade("매도 발생", "매도 : " + String.format(Locale.getDefault(), "%,d", data.getPrice()) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
+                        } else if (pData.getType() == SELL) {
+                            log_info("매도 발생 : " + String.format(Locale.getDefault(), "%,d", pData.getPrice()));
+                            notificationTrade("매도 발생", "매도 : " + String.format(Locale.getDefault(), "%,d", pData.getPrice()) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
                                     , time.get(Calendar.MONTH) + 1, time.get(Calendar.DATE)
                                     , time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE)));
                         } else {
                             // BUY, SELL  이외 수수료 쿠폰 구입 등의 항목일 경우에 여기로 올 수 있다.
                         }
 
-                        if (data.getProcessedTime() > lastNotiTimeInMillis)
-                            lastNotiTimeInMillis = data.getProcessedTime();
+                        if (pData.getProcessedTime() > lastNotiTimeInMillis)
+                            lastNotiTimeInMillis = pData.getProcessedTime();
                     }
                 }
 
@@ -545,5 +547,17 @@ public class TradeJobService extends JobService {
         }
 
         return newList;
+    }
+
+    private boolean isSameSlotOrder(TradeData oData, TradeData pData, int price) {
+        if (((oData.getUnits() + pData.getUnits()) * price) <= MainActivity.UNIT_PRICE) {
+            log_info("isSameSlotOrder : " + String.format(Locale.getDefault(), "%,d", (int)((oData.getUnits() + pData.getUnits()) * price))
+                    + ", " + String.format(Locale.getDefault(), "%,d", (int)(oData.getUnits() * price))
+                    + ", " + String.format(Locale.getDefault(), "%,d", (int)(pData.getUnits() * price)));
+
+            return true;
+        }
+
+        return false;
     }
 }
