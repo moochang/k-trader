@@ -41,6 +41,8 @@ public class MainPage extends Fragment {
     public static final int JOB_ID_FIRST = 1;
     public static final int JOB_ID_REGULAR = 2;
 
+    private static final String KEY_TRADING_STATE = "KEY_TRADING_STATE";
+
     private final static int MAX_BUFFER = 10000;
 
     public static Context context;
@@ -55,6 +57,7 @@ public class MainPage extends Fragment {
 
     ComponentName component;
     MainActivity mainActivity;
+    boolean isTradingStarted = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {super.onCreate(savedInstanceState);}
@@ -71,10 +74,15 @@ public class MainPage extends Fragment {
         scrollView = (ScrollView)layout.findViewById(R.id.scrollView1);
         checkBox = (CheckBox)layout.findViewById(R.id.checkBox);
 
+        if (savedInstanceState != null) {
+            isTradingStarted = savedInstanceState.getBoolean(KEY_TRADING_STATE);
+        }
+
+        btnStartTrading.setEnabled(!isTradingStarted);
+        btnStopTrading.setEnabled(isTradingStarted);
+
         // page switching으로 인한 재방문이 아닌 첫 방문일 때만 초기화 한다.
         if (mainActivity.jobScheduler == null) {
-            btnStopTrading.setEnabled(false);
-
             component = new ComponentName(mainActivity, TradeJobService.class.getName());
 
             IntentFilter theFilter = new IntentFilter();
@@ -119,8 +127,9 @@ public class MainPage extends Fragment {
                 mainActivity.jobScheduler.schedule(firstTradeJob);
                 mainActivity.jobScheduler.schedule(tradeJob);
 
-                btnStartTrading.setEnabled(false);
-                btnStopTrading.setEnabled(true);
+                isTradingStarted = true;
+                btnStartTrading.setEnabled(!isTradingStarted);
+                btnStopTrading.setEnabled(isTradingStarted);
             }
         });
 
@@ -130,8 +139,9 @@ public class MainPage extends Fragment {
                     mainActivity.jobScheduler.cancelAll();
                 }
 
-                btnStartTrading.setEnabled(true);
-                btnStopTrading.setEnabled(false);
+                isTradingStarted = false;
+                btnStartTrading.setEnabled(!isTradingStarted);
+                btnStopTrading.setEnabled(isTradingStarted);
             }
         });
 
@@ -151,12 +161,6 @@ public class MainPage extends Fragment {
                 startActivity(new Intent(mainActivity, SettingActivity.class));
             }
         });
-
-        // page switching으로 인한 재방문인 경우에는 필요한 일만 하고 리턴한다.
-        if (mainActivity.jobScheduler != null) {
-            btnStartTrading.setEnabled(false);
-            btnStopTrading.setEnabled(true);
-        }
 
         return layout;
     }
@@ -238,5 +242,12 @@ public class MainPage extends Fragment {
         }
 
         throw new Exception("dataObj == null");
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putBoolean(KEY_TRADING_STATE, isTradingStarted);
     }
 }
