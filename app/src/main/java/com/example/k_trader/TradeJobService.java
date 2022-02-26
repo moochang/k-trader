@@ -306,14 +306,14 @@ public class TradeJobService extends JobService {
                             for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                                 // intervalPrice가 바뀌는 경계값일 때 문제를 해결하기 위해서 매도할 때의 interval은 현재가가 아니라 매수가를 기준으로 산정한다.
                                 int sellIntervalPrice = MainPage.getProfitPrice(pData.getPrice()) / 2;
-                                int newPrice = pData.getPrice() + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
+                                int targetPrice = pData.getPrice() + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
                                 if ((pData.getPrice() % sellIntervalPrice) != 0)
-                                    newPrice = (pData.getPrice() - (pData.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
+                                    targetPrice = (pData.getPrice() - (pData.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
 
-                                TradeData oData = placedOrderManager.findByPrice(SELL, newPrice);
+                                TradeData oData = placedOrderManager.findByPrice(SELL, targetPrice);
                                 if (oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
-                                        (oData != null && isSameSlotOrder(oData, pData, newPrice))) { // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
-                                    JSONObject result = orderManager.addOrder("매수 발생 대응 매도", SELL, unit, newPrice);
+                                        (oData != null && isSameSlotOrder(oData, pData, targetPrice))) { // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
+                                    JSONObject result = orderManager.addOrder("매수 발생 대응 매도", SELL, unit, targetPrice);
                                     if (result == null) {
                                         // 서버 오류등의 상황에서도 다음 턴 체크를 계속 진행한다.
                                         if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
@@ -329,7 +329,7 @@ public class TradeJobService extends JobService {
                                             .setStatus(PLACED)
                                             .setId("0")
                                             .setUnits(unit)
-                                            .setPrice(newPrice)
+                                            .setPrice(targetPrice)
                                             .setPlacedTime(0));
                                     break;
                                 }
