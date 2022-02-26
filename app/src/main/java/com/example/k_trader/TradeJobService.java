@@ -550,7 +550,7 @@ public class TradeJobService extends JobService {
     }
 
     private boolean isSameSlotOrder(TradeData oData, TradeData pData, int price) {
-        if (((oData.getUnits() + pData.getUnits()) * price) <= MainActivity.UNIT_PRICE) {
+        if (((oData.getUnits() + pData.getUnits()) * price) <= (MainActivity.UNIT_PRICE + MainActivity.UNIT_PRICE * MainActivity.EARNINGS_RATIO)) {
             log_info("isSameSlotOrder : " + String.format(Locale.getDefault(), "%,d", (int)((oData.getUnits() + pData.getUnits()) * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(oData.getUnits() * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(pData.getUnits() * price)));

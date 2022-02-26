@@ -202,25 +202,25 @@ public class MainPage extends Fragment {
         }
     }
 
-    // 주어진 가격에 대한 1% 이익금을 리턴한다.
-    // 매도리스트를 0.5% 가격 단위로 discrete하게 만들기 위해 주어진 가격에서 가장 앞자리만 남기고 절사한 금액의 1%를 계산한다.
-    // 예를 들어 주어진 가격이 4,325만원이라면 4,000으로 절사하고 그 1%인 40만원을 리턴
+    // 주어진 bitcoin 가격에 대한 이익금(EARNINGS_RATIO)을 리턴한다.
+    // 매도 리스트를 0.5% 가격 단위로 discrete하게 만들기 위해 주어진 가격에서 가장 앞자리만 남기고 절사한 금액의 이익금을 계산한다.
+    // 예를 들어 주어진 가격이 4,325만원이라면 4,000으로 절사하고 그 EARNINGS_RATIO 금액(ex: earnings_ratio가 1%인 경우 40만원)을 리턴
     public static int getProfitPrice(int basePrice) {
-        int index = 0;
+        int precision = 0;
 
-        basePrice /= 10000;
-
+        // 자리수 구하기
         while(basePrice > 10) {
             basePrice /= 10;
-            index++;
+            precision++;
         }
 
-        int profit = basePrice;
-        for (int i = 0; i<index; i++) {
-            profit *= 10;
+        // 절사된 floor value 구하기
+        int floor = basePrice;
+        for (int i = 0; i<precision; i++) {
+            floor *= 10;
         }
 
-        return profit * 100;   // basePrice의 1%만 리턴
+        return (int)(floor * MainActivity.EARNINGS_RATIO);   // basePrice의 1%만 리턴
     }
 
     public static int getProfitPrice() throws Exception {

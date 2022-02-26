@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     public static String API_SECRET;
     public static int UNIT_PRICE;
     public static int TRADE_INTERVAL;
+    public static final double EARNINGS_RATIO = 0.01;   // 1%
 
     public static final String BROADCAST_PROGRESS_MESSAGE = "PROGRESS_MESSAGE";
     private static Timer mTimer;
