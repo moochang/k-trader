@@ -1,5 +1,6 @@
 package com.example.k_trader;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -10,8 +11,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
+import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     public static int UNIT_PRICE;
     public static int TRADE_INTERVAL;
     public static final double EARNINGS_RATIO = 0.01;   // 1%
+    public static final int STORAGE_PERMISSION_REQUEST = 0;
 
     public static final String BROADCAST_PROGRESS_MESSAGE = "PROGRESS_MESSAGE";
     private static Timer mTimer;
@@ -44,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     static int progress;
 
     JobScheduler jobScheduler;
+    public static org.apache.log4j.Logger logger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +59,19 @@ public class MainActivity extends AppCompatActivity {
 //        int id = 0;
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(new adapter(getSupportFragmentManager()));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // 마시멜로우 이상 버전이면
+            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    Toast.makeText(this, "Log 저장을 위해 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
+                }
+                requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_REQUEST);
+            }
+
+            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                logger = org.apache.log4j.Logger.getLogger("MainActivity");
+            }
+        }
 
         IntentFilter theFilter = new IntentFilter();
         theFilter.addAction(BROADCAST_PROGRESS_MESSAGE);
@@ -163,5 +182,18 @@ public class MainActivity extends AppCompatActivity {
 //        Toast.makeText(this, "Back button pressed.", Toast.LENGTH_SHORT).show();
         // ��׶��� ������ ��ȯ�Ѵ�.
         moveTaskToBack(true);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == STORAGE_PERMISSION_REQUEST) {
+            if (grantResults[0] == 0) {
+                // 권한 승인 됨
+            } else {
+                Toast.makeText(this, "Log 저장을 위해 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

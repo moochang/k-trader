@@ -18,6 +18,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.base.TradeDataManager;
@@ -72,6 +73,7 @@ public class TradeJobService extends JobService {
     private static List<Integer> priceQueue = new ArrayList<>();
     private static boolean emergency5Trigger = false;
     private static boolean emergency10Trigger = false;
+    private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("TradeJobService");
 
     @Override
     public boolean onStartJob(final JobParameters jobParameters) {
@@ -423,6 +425,10 @@ public class TradeJobService extends JobService {
     }
 
     private void log_info(final String log) {
+        if (logger != null) {
+            logger.info(log);
+        }
+
         Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
         if (MainPage.context != null) {

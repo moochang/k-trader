@@ -25,6 +25,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
 
+import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 
 import org.json.simple.JSONArray;
@@ -47,6 +48,7 @@ public class MainPage extends Fragment {
     private final static int MAX_BUFFER = 10000;
 
     public static Context context;
+    private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("MainPage");
 
     EditText editText;
     Button btnStartTrading;

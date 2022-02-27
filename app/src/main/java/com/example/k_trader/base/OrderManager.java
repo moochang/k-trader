@@ -23,6 +23,7 @@ import static com.example.k_trader.base.TradeDataManager.Type.BUY;
 public class OrderManager {
     private static long lastRequestTimeInMillis = 0;
     private static long safeIntervalInSec = 1;
+    private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("OrderManager");
 
     public boolean cancelOrder(String tag, TradeData data) {
         Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
@@ -168,6 +169,8 @@ public class OrderManager {
     }
 
     private void log_info(final String log) {
+        if (logger != null)
+            logger.info(log);
         Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
         if (MainPage.context != null)
