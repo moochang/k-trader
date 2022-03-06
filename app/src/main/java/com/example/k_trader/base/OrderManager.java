@@ -67,7 +67,7 @@ public class OrderManager {
         return true;
     }
 
-    public boolean cancelAllOrders() {
+    public boolean cancelAllBuyOrders() {
         Api_Client api = new Api_Client(MainActivity.API_KEY, MainActivity.API_SECRET);
         JSONObject result = api.callApi("/info/orders", null);
         int cancelCount = 0;

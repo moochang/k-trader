@@ -90,7 +90,7 @@ public class MainPage extends Fragment {
 
             IntentFilter theFilter = new IntentFilter();
             theFilter.addAction(BROADCAST_LOG_MESSAGE);
-            LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(new MyReceiver(), theFilter);
+            LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(new LogReceiver(), theFilter);
         }
 
         if (mainActivity.getApplicationContext() != null)
@@ -113,7 +113,7 @@ public class MainPage extends Fragment {
                     public void run() {
                         // cancel all buy request
                         OrderManager orderManager = new OrderManager();
-                        orderManager.cancelAllOrders();
+                        orderManager.cancelAllBuyOrders();
                     }
                 }.start();
 
@@ -197,7 +197,7 @@ public class MainPage extends Fragment {
         Log.d("KTrader", log);
     }
 
-    private class MyReceiver extends BroadcastReceiver {
+    private class LogReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             log_info(intent.getStringExtra("log"));
