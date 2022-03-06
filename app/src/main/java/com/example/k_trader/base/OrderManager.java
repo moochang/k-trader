@@ -138,7 +138,7 @@ public class OrderManager {
         else
             rgParams.put("type", "ask");
 
-        log_info(tag + " : " + type.toString() + " 발행 : " + units + " : " + String.format(Locale.getDefault(), "%,d", price));
+        log_info(tag + " : " + type.toString() + " 발행 : " + String.format("%.4f", units) + " : " + String.format(Locale.getDefault(), "%,d", price));
 
         try {
             result = api.callApi("/trade/place", rgParams);

@@ -126,6 +126,11 @@ public class ProcessedOrderPage extends Fragment {
 
                                 JSONArray dataArray = (JSONArray) result.get("data");
                                 if (dataArray != null) {
+                                    if (dataArray.size() == 0) {
+                                        condition = false;
+                                        break;
+                                    }
+
                                     for (int i = 0; i < dataArray.size(); i++) {
                                         JSONObject item = (JSONObject) dataArray.get(i);
 

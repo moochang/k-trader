@@ -90,7 +90,7 @@ public class TradeData {
         if (this.getType() == SELL)
             this.feeEvaluated = Double.parseDouble(fee);
         else if (this.getType() == BUY)
-            this.feeEvaluated = Double.parseDouble(fee) * getPrice();
+            this.feeEvaluated = Double.parseDouble(fee);
         return this;
     }
 
