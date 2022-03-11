@@ -234,8 +234,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
 
     private void onSellItemClick(int position) {
         g_position = position;
-        // 여기서 null pointer 에러가 발생하는데.... 아마도 앱 재실행 했을 때 start 버튼이 안 보이는 상황이랑 관련 있는 듯
-        PopupMenu popup = new PopupMenu(mainActivity.cur_fragment.getContext(), listView);
+        PopupMenu popup = new PopupMenu(this.getContext(), listView);
         popup.setOnMenuItemClickListener(self);
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.placed_order_item_shortcut, popup.getMenu());
