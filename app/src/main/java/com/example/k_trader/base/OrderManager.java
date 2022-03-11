@@ -96,7 +96,7 @@ public class OrderManager {
         return true;
     }
 
-    public JSONObject addOrder(String tag, TradeDataManager.Type type, float units, int price) {
+    public JSONObject addOrder(String tag, TradeDataManager.Type type, double units, int price) {
         Api_Client api = new Api_Client();
         JSONObject result;
         long requestTime = Calendar.getInstance().getTimeInMillis();
