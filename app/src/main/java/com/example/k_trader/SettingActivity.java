@@ -45,12 +45,12 @@ public class SettingActivity extends AppCompatActivity {
             public void onClick(View v) {
                 int tradeInterval = Integer.parseInt(txtApiTradeInterval.getText().toString().replaceAll(",", ""));
                 if (tradeInterval < GlobalSettings.TRADE_INTERVAL_MIN_VALUE) {
-                    Toast.makeText(SettingActivity.this, "°Å·¡ ÁÖ±â °ªÀÌ ³Ê¹« ÀÛ½À´Ï´Ù.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SettingActivity.this, "ê±°ëž˜ ì£¼ê¸° ê°’ì´ ë„ˆë¬´ ìž‘ìŠµë‹ˆë‹¤.", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 int unitPrice = Integer.parseInt(txtApiUnitPrice.getText().toString().replaceAll(",", ""));
                 if (unitPrice < GlobalSettings.UNIT_PRICE_MIN_VALUE) {
-                    Toast.makeText(SettingActivity.this, "1È¸ °Å·¡ ±Ý¾× °ªÀÌ ³Ê¹« ÀÛ½À´Ï´Ù.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SettingActivity.this, "1íšŒ ê±°ëž˜ ê¸ˆì•¡ ê°’ì´ ë„ˆë¬´ ìž‘ìŠµë‹ˆë‹¤.", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
