@@ -32,6 +32,12 @@ dependencies {
     implementation 'com.android.support:design:26.1.0'
     implementation 'android.arch.navigation:navigation-fragment:1.0.0'
     implementation 'android.arch.navigation:navigation-ui:1.0.0'
+    implementation files('libs\\auth0-1.39.0.jar')
+    implementation files('libs\\java-jwt-3.18.3.jar')
+    implementation files('libs\\okio-2.8.0.jar')
+    implementation files('libs\\httpcore-4.0-beta1.jar')
+    implementation files('libs\\httpclient-4.0-alpha3.jar')
+    implementation files('libs\\httpclient-android-4.3.5.1.jar')
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:3.3.3'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
