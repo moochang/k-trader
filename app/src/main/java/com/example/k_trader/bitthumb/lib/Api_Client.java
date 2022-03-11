@@ -1,6 +1,8 @@
 package com.example.k_trader.bitthumb.lib;
 
 import com.example.k_trader.base.GlobalSettings;
+import com.example.k_trader.base.Log4jHelper;
+
 import org.apache.commons.codec.binary.Hex;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -22,7 +24,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Api_Client {
     protected String api_url = "https://api.bithumb.com";
-
+    private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("Api_Client");
 
     public Api_Client() {
     }
@@ -90,7 +92,8 @@ public class Api_Client {
             if (request.ok()) {
                 response = request.body();
             } else {
-                response = "error : " + request.code() + ", message : "	+ request.body();
+                response = request.body();
+                logger.error("error : " + request.code() + ", message : "	+ response);
             }
             request.disconnect();
         }
