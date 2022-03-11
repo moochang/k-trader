@@ -28,6 +28,7 @@ import android.widget.ScrollView;
 import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
+import com.google.gson.Gson;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -45,6 +46,7 @@ public class MainPage extends Fragment {
     public static final int JOB_ID_REGULAR = 2;
 
     private static final String KEY_TRADING_STATE = "KEY_TRADING_STATE";
+    private static final String LOG_RECEIVER_STATE = "LOG_RECEIVER_STATE";
 
     private final static int MAX_BUFFER = 10000;
 
@@ -62,6 +64,7 @@ public class MainPage extends Fragment {
     ComponentName component;
     MainActivity mainActivity;
     boolean isTradingStarted = false;
+    LogReceiver logReceiver;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {super.onCreate(savedInstanceState);}
@@ -80,6 +83,9 @@ public class MainPage extends Fragment {
 
         if (savedInstanceState != null) {
             isTradingStarted = savedInstanceState.getBoolean(KEY_TRADING_STATE);
+            String json = savedInstanceState.getString(LOG_RECEIVER_STATE);
+            Gson gson = new Gson();
+            logReceiver = gson.fromJson(json, LogReceiver.class);
         }
 
         btnStartTrading.setEnabled(!isTradingStarted);
@@ -89,9 +95,13 @@ public class MainPage extends Fragment {
         if (mainActivity.jobScheduler == null) {
             component = new ComponentName(mainActivity, TradeJobService.class.getName());
 
+            if (logReceiver != null) {
+                LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).unregisterReceiver(logReceiver);
+            }
             IntentFilter theFilter = new IntentFilter();
             theFilter.addAction(BROADCAST_LOG_MESSAGE);
-            LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(new LogReceiver(), theFilter);
+            logReceiver = new LogReceiver();
+            LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(logReceiver, theFilter);
         }
 
         if (mainActivity.getApplicationContext() != null)
@@ -253,5 +263,9 @@ public class MainPage extends Fragment {
         super.onSaveInstanceState(outState);
 
         outState.putBoolean(KEY_TRADING_STATE, isTradingStarted);
+
+        Gson gson = new Gson();
+        String json = gson.toJson(logReceiver);
+        outState.putString(LOG_RECEIVER_STATE, json);
     }
 }
