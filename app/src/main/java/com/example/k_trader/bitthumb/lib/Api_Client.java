@@ -1,5 +1,6 @@
 package com.example.k_trader.bitthumb.lib;
 
+import com.example.k_trader.base.GlobalSettings;
 import org.apache.commons.codec.binary.Hex;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -21,12 +22,9 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Api_Client {
     protected String api_url = "https://api.bithumb.com";
-    protected String api_key;
-    protected String api_secret;
 
-    public Api_Client(String api_key, String api_secret) {
-        this.api_key = api_key;
-        this.api_secret = api_secret;
+
+    public Api_Client() {
     }
 
     /**
@@ -126,7 +124,7 @@ public class Api_Client {
         return result;
     }
 
-    private HashMap<String, String> getHttpHeaders(String endpoint, HashMap<String, String> rgData, String apiKey, String apiSecret) {
+    private HashMap<String, String> getHttpHeaders(String endpoint, HashMap<String, String> rgData) {
 
         String strData = Util.mapToQueryString(rgData).replace("?", "");
         String nNonce = usecTime();
@@ -144,11 +142,11 @@ public class Api_Client {
         String str = endpoint + ";"	+ strData + ";" + nNonce;
         //String str = "/info/balance;order_currency=BTC&payment_currency=KRW&endpoint=%2Finfo%2Fbalance;272184496";
 
-        String encoded = asHex(hmacSha512(str, apiSecret));
+        String encoded = asHex(hmacSha512(str, GlobalSettings.getInstance().getApiSecret()));
 
 //		System.out.println("strData was: " + str);
 //		System.out.println("apiSecret was: " + apiSecret);
-        array.put("Api-Key", apiKey);
+        array.put("Api-Key", GlobalSettings.getInstance().getApiKey());
         array.put("Api-Sign", encoded);
         array.put("Api-Nonce", String.valueOf(nNonce));
 
@@ -197,7 +195,7 @@ public class Api_Client {
         }
 
         String api_host = api_url + endpoint;
-        HashMap<String, String> httpHeaders = getHttpHeaders(endpoint, rgParams, api_key, api_secret);
+        HashMap<String, String> httpHeaders = getHttpHeaders(endpoint, rgParams);
 
         rgResultDecode = request(api_host, "POST", rgParams, httpHeaders);
 
@@ -224,7 +222,7 @@ public class Api_Client {
         }
 
         String api_host = api_url + endpoint;
-        HashMap<String, String> httpHeaders = getHttpHeaders(endpoint, rgParams, api_key, api_secret);
+        HashMap<String, String> httpHeaders = getHttpHeaders(endpoint, rgParams);
 
         rgResultDecode = request(api_host, "GET", rgParams, httpHeaders);
 

@@ -18,6 +18,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 import com.example.k_trader.base.TradeData;
@@ -74,6 +75,7 @@ public class TradeJobService extends JobService {
     private static boolean emergency5Trigger = false;
     private static boolean emergency10Trigger = false;
     private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("TradeJobService");
+    private GlobalSettings gSettings = GlobalSettings.getInstance();
 
     @Override
     public boolean onStartJob(final JobParameters jobParameters) {
@@ -144,8 +146,8 @@ public class TradeJobService extends JobService {
                         }
 
                         // 빗썸은 0.0001 BTC가 최소 거래 단위이므로 체크
-                        if (currentPrice / 10000 > MainActivity.UNIT_PRICE) {
-                            log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", MainActivity.UNIT_PRICE) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
+                        if (currentPrice / 10000 > gSettings.getUnitPrice()) {
+                            log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", gSettings.getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
                             return;
                         }
 
@@ -391,7 +393,7 @@ public class TradeJobService extends JobService {
                             }
 
                             // add buy request for lower bound
-                            float unit = (float) ((int) (((float) MainActivity.UNIT_PRICE / lowerBoundPrice) * 10000) / 10000.0);
+                            float unit = (float) ((int) (((float) gSettings.getUnitPrice() / lowerBoundPrice) * 10000) / 10000.0);
                             JSONObject result = orderManager.addOrder("저점", BUY, unit, lowerBoundPrice);
                             if (result == null) {
                                 // 서버 오류등의 상황에서도 다음 턴 체크를 계속 진행한다.
@@ -444,7 +446,7 @@ public class TradeJobService extends JobService {
 
         /* For Android N and Upper Versions */
         mJobBuilder
-                .setMinimumLatency(MainActivity.TRADE_INTERVAL * 1000)
+                .setMinimumLatency(gSettings.getTradeInterval() * 1000)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
 
         if (mJobScheduler != null && mJobScheduler.schedule(mJobBuilder.build()) <= JobScheduler.RESULT_FAILURE) {
@@ -556,7 +558,7 @@ public class TradeJobService extends JobService {
     }
 
     private boolean isSameSlotOrder(TradeData oData, TradeData pData, int price) {
-        if (((oData.getUnits() + pData.getUnits()) * price) <= (MainActivity.UNIT_PRICE + MainActivity.UNIT_PRICE * MainActivity.EARNINGS_RATIO)) {
+        if (((oData.getUnits() + pData.getUnits()) * price) <= (gSettings.getUnitPrice() + gSettings.getUnitPrice() * MainActivity.EARNINGS_RATIO)) {
             log_info("isSameSlotOrder : " + String.format(Locale.getDefault(), "%,d", (int)((oData.getUnits() + pData.getUnits()) * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(oData.getUnits() * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(pData.getUnits() * price)));

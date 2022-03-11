@@ -25,6 +25,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
 
+import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 
@@ -123,7 +124,7 @@ public class MainPage extends Fragment {
                         .build();
 
                 JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
-                        .setMinimumLatency(MainActivity.TRADE_INTERVAL * 1000)
+                        .setMinimumLatency(GlobalSettings.getInstance().getTradeInterval() * 1000)
                         .build();
 
                 mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
