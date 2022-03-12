@@ -81,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
         GlobalSettings.getInstance().setApiKey(sharedPreferences.getString("API_KEY", ""));
         GlobalSettings.getInstance().setApiSecret(sharedPreferences.getString("API_SECRET", ""));
         GlobalSettings.getInstance().setTradeInterval(sharedPreferences.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE));
+        GlobalSettings.getInstance().setFileLogEnabled(sharedPreferences.getBoolean("FILE_LOG_ENABLED", false));
 
         if (GlobalSettings.getInstance().getApiKey().isEmpty() || GlobalSettings.getInstance().getApiSecret().isEmpty()) {
             Toast.makeText(this, "거래를 위해서는 Key와 Secret값 설정이 필요합니다.", Toast.LENGTH_SHORT).show();
@@ -187,11 +188,19 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == STORAGE_PERMISSION_REQUEST) {
+            SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
+            SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
+
             if (grantResults[0] == 0) {
                 // 권한 승인 됨
+                prefsEditr.putBoolean("FILE_LOG_ENABLED", true);
+                GlobalSettings.getInstance().setFileLogEnabled(true);
             } else {
+                prefsEditr.putBoolean("FILE_LOG_ENABLED", false);
+                GlobalSettings.getInstance().setFileLogEnabled(false);
                 Toast.makeText(this, "Log 저장을 위해 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
             }
+            prefsEditr.apply();
         }
     }
 }

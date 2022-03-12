@@ -11,6 +11,7 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -74,13 +75,24 @@ public class TradeJobService extends JobService {
     private static List<Integer> priceQueue = new ArrayList<>();
     private static boolean emergency5Trigger = false;
     private static boolean emergency10Trigger = false;
-    private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("TradeJobService");
-    private GlobalSettings gSettings = GlobalSettings.getInstance();
+    private static org.apache.log4j.Logger logger = Log4jHelper.getLogger("TradeJobService");
 
     @Override
     public boolean onStartJob(final JobParameters jobParameters) {
         new Thread() {
             public void run() {
+                // Read settings again if MainActivity has been terminated by Android
+                if (GlobalSettings.getInstance().getApiKey().isEmpty()) {
+                    SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
+                    GlobalSettings.getInstance().setUnitPrice(sharedPreferences.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE));
+                    GlobalSettings.getInstance().setApiKey(sharedPreferences.getString("API_KEY", ""));
+                    GlobalSettings.getInstance().setApiSecret(sharedPreferences.getString("API_SECRET", ""));
+                    GlobalSettings.getInstance().setTradeInterval(sharedPreferences.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE));
+                    GlobalSettings.getInstance().setFileLogEnabled(sharedPreferences.getBoolean("FILE_LOG_ENABLED", false));
+                    logger = Log4jHelper.getLogger("TradeJobService");
+                    log_info("App has been terminated by Android");
+                }
+
                 OrderManager orderManager = new OrderManager();
 
                 // static 변수 초기화
@@ -146,8 +158,8 @@ public class TradeJobService extends JobService {
                         }
 
                         // 빗썸은 0.0001 BTC가 최소 거래 단위이므로 체크
-                        if (currentPrice / 10000 > gSettings.getUnitPrice()) {
-                            log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", gSettings.getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
+                        if (currentPrice / 10000 > GlobalSettings.getInstance().getUnitPrice()) {
+                            log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", GlobalSettings.getInstance().getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
                             return;
                         }
 
@@ -393,7 +405,7 @@ public class TradeJobService extends JobService {
                             }
 
                             // add buy request for lower bound
-                            float unit = (float) ((int) (((float) gSettings.getUnitPrice() / lowerBoundPrice) * 10000) / 10000.0);
+                            float unit = (float) ((int) (((float) GlobalSettings.getInstance().getUnitPrice() / lowerBoundPrice) * 10000) / 10000.0);
                             JSONObject result = orderManager.addOrder("저점", BUY, unit, lowerBoundPrice);
                             if (result == null) {
                                 // 서버 오류등의 상황에서도 다음 턴 체크를 계속 진행한다.
@@ -446,7 +458,7 @@ public class TradeJobService extends JobService {
 
         /* For Android N and Upper Versions */
         mJobBuilder
-                .setMinimumLatency(gSettings.getTradeInterval() * 1000)
+                .setMinimumLatency(GlobalSettings.getInstance().getTradeInterval() * 1000)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
 
         if (mJobScheduler != null && mJobScheduler.schedule(mJobBuilder.build()) <= JobScheduler.RESULT_FAILURE) {
@@ -558,7 +570,7 @@ public class TradeJobService extends JobService {
     }
 
     private boolean isSameSlotOrder(TradeData oData, TradeData pData, int price) {
-        if (((oData.getUnits() + pData.getUnits()) * price) <= (gSettings.getUnitPrice() + gSettings.getUnitPrice() * MainActivity.EARNINGS_RATIO)) {
+        if (((oData.getUnits() + pData.getUnits()) * price) <= (GlobalSettings.getInstance().getUnitPrice() + GlobalSettings.getInstance().getUnitPrice() * MainActivity.EARNINGS_RATIO)) {
             log_info("isSameSlotOrder : " + String.format(Locale.getDefault(), "%,d", (int)((oData.getUnits() + pData.getUnits()) * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(oData.getUnits() * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(pData.getUnits() * price)));

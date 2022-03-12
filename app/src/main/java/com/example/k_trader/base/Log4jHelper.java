@@ -25,7 +25,7 @@ public class Log4jHelper {
         int maxBackupSize = 2;
         long maxFileSize = 1 * 1024 * 1024;
 
-        if (MainActivity.logger == null)
+        if (!GlobalSettings.getInstance().isFileLogEnabled())
             return;
 
         configure( fileName, filePattern, maxBackupSize, maxFileSize );
@@ -42,7 +42,7 @@ public class Log4jHelper {
     }
 
     public static org.apache.log4j.Logger getLogger( String name ) {
-        if (MainActivity.logger == null)
+        if (!GlobalSettings.getInstance().isFileLogEnabled())
             return null;
 
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger( name );
