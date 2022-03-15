@@ -67,6 +67,10 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
+                SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
+                prefsEditr.putBoolean("FILE_LOG_ENABLED", true);
+                prefsEditr.apply();
                 logger = org.apache.log4j.Logger.getLogger("MainActivity");
             }
         }
