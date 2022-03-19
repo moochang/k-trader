@@ -82,7 +82,7 @@ public class TradeJobService extends JobService {
         new Thread() {
             public void run() {
                 // Read settings again if MainActivity has been terminated by Android
-                if (GlobalSettings.getInstance().getApiKey().isEmpty()) {
+                if (GlobalSettings.getInstance().getApiKey() == null) {
                     SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
                     GlobalSettings.getInstance().setUnitPrice(sharedPreferences.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE));
                     GlobalSettings.getInstance().setApiKey(sharedPreferences.getString("API_KEY", ""));

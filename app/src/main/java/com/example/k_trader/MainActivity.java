@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == STORAGE_PERMISSION_REQUEST) {
+        if (requestCode == STORAGE_PERMISSION_REQUEST && grantResults.length > 0) {
             SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
             SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
 
