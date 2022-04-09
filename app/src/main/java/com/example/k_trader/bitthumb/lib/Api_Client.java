@@ -188,7 +188,7 @@ public class Api_Client {
         return new String(HttpRequest.Base64.encodeBytes(bytes));
     }
 
-    public JSONObject callApi(String endpoint, HashMap<String, String> params) {
+    public JSONObject callApi(String method, String endpoint, HashMap<String, String> params) {
         String rgResultDecode = "";
         HashMap<String, String> rgParams = new HashMap<String, String>();
         rgParams.put("endpoint", endpoint);
@@ -200,34 +200,7 @@ public class Api_Client {
         String api_host = api_url + endpoint;
         HashMap<String, String> httpHeaders = getHttpHeaders(endpoint, rgParams);
 
-        rgResultDecode = request(api_host, "POST", rgParams, httpHeaders);
-
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObject = null;
-        try {
-            jsonObject = (JSONObject) jsonParser.parse(rgResultDecode);
-        } catch (ParseException e) {
-            //Application.LOGGER.error(e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-
-        return jsonObject;
-    }
-
-    public JSONObject getApi(String endpoint, HashMap<String, String> params) {
-        String rgResultDecode = "";
-        HashMap<String, String> rgParams = new HashMap<String, String>();
-        rgParams.put("endpoint", endpoint);
-
-        if (params != null) {
-            rgParams.putAll(params);
-        }
-
-        String api_host = api_url + endpoint;
-        HashMap<String, String> httpHeaders = getHttpHeaders(endpoint, rgParams);
-
-        rgResultDecode = request(api_host, "GET", rgParams, httpHeaders);
+        rgResultDecode = request(api_host, method, rgParams, httpHeaders);
 
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = null;

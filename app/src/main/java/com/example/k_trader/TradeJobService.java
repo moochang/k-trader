@@ -51,6 +51,7 @@ public class TradeJobService extends JobService {
     private static final int PRICE_SAVING_QUEUE_COUNT = 60;  // 1시간 분량의 시장가를 저장해 두고 분석에 사용한다.
     private static final int BUY_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 아래까지 매수점을 찾아본다.
     private static final int SELL_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 위까지 매도점을 찾아본다.
+    private static final double TRADING_VALUE_MIN = 0.0001;
 
     private double krwBalance;
 
@@ -76,11 +77,15 @@ public class TradeJobService extends JobService {
     private static boolean emergency5Trigger = false;
     private static boolean emergency10Trigger = false;
     private static org.apache.log4j.Logger logger = Log4jHelper.getLogger("TradeJobService");
+    private Context ctx;
+    private OrderManager orderManager;
 
     @Override
     public boolean onStartJob(final JobParameters jobParameters) {
         new Thread() {
             public void run() {
+                ctx = TradeJobService.this;
+                orderManager = new OrderManager();
                 tradeBusinessLogic();
 
                 if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
@@ -244,7 +249,7 @@ public class TradeJobService extends JobService {
     private void tradeBusinessLogic() {
         // Read settings again if MainActivity has been terminated by Android
         if (GlobalSettings.getInstance().getApiKey() == null) {
-            SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
+            SharedPreferences sharedPreferences = ctx.getSharedPreferences("settings", MODE_PRIVATE);
             GlobalSettings.getInstance().setUnitPrice(sharedPreferences.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE));
             GlobalSettings.getInstance().setApiKey(sharedPreferences.getString("API_KEY", ""));
             GlobalSettings.getInstance().setApiSecret(sharedPreferences.getString("API_SECRET", ""));
@@ -253,8 +258,6 @@ public class TradeJobService extends JobService {
             logger = Log4jHelper.getLogger("TradeJobService");
             log_info("App has been terminated by Android");
         }
-
-        OrderManager orderManager = new OrderManager();
 
         // static 변수 초기화
         if (lastNotiTimeInMillis == 0)
@@ -417,7 +420,7 @@ public class TradeJobService extends JobService {
             }
         }
 
-        // 마지막 Noti 이후 발생한 매도/매수에 대해서 Noti를 발송한다.
+        // 마지막 Noti 이후 발생한 매도/매수에 대해서 Noti를 발송하고, 매수건에 대해서는 이익금을 더해 매도 오더를 발행한다.
         {
             // 마지막 Noti 이후 발생한 매도/매수만 필터링 한 결과를 얻는다.
             List<TradeData> list = processedOrderManager.getList().stream()
@@ -473,6 +476,7 @@ public class TradeJobService extends JobService {
                                 return;
                             }
                             isSold = true;
+                            availableBtcBalance -= unit;
 
                             // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. 리스트 전체를 다시 갱신하는게 더 깔끔 할 것 같긴 한데.. 일단 이렇게..
                             placedOrderManager.add(placedOrderManager.build()
@@ -501,6 +505,38 @@ public class TradeJobService extends JobService {
 
                 if (pData.getProcessedTime() > lastNotiTimeInMillis)
                     lastNotiTimeInMillis = pData.getProcessedTime();
+            }
+        }
+
+        // 매수건에 대한 매도를 다 처리 했음에도 BTC 잔고가 남아 있는 경우에 대한 예외처리, 가능한 slot을 찾아 매도 오더를 발행한다.
+        // 예) 매수 발생 후 앱이 종료되었다가 앱이 재실행 된 경우
+        if (availableBtcBalance > TRADING_VALUE_MIN) {
+            log_info("매도 필요 잔고 : " + String.format("%.4f", availableBtcBalance));
+            // 현재가보다 상위에 비어 있는 slot 중 하나를 찾아보고 있다면 매도하도록 한다.
+            int floorPrice = getFloorPrice(currentPrice);
+            double unit = Math.min(getUnitAmount4Price(floorPrice), (availableBtcBalance * 10000) / 10000.0);
+            int sellIntervalPrice = MainPage.getProfitPrice(floorPrice) / 2; // 0.5%
+            for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
+                int targetPrice = floorPrice + MainPage.getProfitPrice(floorPrice) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
+
+                TradeData oData = placedOrderManager.findByPrice(SELL, targetPrice);
+                if (oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
+                        (oData != null && isSameSlotOrder(oData, new TradeData().build().setUnits((float)unit), targetPrice))) { // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
+                    if (orderManager.addOrder("이전 실행 매수 발생 대응 매도", SELL, unit, targetPrice) == null) {
+                        return;
+                    }
+                    availableBtcBalance -= unit;
+
+                    // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. 리스트 전체를 다시 갱신하는게 더 깔끔 할 것 같긴 한데.. 일단 이렇게..
+                    placedOrderManager.add(placedOrderManager.build()
+                            .setType(SELL)
+                            .setStatus(PLACED)
+                            .setId("0")
+                            .setUnits((float)unit)
+                            .setPrice(targetPrice)
+                            .setPlacedTime(0));
+                    break;
+                }
             }
         }
 
@@ -548,5 +584,29 @@ public class TradeJobService extends JobService {
                 lowerBoundPrice -= intervalPrice;
             }
         }
+    }
+
+    // 주어진 가격 위쪽의 첫번째 매도 slot 가격을 구한다.
+    private int getCeilingPrice(int price) {
+        int floor = getFloorPrice(price);
+        return floor + MainPage.getProfitPrice(floor);
+    }
+
+    // 주어진 가격 아래쪽의 첫번째 매수 slot 가격을 구한다.
+    private int getFloorPrice(int price) {
+        return price - (price % MainPage.getProfitPrice(price));
+    }
+
+    // 주어진 가격 slot에 매수 가능한 BTC 개수를 구한다. 소수점 아래 4자리로 절사
+    private double getUnitAmount4Price(int price) {
+        return (((double)GlobalSettings.getInstance().getUnitPrice() / price) * 10000) / 10000.0;
+    }
+
+    public void setContext(Context ctx) {
+        this.ctx = ctx;
+    }
+
+    public void setOrderManager(OrderManager orderManager) {
+        this.orderManager = orderManager;
     }
 }

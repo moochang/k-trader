@@ -38,7 +38,7 @@ public class OrderManager {
     }
 
     public OrderManager() {
-        new OrderManager(new DefaultTradeApiService());
+        tradeApiService = new DefaultTradeApiService();
     }
 
     public OrderManager(TradeApiService tradeApiService) {
@@ -62,7 +62,7 @@ public class OrderManager {
         log_info(tag + " : " + data.getType().toString() + " 취소 : " + data.getId() + " : " + data.getUnits() + " : " + String.format(Locale.getDefault(), "%,d", data.getPrice()));
 
         try {
-            result = api.callApi("/trade/cancel", rgParams);
+            result = api.callApi("POST", "/trade/cancel", rgParams);
 
             if (result == null) {
                 log_info(tag + " : " + "/trade/cancel : null");
@@ -89,7 +89,7 @@ public class OrderManager {
 
     public boolean cancelAllBuyOrders() {
         Api_Client api = tradeApiService.getApiService();
-        JSONObject result = api.callApi("/info/orders", null);
+        JSONObject result = api.callApi("POST", "/info/orders", null);
         int cancelCount = 0;
 
         if (result == null)
@@ -161,7 +161,7 @@ public class OrderManager {
         log_info(tag + " : " + type.toString() + " 발행 : " + String.format("%.4f", units) + " : " + String.format(Locale.getDefault(), "%,d", price));
 
         try {
-            result = api.callApi("/trade/place", rgParams);
+            result = api.callApi("POST", "/trade/place", rgParams);
 
             if (result == null) {
                 log_info(tag + " : " + "/trade/place : null");
@@ -230,9 +230,9 @@ public class OrderManager {
 
         try {
             if (type == BUY)
-                result = api.callApi("/trade/market_buy", rgParams);
+                result = api.callApi("POST", "/trade/market_buy", rgParams);
             else
-                result = api.callApi("/trade/market_sell", rgParams);
+                result = api.callApi("POST", "/trade/market_sell", rgParams);
 
             if (result == null) {
                 log_info(tag + " : " + "/trade/market_(buy/sell) : null");
@@ -265,7 +265,7 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            result = api.callApi("/info/balance", null);
+            result = api.callApi("POST", "/info/balance", null);
 
             if (result == null) {
                 log_info(tag + " : " + "/info/balance : null");
@@ -295,7 +295,7 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            result = api.getApi("/public/orderbook/BTC", null);
+            result = api.callApi("GET", "/public/orderbook/BTC", null);
 
             if (result == null) {
                 log_info(tag + " : " + "/public/orderbook/BTC : null");
@@ -330,7 +330,7 @@ public class OrderManager {
             param.put("count", "200");
             param.put("order_currency", "BTC");
 
-            result = api.callApi("/info/orders", param);
+            result = api.callApi("POST", "/info/orders", param);
 
             if (result == null) {
                 log_info(tag + " : " + "/info/orders : null");
@@ -374,7 +374,7 @@ public class OrderManager {
             rgParams.put("order_currency", "BTC");
             rgParams.put("payment_currency", "KRW");
 
-            result = api.callApi("/info/user_transactions", rgParams);
+            result = api.callApi("POST", "/info/user_transactions", rgParams);
 
             if (result == null) {
                 log_info(tag + " : " + "/info/user_transactions : null");
