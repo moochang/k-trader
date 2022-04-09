@@ -18,12 +18,25 @@ import org.junit.Test;
 import java.util.HashMap;
 
 public class OrderManagerTest {
+    class DummyApiClient extends Api_Client {
+        @Override
+        public JSONObject callApi(String endpoint, HashMap<String, String> params) {
+            JSONObject obj = new JSONObject();
+            obj.put("status", "0000");
+            return obj;
+        }
+    }
+
+    class DummyTradeApiService implements OrderManager.TradeApiService {
+        @Override
+        public Api_Client getApiService() {
+            return new DummyApiClient();
+        }
+    }
+
     @Test
     public void addOrder_minValueCheck() throws Exception {
-        OrderManager orderManager = new OrderManager();
-//        Api_Client api = mock(Api_Client.class);
-//        when(api.callApi(anyString(), (HashMap)anyMap())).thenReturn((JSONObject)new JSONParser().parse("{}"));
-
+        OrderManager orderManager = new OrderManager(new DummyTradeApiService());
         JSONObject obj = orderManager.addOrder("저점", BUY, 0.0001, 10000000);;
         assertNotEquals(obj, null);
     }
