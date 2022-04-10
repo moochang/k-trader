@@ -60,15 +60,6 @@ public class TradeJobService extends JobService {
     public static int intervalPrice;                // 거래간 인터벌, 현재가의 0.5%
     public static long lastNotiTimeInMillis;        // 마지막 Notification 완료 시점
     public static double availableBtcBalance;       // 현재 판매 가능한 비트코인 총량 = 현재 보유중인 비트코인 총량 - 매도 중인 비트코인 총량
-    public static int lowerBoundPrice;               // 다음 매수 예정가
-    public static int reservedSellPrice;             // 시장가 매수 후 매도할 예약 가격, 시장가 매수시에만 0이 아닌 값 유지
-
-    private int lastBuyPrice;                      // 마지막 매수가
-    private int lastSellPrice;                     // 마지막 매도가
-    private Calendar lastBuyTime;                   // 마지막 매수가 완료된 시간
-    private Calendar lastSellTime;                  // 마지막 매도가 완료된 시간
-
-    private boolean lowerBoundPriceExist;        // 다음 매수 예정가로 오더가 들어가 있는지 여부
 
     private TradeDataManager placedOrderManager = new TradeDataManager();
     private static TradeDataManager processedOrderManager = new TradeDataManager();
@@ -391,15 +382,12 @@ public class TradeJobService extends JobService {
 
         // 마지막 매수 관련 정보를 초기화 한다.
         {
-            lastBuyPrice = 0;
-            lastBuyTime = null;
             TradeData data = processedOrderManager.findLatestProcessedTime(BUY);
-            long buySellTime = 0;
             if (data != null) {
-                lastBuyPrice = data.getPrice();
+                Calendar lastBuyTime;
                 lastBuyTime = Calendar.getInstance();
                 lastBuyTime.setTimeInMillis(data.getProcessedTime());
-                log_info("마지막 매수 : " + String.format(Locale.getDefault(), "%,d", lastBuyPrice) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
+                log_info("마지막 매수 : " + String.format(Locale.getDefault(), "%,d", data.getPrice()) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
                         , lastBuyTime.get(Calendar.MONTH) + 1, lastBuyTime.get(Calendar.DATE)
                         , lastBuyTime.get(Calendar.HOUR_OF_DAY), lastBuyTime.get(Calendar.MINUTE)));
             }
@@ -407,14 +395,12 @@ public class TradeJobService extends JobService {
 
         // 마지막 매도 관련 정보를 초기화 환다.
         {
-            lastSellPrice = 0;
-            lastSellTime = null;
             TradeData data = processedOrderManager.findLatestProcessedTime(SELL);
             if (data != null) {
-                lastSellPrice = data.getPrice();
+                Calendar lastSellTime;
                 lastSellTime = Calendar.getInstance();
                 lastSellTime.setTimeInMillis(data.getProcessedTime());
-                log_info("마지막 매도 : " + String.format(Locale.getDefault(), "%,d", lastSellPrice) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
+                log_info("마지막 매도 : " + String.format(Locale.getDefault(), "%,d", data.getPrice()) + ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d"
                         , lastSellTime.get(Calendar.MONTH) + 1, lastSellTime.get(Calendar.DATE)
                         , lastSellTime.get(Calendar.HOUR_OF_DAY), lastSellTime.get(Calendar.MINUTE)));
             }
@@ -442,7 +428,7 @@ public class TradeJobService extends JobService {
                             , time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE)));
 
                     // 매도 오더 발행 : 마지막 매수 오더가 완료되었다면 +INTERVAL_PRICE 가격에 매도 오더를 발행한다.
-                    // 매수되었던 unit이 소수점 4자리 이하 일수도 있으니 다시 4자리로 regulation 한다.
+                    // 매수되었던 unit이 소수점 4자리 이하 일수도 있으니 다시 4자리로 절사 한다.
                     float unit = (float)((int)(pData.getUnits() * 10000) / 10000.0);
 
                     // 0.00005~9 만큼 남는다면 반올림한다.
@@ -460,7 +446,7 @@ public class TradeJobService extends JobService {
                         unit = (float)((int)(availableBtcBalance * 10000) / 10000.0);
                     }
 
-                    // 매수된 내용이 있다면 3단계 위까지 찾아보고 가능한 높은 빈칸에 매도하도록 한다.
+                    // 매수된 내용이 있다면 가능한 상위 slot에 매도하도록 한다.
                     boolean isSold = false;
                     for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                         // intervalPrice가 바뀌는 경계값일 때 문제를 해결하기 위해서 매도할 때의 interval은 현재가가 아니라 매수가를 기준으로 산정한다.
@@ -478,17 +464,14 @@ public class TradeJobService extends JobService {
                             isSold = true;
                             availableBtcBalance -= unit;
 
-                            // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. 리스트 전체를 다시 갱신하는게 더 깔끔 할 것 같긴 한데.. 일단 이렇게..
+                            // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
                             placedOrderManager.add(placedOrderManager.build()
                                     .setType(SELL)
                                     .setStatus(PLACED)
-                                    .setId("0")
                                     .setUnits(unit)
-                                    .setPrice(targetPrice)
-                                    .setPlacedTime(0));
+                                    .setPrice(targetPrice));
                             break;
                         }
-//                              log_info("Skip 매도 : " + String.format(Locale.getDefault(), "%,d", newPrice));
                     }
                     if (!isSold) {
                         notificationTrade("매도 실패", "매도시도 : "
@@ -527,61 +510,44 @@ public class TradeJobService extends JobService {
                     }
                     availableBtcBalance -= unit;
 
-                    // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. 리스트 전체를 다시 갱신하는게 더 깔끔 할 것 같긴 한데.. 일단 이렇게..
+                    // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
                     placedOrderManager.add(placedOrderManager.build()
                             .setType(SELL)
                             .setStatus(PLACED)
-                            .setId("0")
                             .setUnits((float)unit)
-                            .setPrice(targetPrice)
-                            .setPlacedTime(0));
+                            .setPrice(targetPrice));
                     break;
                 }
             }
         }
 
-        // 다음 저점 매수가 산출
+        // 매수 요청 발행, 어느 시점에서나 active한 매수 오더는 1개만 유지하도록 한다.
         {
-            lowerBoundPrice = currentPrice - (currentPrice % intervalPrice);
-            lowerBoundPriceExist = false;
+            int targetPrice = getFloorPrice(currentPrice);
+            log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d, 오더 %s"
+                    , targetPrice
+                    , (placedOrderManager.findByPrice(BUY, targetPrice) != null) ? "있음" : "없음"));
 
-            TradeData data = placedOrderManager.findByPrice(BUY, lowerBoundPrice);
-            if (data != null)
-                lowerBoundPriceExist = true;
+            // 해당 가격에 이미 대기중인 매수가 있다면 skip
+            if (placedOrderManager.findByPrice(BUY, targetPrice) != null)
+                return;
 
-            log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d, 오더 %s", lowerBoundPrice, lowerBoundPriceExist ? "있음" : "없음"));
-        }
+            // 해당 가격에 이미 대기중인 매도가 있다면 skip
+            if (placedOrderManager.findByPrice(SELL, targetPrice + MainPage.getProfitPrice(targetPrice)) != null)
+                return;
 
-        // 매수 요청 발행
-        {
-            for (int i = 0; i< BUY_SLOT_LOOK_ASIDE_MAX; i++) {
-                // 해당 가격에 이미 대기중인 매수가 있다면 skip
-                if (placedOrderManager.findByPrice(BUY, lowerBoundPrice) != null)
-                    break;
-
-                TradeData data = placedOrderManager.findByPrice(SELL, lowerBoundPrice + MainPage.getProfitPrice(lowerBoundPrice));
-
-                if (data == null) {
-                    // 체결 되기 어려운 낮은 가격 order는 모두 취소한다.
-                    for (TradeData tmp : placedOrderManager.getList()) {
-                        if (tmp.getType() == BUY) {  // 1000만원 단위 경계에서 buy price가 미세하게 차이나서 data가 null이 되어 들어올 수 있으므로 전체 buy를 취소한다.
-                            if (!orderManager.cancelOrder("체결 안 될 오더", tmp)) {
-                                return;
-                            }
-                        }
-                    }
-
-                    // add buy request for lower bound
-                    float unit = (float) ((int) (((float) GlobalSettings.getInstance().getUnitPrice() / lowerBoundPrice) * 10000) / 10000.0);
-                    if (orderManager.addOrder("저점", BUY, unit, lowerBoundPrice) == null) {
+            // 체결 되기 어려운 낮은 가격 order는 모두 취소한다.
+            for (TradeData tmp : placedOrderManager.getList()) {
+                if (tmp.getType() == BUY) {  // 1000만원 단위 경계에서 buy price가 미세하게 차이나서 data가 null이 되어 들어올 수 있으므로 전체 buy를 취소한다.
+                    if (!orderManager.cancelOrder("체결 안 될 오더", tmp)) {
                         return;
                     }
-                    break;
-                } else {
-//                            log_info("Skip 매수 : " + String.format(Locale.getDefault(), "%,d", lowerBoundPrice));
-//                            log_info(String.format(Locale.getDefault(), "%,d", lowerBoundPrice + MainPage.PROFIT_PRICE) + "매도가 이미 존재");
                 }
-                lowerBoundPrice -= intervalPrice;
+            }
+
+            // add buy request for targt price
+            if (orderManager.addOrder("저점", BUY, getUnitAmount4Price(targetPrice), targetPrice) == null) {
+                return;
             }
         }
     }
@@ -592,9 +558,9 @@ public class TradeJobService extends JobService {
         return floor + MainPage.getProfitPrice(floor);
     }
 
-    // 주어진 가격 아래쪽의 첫번째 매수 slot 가격을 구한다.
+    // 주어진 가격 아래쪽의 첫번째 매수 slot 가격을 구한다. (0.5% 단위)
     private int getFloorPrice(int price) {
-        return price - (price % MainPage.getProfitPrice(price));
+        return price - (price % (MainPage.getProfitPrice(price) / 2));
     }
 
     // 주어진 가격 slot에 매수 가능한 BTC 개수를 구한다. 소수점 아래 4자리로 절사
