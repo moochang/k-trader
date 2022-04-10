@@ -72,7 +72,10 @@ public class TradeJobService extends JobService {
             public void run() {
                 ctx = TradeJobService.this;
                 orderManager = new OrderManager();
-                tradeBusinessLogic();
+
+                try {
+                    tradeBusinessLogic();
+                } catch (Exception e) {}
 
                 if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
                     scheduleRefresh();
@@ -224,7 +227,7 @@ public class TradeJobService extends JobService {
         return false;
     }
 
-    private void tradeBusinessLogic() {
+    private void tradeBusinessLogic() throws Exception {
         // Read settings again if MainActivity has been terminated by Android
         if (GlobalSettings.getInstance().getApiKey() == null) {
             SharedPreferences sharedPreferences = ctx.getSharedPreferences("settings", MODE_PRIVATE);
@@ -249,79 +252,51 @@ public class TradeJobService extends JobService {
 
         // 잔고를 가져와 업데이트 한다.
         {
-            JSONObject result = orderManager.getBalance("");
-            if (result == null) {
-                return;
-            }
-
-            JSONObject dataObj = (JSONObject)result.get("data");
+            JSONObject dataObj = orderManager.getBalance("");
             krwBalance = Double.parseDouble((String)dataObj.get("total_krw"));
             availableBtcBalance = Double.parseDouble((String)dataObj.get("available_btc"));
         }
 
         // 비트코인 현재가를 가져온다.
         {
-            JSONObject result = orderManager.getCurrentPrice("");
-            if (result == null) {
+            JSONObject dataObj = orderManager.getCurrentPrice("");
+            JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
+            if (dataArray != null) {
+                JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
+                currentPrice = (int)Double.parseDouble((String)item.get("price"));
+            }
+
+            log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
+
+            // 빗썸은 0.0001 BTC가 최소 거래 단위이므로 체크
+            if (currentPrice / 10000 > GlobalSettings.getInstance().getUnitPrice()) {
+                log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", GlobalSettings.getInstance().getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
                 return;
             }
 
-            JSONObject dataObj = (JSONObject)result.get("data");
-            if (dataObj != null) {
-                JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
-                if (dataArray != null) {
-                    JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
-                    currentPrice = (int)Double.parseDouble((String)item.get("price"));
-                }
-
-                log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
-
-                // defensive code, 서버에서 가격이 업데이트 되지 않는 경우 계속 매수 되는 경우를 방지하지 위해서 skip한다.
-                if (priceQueue.size() > 0) {
-                    if (currentPrice == priceQueue.get(priceQueue.size() - 1)) {
-                        log_info("서버 가격 업데이트 안됨 : " + String.format(Locale.getDefault(), "%,d", priceQueue.get(priceQueue.size() - 1)));
-                        return;
-                    }
-                }
-
-                // 빗썸은 0.0001 BTC가 최소 거래 단위이므로 체크
-                if (currentPrice / 10000 > GlobalSettings.getInstance().getUnitPrice()) {
-                    log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", GlobalSettings.getInstance().getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
-                    return;
-                }
-
-                priceQueue.add(currentPrice);
-                while (priceQueue.size() > PRICE_SAVING_QUEUE_COUNT) {
-                    // 가장 오래된 시장가를 밀어낸다.
-                    priceQueue.remove(0);
-                }
-
-                log_info("최근 한시간 변화폭 : " + String.format(Locale.getDefault(), "(%,.1f%%)", getPriceVariationRate()));
+            priceQueue.add(currentPrice);
+            while (priceQueue.size() > PRICE_SAVING_QUEUE_COUNT) {
+                // 가장 오래된 시장가를 밀어낸다.
+                priceQueue.remove(0);
             }
+
+            log_info("최근 한시간 변화폭 : " + String.format(Locale.getDefault(), "(%,.1f%%)", getPriceVariationRate()));
         }
 
         // Placed 상태인 오더 리스트를 가져온다.
         {
-            JSONObject result = orderManager.getPlacedOrderList("");
-            if (result == null) {
-                return;
-            }
+            JSONArray dataArray = orderManager.getPlacedOrderList("");
+            Log.d("KTrader", "placed order item count : " +  dataArray.size());
 
-            JSONArray dataArray = (JSONArray) result.get("data");
-            if (dataArray != null) {
-                Log.d("KTrader", "placed order item count : " +  dataArray.size());
-
-                for (int i = 0; i < dataArray.size(); i++) {
-                    JSONObject item = (JSONObject) dataArray.get(i);
-                    String id = (String) item.get("order_id");
-                    placedOrderManager.add(placedOrderManager.build()
-                            .setType(orderManager.convertOrderType((String) item.get("type")))
-                            .setStatus(PLACED)
-                            .setId(id)
-                            .setUnits((float) Double.parseDouble((String) item.get("units_remaining")))
-                            .setPrice(Integer.parseInt(((String) item.get("price")).replaceAll(",", "")))
-                            .setPlacedTime(Long.parseLong((String) item.get("order_date")) / 1000));
-                }
+            for (int i = 0; i < dataArray.size(); i++) {
+                JSONObject item = (JSONObject) dataArray.get(i);
+                placedOrderManager.add(placedOrderManager.build()
+                        .setType(orderManager.convertOrderType((String) item.get("type")))
+                        .setStatus(PLACED)
+                        .setId((String) item.get("order_id"))
+                        .setUnits((float) Double.parseDouble((String) item.get("units_remaining")))
+                        .setPrice(Integer.parseInt(((String) item.get("price")).replaceAll(",", "")))
+                        .setPlacedTime(Long.parseLong((String) item.get("order_date")) / 1000));
             }
         }
 
@@ -331,36 +306,29 @@ public class TradeJobService extends JobService {
 
         // Processed 상태인 매수/매도 이력을 가져온다.
         {
-            JSONObject result = orderManager.getProcessedOrderList("", 0, "15");
-            if (result == null) {
-                return;
-            }
+            JSONArray dataArray = orderManager.getProcessedOrderList("", 0, "15");
+            for (Object o : dataArray) {
+                JSONObject item = (JSONObject)o;
+//              Log.d("KTrader", item.toString());
 
-            JSONArray dataArray = (JSONArray) result.get("data");
-            if (dataArray != null) {
-                for (int i = 0; i < dataArray.size(); i++) {
-                    JSONObject item = (JSONObject)dataArray.get(i);
-//                            Log.d("KTrader", item.toString());
+                int search = Integer.parseInt((String)item.get("search"));
+                long processedTimeInMillis;
+                String date_string = (String)item.get("transfer_date");
 
-                    int search = Integer.parseInt((String)item.get("search"));
-                    long processedTimeInMillis;
-                    String date_string = (String)item.get("transfer_date");
+                if (date_string.length() == 13)
+                    processedTimeInMillis = Long.parseLong((String) item.get("transfer_date"));
+                else // micro second
+                    processedTimeInMillis = Long.parseLong((String) item.get("transfer_date")) / 1000;
 
-                    if (date_string.length() == 13)
-                        processedTimeInMillis = Long.parseLong((String) item.get("transfer_date"));
-                    else // micro second
-                        processedTimeInMillis = Long.parseLong((String) item.get("transfer_date")) / 1000;
-
-                    if (processedOrderManager.findByProcessedTime(processedTimeInMillis) == null && convertSearchType(search) != NONE) {
+                if (processedOrderManager.findByProcessedTime(processedTimeInMillis) == null && convertSearchType(search) != NONE) {
 //                                Log.d("KTrader", item.toString());
-                        processedOrderManager.add(processedOrderManager.build()
-                                .setType(convertSearchType(search))
-                                .setStatus(PROCESSED)
-                                .setUnits(((float) Double.parseDouble(((String) item.get("units")).replace(" ", "").replace("-", ""))))
-                                .setPrice(Math.abs(Integer.parseInt((String)item.get("price"))))
-                                .setFeeRaw((String) item.get("fee"))
-                                .setProcessedTime(processedTimeInMillis));
-                    }
+                    processedOrderManager.add(processedOrderManager.build()
+                            .setType(convertSearchType(search))
+                            .setStatus(PROCESSED)
+                            .setUnits(((float) Double.parseDouble(((String) item.get("units")).replace(" ", "").replace("-", ""))))
+                            .setPrice(Math.abs(Integer.parseInt((String)item.get("price"))))
+                            .setFeeRaw((String) item.get("fee"))
+                            .setProcessedTime(processedTimeInMillis));
                 }
             }
         }

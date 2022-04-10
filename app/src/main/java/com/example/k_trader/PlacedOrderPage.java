@@ -119,23 +119,23 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
 
                         // 아직 체결 되지 않은 주문 상태인 항목들을 모두 가져온다.
                         {
-                            JSONObject result = orderManager.getPlacedOrderList("");
-                            if (result == null)
+                            JSONArray dataArray = null;
+                            try {
+                                dataArray = orderManager.getPlacedOrderList("");
+                            } catch (Exception e) {
                                 return;
+                            }
 
-                            JSONArray dataArray = (JSONArray) result.get("data");
-                            if (dataArray != null) {
-                                for (int i = 0; i < dataArray.size(); i++) {
-                                    JSONObject item = (JSONObject) dataArray.get(i);
-                                    String id = (String) item.get("order_id");
-                                    placedOrderManager.add(placedOrderManager.build()
-                                            .setType(orderManager.convertOrderType((String) item.get("type")))
-                                            .setStatus(PLACED)
-                                            .setId(id)
-                                            .setUnits((float) Double.parseDouble((String) item.get("units_remaining")))
-                                            .setPrice(Integer.parseInt(((String) item.get("price")).replaceAll(",", "")))
-                                            .setPlacedTime(Long.parseLong((String) item.get("order_date")) / 1000));
-                                }
+                            for (int i = 0; i < dataArray.size(); i++) {
+                                JSONObject item = (JSONObject) dataArray.get(i);
+                                String id = (String) item.get("order_id");
+                                placedOrderManager.add(placedOrderManager.build()
+                                        .setType(orderManager.convertOrderType((String) item.get("type")))
+                                        .setStatus(PLACED)
+                                        .setId(id)
+                                        .setUnits((float) Double.parseDouble((String) item.get("units_remaining")))
+                                        .setPrice(Integer.parseInt(((String) item.get("price")).replaceAll(",", "")))
+                                        .setPlacedTime(Long.parseLong((String) item.get("order_date")) / 1000));
                             }
                         }
 

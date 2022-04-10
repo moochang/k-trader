@@ -262,7 +262,7 @@ public class OrderManager {
         return result;
     }
 
-    public JSONObject getBalance(String tag) {
+    public JSONObject getBalance(String tag) throws Exception {
         Api_Client api = tradeApiService.getApiService();
         JSONObject result = null;
 
@@ -271,28 +271,28 @@ public class OrderManager {
 
             if (result == null) {
                 log_info(tag + " : " + "/info/balance : null");
-                return null;
+                throw new Exception("returns null");
             }
 
             if (result.get("status") instanceof Long) {
                 log_info(tag + " : " + "/info/balance : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 log_info(tag + " : " + "/info/balance : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
         } catch (Exception e) {
             e.printStackTrace();
             log_info(tag + " : " + "/info/balance : " + e.getMessage());
-            return null;
+            throw new Exception("returns null");
         }
 
-        return result;
+        return (JSONObject)result.get("data");
     }
 
-    public JSONObject getCurrentPrice(String tag) {
+    public JSONObject getCurrentPrice(String tag) throws Exception {
         Api_Client api = tradeApiService.getApiService();
         JSONObject result = null;
 
@@ -301,29 +301,29 @@ public class OrderManager {
 
             if (result == null) {
                 log_info(tag + " : " + "/public/orderbook/BTC : null");
-                return null;
+                throw new Exception("returns null");
             }
 
             if (result.get("status") instanceof Long) {
                 log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 // ex ) {"message":"Database Fail","status":"5400"}
                 log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
         } catch (Exception e) {
             e.printStackTrace();
             log_info(tag + " : " + "/public/orderbook/BTC : " + e.getMessage());
-            return null;
+            throw new Exception("returns null");
         }
 
-        return result;
+        return (JSONObject)result.get("data");
     }
 
-    public JSONObject getPlacedOrderList(String tag) {
+    public JSONArray getPlacedOrderList(String tag) throws Exception {
         Api_Client api = tradeApiService.getApiService();
         JSONObject result = null;
 
@@ -336,35 +336,35 @@ public class OrderManager {
 
             if (result == null) {
                 log_info(tag + " : " + "/info/orders : null");
-                return null;
+                throw new Exception("returns null");
             }
 
             if (result.get("status") instanceof Long) {
                 log_info(tag + " : " + "/info/orders : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
 
             if (((String) result.get("status")).equals("5600")) {
                 if (((String) result.get("message")).equals("거래 진행중인 내역이 존재하지 않습니다.")) {
                     // workaround
-                    return result;
+                    throw new Exception("returns null");
                 }
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 log_info(tag + " : " + "/info/orders : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
         } catch (Exception e) {
             e.printStackTrace();
             log_info(tag + " : " + "/info/orders : " + e.getMessage());
-            return null;
+            throw new Exception("returns null");
         }
 
-        return result;
+        return (JSONArray)result.get("data");
     }
 
-    public JSONObject getProcessedOrderList(String tag, int offset, String count) {
+    public JSONArray getProcessedOrderList(String tag, int offset, String count) throws Exception {
         Api_Client api = tradeApiService.getApiService();
         JSONObject result = null;
 
@@ -380,25 +380,25 @@ public class OrderManager {
 
             if (result == null) {
                 log_info(tag + " : " + "/info/user_transactions : null");
-                return null;
+                throw new Exception("returns null");
             }
 
             if (result.get("status") instanceof Long) {
                 log_info(tag + " : " + "/info/user_transactions : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 log_info(tag + " : " + "/info/user_transactions : " + result.toString());
-                return null;
+                throw new Exception("returns null");
             }
         } catch (Exception e) {
             e.printStackTrace();
             log_info(tag + " : " + "/info/user_transactions : " + e.getMessage());
-            return null;
+            throw new Exception("returns null");
         }
 
-        return result;
+        return (JSONArray) result.get("data");
     }
 
     public TradeDataManager.Type convertOrderType(String type) {

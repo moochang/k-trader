@@ -240,19 +240,16 @@ public class MainPage extends Fragment {
         OrderManager orderManager = new OrderManager();
         int currentPrice;                  // 비트코인 현재 시장가
 
-        JSONObject result = orderManager.getCurrentPrice("");
-        if (result == null) {
+        JSONObject dataObj = orderManager.getCurrentPrice("");
+        if (dataObj == null) {
             throw new Exception("Unknown network issue happens");
         }
 
-        JSONObject dataObj = (JSONObject) result.get("data");
-        if (dataObj != null) {
-            JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
-            if (dataArray != null) {
-                JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
-                currentPrice = (int) Double.parseDouble((String) item.get("price"));
-                return getProfitPrice(currentPrice);
-            }
+        JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
+        if (dataArray != null) {
+            JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
+            currentPrice = (int) Double.parseDouble((String) item.get("price"));
+            return getProfitPrice(currentPrice);
         }
 
         throw new Exception("dataObj == null");

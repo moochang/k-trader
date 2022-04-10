@@ -126,49 +126,48 @@ public class ProcessedOrderPage extends Fragment {
                         {
                             while(condition) {
                                 // 매수/매도 완료 리스트를 가져온다.
-                                JSONObject result = orderManager.getProcessedOrderList("", offset, "50");
-                                if (result == null) {
+                                JSONArray dataArray = null;
+                                try {
+                                    dataArray = orderManager.getProcessedOrderList("", offset, "50");
+                                } catch (Exception e) {
                                     return;
                                 }
 
-                                JSONArray dataArray = (JSONArray) result.get("data");
-                                if (dataArray != null) {
-                                    if (dataArray.size() == 0) {
+                                if (dataArray.size() == 0) {
+                                    condition = false;
+                                    break;
+                                }
+
+                                for (Object o : dataArray) {
+                                    JSONObject item = (JSONObject) o;
+
+                                    //{"search":"1","btc_remain":"5.42478202","price":-99330,"fee":"0.00003225","krw_remain":4275528,"units":"+ 0.01286775","transfer_date":"1557543507259903","btc1krw":7700000}
+                                    //{"search":"2","btc_remain":"5.41191427","price":1012350,"fee":"2537.22","krw_remain":4374858,"units":"- 0.1331","transfer_date":"1557538928212073","btc1krw":7625000}
+
+                                    //{"search":"2","btc_remain":"0.75468327","price":101010,"fee":"0","krw_remain":9157566,"units":"0.0078","transfer_date":"1566201030737","btc1krw":"12950000"}
+                                    Log.d("KTrader", item.toString());
+
+                                    int search = Integer.parseInt((String) item.get("search"));
+                                    long processedTimeInMillis;
+                                    String date_string = (String) item.get("transfer_date");
+                                    if (date_string.length() == 13)
+                                        processedTimeInMillis = Long.parseLong((String) item.get("transfer_date"));
+                                    else // micro second
+                                        processedTimeInMillis = Long.parseLong((String) item.get("transfer_date")) / 1000;
+
+                                    if ((currentTime.getTimeInMillis() - processedTimeInMillis) / 1000 / 60 / 60 / 24.0 > rangeDays) {
                                         condition = false;
                                         break;
                                     }
 
-                                    for (int i = 0; i < dataArray.size(); i++) {
-                                        JSONObject item = (JSONObject) dataArray.get(i);
-
-                                        //{"search":"1","btc_remain":"5.42478202","price":-99330,"fee":"0.00003225","krw_remain":4275528,"units":"+ 0.01286775","transfer_date":"1557543507259903","btc1krw":7700000}
-                                        //{"search":"2","btc_remain":"5.41191427","price":1012350,"fee":"2537.22","krw_remain":4374858,"units":"- 0.1331","transfer_date":"1557538928212073","btc1krw":7625000}
-
-                                        //{"search":"2","btc_remain":"0.75468327","price":101010,"fee":"0","krw_remain":9157566,"units":"0.0078","transfer_date":"1566201030737","btc1krw":"12950000"}
-                                        Log.d("KTrader", item.toString());
-
-                                        int search = Integer.parseInt((String) item.get("search"));
-                                        long processedTimeInMillis;
-                                        String date_string = (String) item.get("transfer_date");
-                                        if (date_string.length() == 13)
-                                            processedTimeInMillis = Long.parseLong((String) item.get("transfer_date"));
-                                        else // micro second
-                                            processedTimeInMillis = Long.parseLong((String) item.get("transfer_date")) / 1000;
-
-                                        if ((currentTime.getTimeInMillis() - processedTimeInMillis) / 1000 / 60 / 60 / 24.0 > rangeDays) {
-                                            condition = false;
-                                            break;
-                                        }
-
-                                        if (tradedataManager.findByProcessedTime(processedTimeInMillis) == null && convertSearchType(search) != NONE) {
-                                            tradedataManager.add(tradedataManager.build()
-                                                    .setType(convertSearchType(search))
-                                                    .setStatus(PROCESSED)
-                                                    .setUnits(((float) Double.parseDouble(((String) item.get("units")).replace(" ", "").replace("-", ""))))
-                                                    .setPrice(Math.abs(Integer.parseInt(((String) item.get("price")))))
-                                                    .setFeeRaw((String) item.get("fee"))
-                                                    .setProcessedTime(processedTimeInMillis));
-                                        }
+                                    if (tradedataManager.findByProcessedTime(processedTimeInMillis) == null && convertSearchType(search) != NONE) {
+                                        tradedataManager.add(tradedataManager.build()
+                                                .setType(convertSearchType(search))
+                                                .setStatus(PROCESSED)
+                                                .setUnits(((float) Double.parseDouble(((String) item.get("units")).replace(" ", "").replace("-", ""))))
+                                                .setPrice(Math.abs(Integer.parseInt(((String) item.get("price")))))
+                                                .setFeeRaw((String) item.get("fee"))
+                                                .setProcessedTime(processedTimeInMillis));
                                     }
                                 }
 
