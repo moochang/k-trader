@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
@@ -128,7 +129,7 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
                                     JSONObject item = (JSONObject) dataArray.get(i);
                                     String id = (String) item.get("order_id");
                                     placedOrderManager.add(placedOrderManager.build()
-                                            .setType(convertOrderType((String) item.get("type")))
+                                            .setType(orderManager.convertOrderType((String) item.get("type")))
                                             .setStatus(PLACED)
                                             .setId(id)
                                             .setUnits((float) Double.parseDouble((String) item.get("units_remaining")))
@@ -222,14 +223,6 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
         });
 
         return layout;
-    }
-
-    private TradeDataManager.Type convertOrderType(String type) {
-        switch(type) {
-            case "bid" : return BUY;
-            case "ask" : return SELL;
-        }
-        return NONE;
     }
 
     private void onSellItemClick(int position) {
@@ -675,5 +668,12 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
             return value - (value % unit);
 
         return value;
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+
     }
 }

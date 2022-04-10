@@ -35,6 +35,6 @@ public class OrderManagerTest {
         JSONObject obj = orderManager.addOrder("저점", BUY, 0.0001, 10000000);;
         
         // 결과값이 null이 아니어야 정상
-        assertNotEquals(obj, null);
+        assertNotEquals(null, obj);
     }
 }

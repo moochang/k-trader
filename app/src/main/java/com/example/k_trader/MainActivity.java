@@ -57,6 +57,23 @@ public class MainActivity extends AppCompatActivity {
 //        int id = 0;
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(new adapter(getSupportFragmentManager()));
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int i, float v, int i1) {
+
+            }
+
+            @Override
+            public void onPageSelected(int i) {
+                if (i == 2)
+                    ProcessedOrderPage.getInstance().refresh();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int i) {
+
+            }
+        });
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // 마시멜로우 이상 버전이면
             if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -144,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                     cur_fragment = new PlacedOrderPage();
                     break;
                 case 2:
-                    cur_fragment = new ProcessedOrderPage();
+                    cur_fragment = ProcessedOrderPage.getInstance();
                     break;
             }
             return cur_fragment;

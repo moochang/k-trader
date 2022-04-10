@@ -49,15 +49,12 @@ import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 public class TradeJobService extends JobService {
 
     private static final int PRICE_SAVING_QUEUE_COUNT = 60;  // 1시간 분량의 시장가를 저장해 두고 분석에 사용한다.
-    private static final int BUY_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 아래까지 매수점을 찾아본다.
     private static final int SELL_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 위까지 매도점을 찾아본다.
     private static final double TRADING_VALUE_MIN = 0.0001;
 
     private double krwBalance;
 
     public static int currentPrice;                  // 비트코인 현재 시장가
-    public static int profitPrice;                  // currentPrice에 기반한 거래당 이익 퍼센티지, 현재가의 1%
-    public static int intervalPrice;                // 거래간 인터벌, 현재가의 0.5%
     public static long lastNotiTimeInMillis;        // 마지막 Notification 완료 시점
     public static double availableBtcBalance;       // 현재 판매 가능한 비트코인 총량 = 현재 보유중인 비트코인 총량 - 매도 중인 비트코인 총량
 
@@ -65,8 +62,6 @@ public class TradeJobService extends JobService {
     private static TradeDataManager processedOrderManager = new TradeDataManager();
 
     private static List<Integer> priceQueue = new ArrayList<>();
-    private static boolean emergency5Trigger = false;
-    private static boolean emergency10Trigger = false;
     private static org.apache.log4j.Logger logger = Log4jHelper.getLogger("TradeJobService");
     private Context ctx;
     private OrderManager orderManager;
@@ -166,14 +161,6 @@ public class TradeJobService extends JobService {
 
         if (nm != null)
             nm.notify((int)System.currentTimeMillis(), builder.build());
-    }
-
-    private TradeDataManager.Type convertOrderType(String type) {
-        switch(type) {
-            case "bid" : return BUY;
-            case "ask" : return SELL;
-        }
-        return NONE;
     }
 
     private TradeDataManager.Type convertSearchType(int search) {
@@ -285,8 +272,6 @@ public class TradeJobService extends JobService {
                 if (dataArray != null) {
                     JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
                     currentPrice = (int)Double.parseDouble((String)item.get("price"));
-                    profitPrice = MainPage.getProfitPrice(currentPrice);
-                    intervalPrice = profitPrice / 2;
                 }
 
                 log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
@@ -330,7 +315,7 @@ public class TradeJobService extends JobService {
                     JSONObject item = (JSONObject) dataArray.get(i);
                     String id = (String) item.get("order_id");
                     placedOrderManager.add(placedOrderManager.build()
-                            .setType(convertOrderType((String) item.get("type")))
+                            .setType(orderManager.convertOrderType((String) item.get("type")))
                             .setStatus(PLACED)
                             .setId(id)
                             .setUnits((float) Double.parseDouble((String) item.get("units_remaining")))

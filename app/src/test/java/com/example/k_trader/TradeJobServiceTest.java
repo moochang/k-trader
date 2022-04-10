@@ -108,6 +108,16 @@ public class TradeJobServiceTest {
         method.setAccessible(true);
         method.invoke(job);
 
-        assertEquals(isOrderAdded, true);
+        assertEquals(true, isOrderAdded);
+    }
+
+    @Test
+    public void checkGetFloorPrice()  throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        TradeJobService job = new TradeJobService();
+        Method method = job.getClass().getDeclaredMethod("getFloorPrice", int.class);
+        method.setAccessible(true);
+
+        int result = (int)method.invoke(job, 50000000);
+        assertEquals(50000000, result);
     }
 }

@@ -1,6 +1,7 @@
 package com.example.k_trader;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import com.example.k_trader.base.OrderManager;
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.base.TradeDataManager;
+import com.google.gson.Gson;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -36,6 +38,7 @@ import static com.example.k_trader.base.TradeDataManager.Type.SELL;
  */
 
 public class ProcessedOrderPage extends Fragment {
+    private static final String TRADE_DATA_LIST = "TRADE_DATA_LIST";
 
     MainActivity mainActivity;
     ArrayList<Listviewitem> list;
@@ -52,6 +55,16 @@ public class ProcessedOrderPage extends Fragment {
 
     private TradeDataManager tradedataManager;
     private OrderManager orderManager;
+    private static ProcessedOrderPage instance;
+
+    private void ProcessedOrderPage() {}
+
+    public static ProcessedOrderPage getInstance() {
+        if (instance == null) {
+            instance = new ProcessedOrderPage();
+        }
+        return instance;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,19 +112,13 @@ public class ProcessedOrderPage extends Fragment {
 
         btnRefresh.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                list.clear();
-
                 ListviewAdapter adapter = new ListviewAdapter(mainActivity.getApplicationContext(), R.layout.list_item, list);
                 listView.setAdapter(adapter);
 
                 // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
                 new Thread() {
                     public void run() {
-                        feeTotal = 0;
-                        priceTotal = 0;
                         int offset = 0;
-                        buyTotal = 0;
-                        sellTotal = 0;
                         boolean condition = true;
 
                         tradedataManager.clear();
@@ -169,58 +176,23 @@ public class ProcessedOrderPage extends Fragment {
                                 offset += 50;
                             }
 
-                            // 리스트에 추가한다.
-                            for (TradeData data : tradedataManager.getList()) {
-                                String text;
-                                Calendar completeTime = Calendar.getInstance();
-                                completeTime.setTimeInMillis(data.getProcessedTime());
-                                String date = String.format(Locale.getDefault(), "%02d/%02d %02d:%02d:%02d"
-                                        , completeTime.get(Calendar.MONTH) + 1, completeTime.get(Calendar.DATE)
-                                        , completeTime.get(Calendar.HOUR_OF_DAY), completeTime.get(Calendar.MINUTE), completeTime.get(Calendar.SECOND));
-
-                                if (data.getType() == BUY) {
-                                    text = "매수 완료 : ";
-                                    buyTotal++;
-                                } else if (data.getType() == SELL) {
-                                    text = "매도 완료 : ";
-                                    sellTotal++;
-                                } else
-                                    continue;
-
-                                text += String.format(Locale.getDefault(), "%.4f", data.getUnits())
-                                        + " : " + String.format(Locale.getDefault(), "%,d", data.getPrice())
-                                        + " : " + date
-                                        + " : " + (int)data.getFeeEvaluated();
-
-                                Listviewitem listItem = new Listviewitem(0, text);
-                                list.add(listItem);
-//                                Log.d("KTrader", text);
-
-                                feeTotal += data.getFeeEvaluated();
-                                priceTotal += (data.getPrice() * data.getUnits());
-                            }
+                            addToUiList();
                         }
-
-                        // run ui thread to prevent 'CalledFromWrongThreadException'
-                        Runnable runnable = new Runnable() {
-                            public void run() {
-                                mainActivity.runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        ListviewAdapter adapter = new ListviewAdapter(mainActivity.getApplicationContext(), R.layout.list_item, list);
-                                        listView.setAdapter(adapter);
-
-                                        textView.setText("거래회수 : " + (buyTotal + sellTotal) + "회 (매수 : " + buyTotal + ", 매도 : " + sellTotal + ")\r\n"
-                                                        + "거래대금 : " + String.format(Locale.getDefault(), "%,d원", priceTotal) + "\r\n"
-                                                        + "수수료    : " + String.format(Locale.getDefault(), "%,d원", (int)feeTotal));
-                                    }
-                                });
-                            }
-                        };
-                        runnable.run();
                     }
                 }.start();
             }
         });
+
+        if (savedInstanceState != null) {
+            String json = savedInstanceState.getString(TRADE_DATA_LIST);
+            Gson gson = new Gson();
+            tradedataManager = gson.fromJson(json, TradeDataManager.class);
+
+            ListviewAdapter adapter = new ListviewAdapter(mainActivity.getApplicationContext(), R.layout.list_item, list);
+            listView.setAdapter(adapter);
+
+            addToUiList();
+        }
 
         return layout;
     }
@@ -231,5 +203,77 @@ public class ProcessedOrderPage extends Fragment {
             case 2 : return SELL;
         }
         return NONE;
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        Gson gson = new Gson();
+        String json = gson.toJson(tradedataManager);
+        outState.putString(TRADE_DATA_LIST, json);
+    }
+
+    private void addToUiList() {
+        feeTotal = 0;
+        priceTotal = 0;
+        buyTotal = 0;
+        sellTotal = 0;
+
+        list.clear();
+
+        // 리스트에 추가한다.
+        for (TradeData data : tradedataManager.getList()) {
+            String text;
+            Calendar completeTime = Calendar.getInstance();
+            completeTime.setTimeInMillis(data.getProcessedTime());
+            String date = String.format(Locale.getDefault(), "%02d/%02d %02d:%02d:%02d"
+                    , completeTime.get(Calendar.MONTH) + 1, completeTime.get(Calendar.DATE)
+                    , completeTime.get(Calendar.HOUR_OF_DAY), completeTime.get(Calendar.MINUTE), completeTime.get(Calendar.SECOND));
+
+            if (data.getType() == BUY) {
+                text = "매수 완료 : ";
+                buyTotal++;
+            } else if (data.getType() == SELL) {
+                text = "매도 완료 : ";
+                sellTotal++;
+            } else
+                continue;
+
+            text += String.format(Locale.getDefault(), "%.4f", data.getUnits())
+                    + " : " + String.format(Locale.getDefault(), "%,d", data.getPrice())
+                    + " : " + date
+                    + " : " + (int)data.getFeeEvaluated();
+
+            Listviewitem listItem = new Listviewitem(0, text);
+            list.add(listItem);
+//                                Log.d("KTrader", text);
+
+            feeTotal += data.getFeeEvaluated();
+            priceTotal += (data.getPrice() * data.getUnits());
+        }
+
+        // run ui thread to prevent 'CalledFromWrongThreadException'
+        Runnable runnable = new Runnable() {
+            public void run() {
+                mainActivity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        ListviewAdapter adapter = new ListviewAdapter(mainActivity.getApplicationContext(), R.layout.list_item, list);
+                        listView.setAdapter(adapter);
+
+                        textView.setText("거래회수 : " + (buyTotal + sellTotal) + "회 (매수 : " + buyTotal + ", 매도 : " + sellTotal + ")\r\n"
+                                + "거래대금 : " + String.format(Locale.getDefault(), "%,d원", priceTotal) + "\r\n"
+                                + "수수료    : " + String.format(Locale.getDefault(), "%,d원", (int)feeTotal));
+                    }
+                });
+            }
+        };
+        runnable.run();
+    }
+
+    public void refresh() {
+        if (tradedataManager != null) {
+            addToUiList();
+        }
     }
 }

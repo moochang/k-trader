@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.Locale;
 
 import static com.example.k_trader.base.TradeDataManager.Type.BUY;
+import static com.example.k_trader.base.TradeDataManager.Type.NONE;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-23.
@@ -397,5 +399,13 @@ public class OrderManager {
         }
 
         return result;
+    }
+
+    public TradeDataManager.Type convertOrderType(String type) {
+        switch(type) {
+            case "bid" : return BUY;
+            case "ask" : return SELL;
+        }
+        return NONE;
     }
 }
