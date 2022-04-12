@@ -480,9 +480,6 @@ public class TradeJobService extends JobService {
             for (int i = 0; i< BUY_SLOT_LOOK_ASIDE_MAX; i++) {
                 int targetPrice = getFloorPrice(currentPrice);
                 targetPrice -= (i * (MainPage.getProfitPrice(targetPrice) / 2)); // 0.5%
-                log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d, 오더 %s"
-                        , targetPrice
-                        , (placedOrderManager.findByPrice(BUY, targetPrice) != null) ? "있음" : "없음"));
 
                 // 해당 가격에 이미 대기중인 매수가 있다면 skip
                 if (placedOrderManager.findByPrice(BUY, targetPrice) != null)
@@ -491,6 +488,8 @@ public class TradeJobService extends JobService {
                 // 해당 가격에 이미 대기중인 매도가 있다면 skip
                 if (placedOrderManager.findByPrice(SELL, targetPrice + MainPage.getProfitPrice(targetPrice)) != null)
                     continue;
+
+                log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d", targetPrice));
 
                 // 체결 되기 어려운 낮은 가격 order는 모두 취소한다.
                 for (TradeData tmp : placedOrderManager.getList()) {
