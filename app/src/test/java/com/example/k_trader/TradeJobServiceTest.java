@@ -22,6 +22,7 @@ import java.util.HashMap;
 
 public class TradeJobServiceTest {
     boolean isOrderAdded;
+    int buyPrice;
 
     class DummyApiClient extends Api_Client {
         @Override
@@ -153,8 +154,16 @@ public class TradeJobServiceTest {
                 item.put("price", "51,500,000");
                 item.put("order_date", "1000");
 
+                JSONObject item2 = new JSONObject();
+                item2.put("order_id", "0");
+                item2.put("type", "bid");
+                item2.put("units_remaining", "0.0123");
+                item2.put("price", "50,750,000");
+                item2.put("order_date", "1000");
+
                 JSONArray data = new JSONArray();
                 data.add(item);
+                data.add(item2);
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
@@ -211,5 +220,102 @@ public class TradeJobServiceTest {
         method.invoke(job);
 
         assertEquals(false, isOrderAdded);
+    }
+
+    class DummyApiClient3 extends Api_Client {
+        @Override
+        public JSONObject callApi(String method, String endpoint, HashMap<String, String> params) {
+            if (endpoint.equals("/info/balance")) { // getBalance
+                JSONObject data = new JSONObject();
+                data.put("total_krw", "0");
+                data.put("available_btc", "0.00001808");
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+                JSONObject price = new JSONObject();
+                price.put("price", "49390000"); // currentPrice
+
+                JSONArray bids = new JSONArray();
+                bids.add(price);
+
+                JSONObject data = new JSONObject();
+                data.put("bids", bids);
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/info/orders")) { // getPlacedOrderList
+                JSONObject item = new JSONObject();
+                item.put("order_id", "0");
+                item.put("type", "ask");
+                item.put("units_remaining", "0.0123");
+                item.put("price", "49,600,000");
+                item.put("order_date", "1000");
+
+                JSONArray data = new JSONArray();
+                data.add(item);
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/info/user_transactions")) { // getProcessedOrderList
+//                JSONObject item = new JSONObject();
+//                price.put("search", "0");
+
+                JSONArray data = new JSONArray();
+//                data.add(item);
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/trade/place")) { // addOrder
+                isOrderAdded = true;
+                String price = params.get("price");
+                buyPrice = Integer.valueOf(price);
+            }
+            JSONObject obj = new JSONObject();
+            obj.put("status", "0000");
+            return obj;
+        }
+    }
+
+    class DummyTradeApiService3 implements OrderManager.TradeApiService {
+        @Override
+        public Api_Client getApiService() {
+            return new DummyApiClient3();
+        }
+    }
+
+    // 현재 BTC가격이 첫 매도 slot의 가격과 근접한 경우에는 Buy order를 발행할 때 아래로 2 slot 이상을 확인할 필요가 있음
+    // 1개 slot만 확인 할 경우 현재가 기준으로 매도 slot값이 이미 있음으로 판단해서 buy order 발행 안 됨
+    @Test
+    public void tradeBusinessLogic_issuingBuyOrderCheck() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        final SharedPreferences sharedPrefs = Mockito.mock(SharedPreferences.class);
+        final Context context = Mockito.mock(Context.class);
+        Mockito.when(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs);
+
+        Mockito.when(sharedPrefs.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
+        Mockito.when(sharedPrefs.getString("API_KEY", "")).thenReturn("");
+        Mockito.when(sharedPrefs.getString("API_SECRET", "")).thenReturn("");
+        Mockito.when(sharedPrefs.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
+        Mockito.when(sharedPrefs.getBoolean("FILE_LOG_ENABLED", false)).thenReturn(false);
+
+        isOrderAdded = false;
+
+        TradeJobService job = new TradeJobService();
+        job.setContext(context);
+        job.setOrderManager(new OrderManager(new DummyTradeApiService3()));
+        Method method = job.getClass().getDeclaredMethod("tradeBusinessLogic");
+        method.setAccessible(true);
+        method.invoke(job);
+
+        assertEquals(true, isOrderAdded);
+        assertEquals(49000000, buyPrice);
     }
 }

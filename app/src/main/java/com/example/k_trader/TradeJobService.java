@@ -50,6 +50,7 @@ public class TradeJobService extends JobService {
 
     private static final int PRICE_SAVING_QUEUE_COUNT = 60;  // 1시간 분량의 시장가를 저장해 두고 분석에 사용한다.
     private static final int SELL_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 위까지 매도점을 찾아본다.
+    private static final int BUY_SLOT_LOOK_ASIDE_MAX = 3;
     private static final double TRADING_VALUE_MIN = 0.0001;
 
     private double krwBalance;
@@ -283,7 +284,7 @@ public class TradeJobService extends JobService {
             log_info("최근 한시간 변화폭 : " + String.format(Locale.getDefault(), "(%,.1f%%)", getPriceVariationRate()));
         }
 
-        // Placed 상태인 오더 리스트를 가져온다.
+        // 현재 걸려 있는 매도 리스트를 가져온다.
         {
             JSONArray dataArray = orderManager.getPlacedOrderList("");
             Log.d("KTrader", "placed order item count : " +  dataArray.size());
@@ -304,7 +305,7 @@ public class TradeJobService extends JobService {
         log_info("예상잔고 : " + String.format(Locale.getDefault(), "%,d"
                 , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableBtcBalance * currentPrice)));
 
-        // Processed 상태인 매수/매도 이력을 가져온다.
+        // 매수/매도 완료 이력을 가져온다.
         {
             JSONArray dataArray = orderManager.getProcessedOrderList("", 0, "15");
             for (Object o : dataArray) {
@@ -476,31 +477,35 @@ public class TradeJobService extends JobService {
 
         // 매수 요청 발행, 어느 시점에서나 active한 매수 오더는 1개만 유지하도록 한다.
         {
-            int targetPrice = getFloorPrice(currentPrice);
-            log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d, 오더 %s"
-                    , targetPrice
-                    , (placedOrderManager.findByPrice(BUY, targetPrice) != null) ? "있음" : "없음"));
+            for (int i = 0; i< BUY_SLOT_LOOK_ASIDE_MAX; i++) {
+                int targetPrice = getFloorPrice(currentPrice);
+                targetPrice -= (i * (MainPage.getProfitPrice(targetPrice) / 2)); // 0.5%
+                log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d, 오더 %s"
+                        , targetPrice
+                        , (placedOrderManager.findByPrice(BUY, targetPrice) != null) ? "있음" : "없음"));
 
-            // 해당 가격에 이미 대기중인 매수가 있다면 skip
-            if (placedOrderManager.findByPrice(BUY, targetPrice) != null)
-                return;
+                // 해당 가격에 이미 대기중인 매수가 있다면 skip
+                if (placedOrderManager.findByPrice(BUY, targetPrice) != null)
+                    return;
 
-            // 해당 가격에 이미 대기중인 매도가 있다면 skip
-            if (placedOrderManager.findByPrice(SELL, targetPrice + MainPage.getProfitPrice(targetPrice)) != null)
-                return;
+                // 해당 가격에 이미 대기중인 매도가 있다면 skip
+                if (placedOrderManager.findByPrice(SELL, targetPrice + MainPage.getProfitPrice(targetPrice)) != null)
+                    continue;
 
-            // 체결 되기 어려운 낮은 가격 order는 모두 취소한다.
-            for (TradeData tmp : placedOrderManager.getList()) {
-                if (tmp.getType() == BUY) {  // 1000만원 단위 경계에서 buy price가 미세하게 차이나서 data가 null이 되어 들어올 수 있으므로 전체 buy를 취소한다.
-                    if (!orderManager.cancelOrder("체결 안 될 오더", tmp)) {
-                        return;
+                // 체결 되기 어려운 낮은 가격 order는 모두 취소한다.
+                for (TradeData tmp : placedOrderManager.getList()) {
+                    if (tmp.getType() == BUY) {  // 1000만원 단위 경계에서 buy price가 미세하게 차이나서 data가 null이 되어 들어올 수 있으므로 전체 buy를 취소한다.
+                        if (!orderManager.cancelOrder("체결 안 될 오더", tmp)) {
+                            return;
+                        }
                     }
                 }
-            }
 
-            // add buy request for targt price
-            if (orderManager.addOrder("저점", BUY, getUnitAmount4Price(targetPrice), targetPrice) == null) {
-                return;
+                // add buy request for targt price
+                if (orderManager.addOrder("저점", BUY, getUnitAmount4Price(targetPrice), targetPrice) == null) {
+                    return;
+                }
+                break;
             }
         }
     }
