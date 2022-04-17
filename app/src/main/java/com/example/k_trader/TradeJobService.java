@@ -217,7 +217,7 @@ public class TradeJobService extends JobService {
     }
 
     private boolean isSameSlotOrder(TradeData oData, TradeData pData, int price) {
-        if (((oData.getUnits() + pData.getUnits()) * price) <= (GlobalSettings.getInstance().getUnitPrice() + GlobalSettings.getInstance().getUnitPrice() * MainActivity.EARNINGS_RATIO)) {
+        if (((oData.getUnits() + pData.getUnits()) * price) <= (GlobalSettings.getInstance().getUnitPrice() + GlobalSettings.getInstance().getUnitPrice() * (GlobalSettings.getInstance().getEarningRate() / 100.0))) {
             log_info("isSameSlotOrder : " + String.format(Locale.getDefault(), "%,d", (int)((oData.getUnits() + pData.getUnits()) * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(oData.getUnits() * price))
                     + ", " + String.format(Locale.getDefault(), "%,d", (int)(pData.getUnits() * price)));
@@ -232,11 +232,13 @@ public class TradeJobService extends JobService {
         // Read settings again if MainActivity has been terminated by Android
         if (GlobalSettings.getInstance().getApiKey() == null) {
             SharedPreferences sharedPreferences = ctx.getSharedPreferences("settings", MODE_PRIVATE);
-            GlobalSettings.getInstance().setUnitPrice(sharedPreferences.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE));
-            GlobalSettings.getInstance().setApiKey(sharedPreferences.getString("API_KEY", ""));
-            GlobalSettings.getInstance().setApiSecret(sharedPreferences.getString("API_SECRET", ""));
-            GlobalSettings.getInstance().setTradeInterval(sharedPreferences.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE));
-            GlobalSettings.getInstance().setFileLogEnabled(sharedPreferences.getBoolean("FILE_LOG_ENABLED", false));
+            GlobalSettings.getInstance().setApiKey(sharedPreferences.getString(GlobalSettings.API_KEY_KEY_NAME, ""))
+                                        .setApiSecret(sharedPreferences.getString(GlobalSettings.API_SECRET_KEY_NAME, ""))
+                                        .setUnitPrice(sharedPreferences.getInt(GlobalSettings.UNIT_PRICE_KEY_NAME, GlobalSettings.UNIT_PRICE_DEFAULT_VALUE))
+                                        .setTradeInterval(sharedPreferences.getInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE))
+                                        .setFileLogEnabled(sharedPreferences.getBoolean(GlobalSettings.FILE_LOG_ENABLED_KEY_NAME, false))
+                                        .setEarningRate(sharedPreferences.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE))
+                                        .setSlotIntervalRate(sharedPreferences.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE));
             logger = Log4jHelper.getLogger("TradeJobService");
             log_info("App has been terminated by Android");
         }
@@ -404,7 +406,7 @@ public class TradeJobService extends JobService {
                     boolean isSold = false;
                     for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                         // intervalPrice가 바뀌는 경계값일 때 문제를 해결하기 위해서 매도할 때의 interval은 현재가가 아니라 매수가를 기준으로 산정한다.
-                        int sellIntervalPrice = MainPage.getProfitPrice(pData.getPrice()) / 2;
+                        int sellIntervalPrice = MainPage.getSlotIntervalPrice(pData.getPrice());
                         int targetPrice = pData.getPrice() + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
                         if ((pData.getPrice() % sellIntervalPrice) != 0)
                             targetPrice = (pData.getPrice() - (pData.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
@@ -452,7 +454,7 @@ public class TradeJobService extends JobService {
             // 현재가보다 상위에 비어 있는 slot 중 하나를 찾아보고 있다면 매도하도록 한다.
             int floorPrice = getFloorPrice(currentPrice);
             double unit = Math.min(getUnitAmount4Price(floorPrice), (availableBtcBalance * 10000) / 10000.0);
-            int sellIntervalPrice = MainPage.getProfitPrice(floorPrice) / 2; // 0.5%
+            int sellIntervalPrice = MainPage.getSlotIntervalPrice(floorPrice) ;
             for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                 int targetPrice = floorPrice + MainPage.getProfitPrice(floorPrice) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
 
@@ -479,7 +481,7 @@ public class TradeJobService extends JobService {
         {
             for (int i = 0; i< BUY_SLOT_LOOK_ASIDE_MAX; i++) {
                 int targetPrice = getFloorPrice(currentPrice);
-                targetPrice -= (i * (MainPage.getProfitPrice(targetPrice) / 2)); // 0.5%
+                targetPrice -= (i * (MainPage.getSlotIntervalPrice(targetPrice)));
 
                 // 해당 가격에 이미 대기중인 매수가 있다면 skip
                 if (placedOrderManager.findByPrice(BUY, targetPrice) != null)
@@ -515,9 +517,9 @@ public class TradeJobService extends JobService {
         return floor + MainPage.getProfitPrice(floor);
     }
 
-    // 주어진 가격 아래쪽의 첫번째 매수 slot 가격을 구한다. (0.5% 단위)
+    // 주어진 가격 아래쪽의 첫번째 매수 slot 가격을 구한다.
     private int getFloorPrice(int price) {
-        return price - (price % (MainPage.getProfitPrice(price) / 2));
+        return price - (price % MainPage.getSlotIntervalPrice(price));
     }
 
     // 주어진 가격 slot에 매수 가능한 BTC 개수를 구한다. 소수점 아래 4자리로 절사

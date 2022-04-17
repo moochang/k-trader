@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
     Fragment cur_fragment = new Fragment();
     ViewPager viewPager;
 
-    public static final double EARNINGS_RATIO = 0.01;   // 1%
     public static final int STORAGE_PERMISSION_REQUEST = 0;
 
     public static final String BROADCAST_PROGRESS_MESSAGE = "PROGRESS_MESSAGE";
@@ -98,11 +97,13 @@ public class MainActivity extends AppCompatActivity {
 
         // Load app settings (data/data/(package_name)/shared_prefs/SharedPreference)
         SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
-        GlobalSettings.getInstance().setUnitPrice(sharedPreferences.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE));
-        GlobalSettings.getInstance().setApiKey(sharedPreferences.getString("API_KEY", ""));
-        GlobalSettings.getInstance().setApiSecret(sharedPreferences.getString("API_SECRET", ""));
-        GlobalSettings.getInstance().setTradeInterval(sharedPreferences.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE));
-        GlobalSettings.getInstance().setFileLogEnabled(sharedPreferences.getBoolean("FILE_LOG_ENABLED", false));
+        GlobalSettings.getInstance().setApiKey(sharedPreferences.getString(GlobalSettings.API_KEY_KEY_NAME, ""))
+                                    .setApiSecret(sharedPreferences.getString(GlobalSettings.API_SECRET_KEY_NAME, ""))
+                                    .setUnitPrice(sharedPreferences.getInt(GlobalSettings.UNIT_PRICE_KEY_NAME, GlobalSettings.UNIT_PRICE_DEFAULT_VALUE))
+                                    .setTradeInterval(sharedPreferences.getInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE))
+                                    .setFileLogEnabled(sharedPreferences.getBoolean(GlobalSettings.FILE_LOG_ENABLED_KEY_NAME, false))
+                                    .setEarningRate(sharedPreferences.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE))
+                                    .setSlotIntervalRate(sharedPreferences.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE));
 
         if (GlobalSettings.getInstance().getApiKey().isEmpty() || GlobalSettings.getInstance().getApiSecret().isEmpty()) {
             Toast.makeText(this, "거래를 위해서는 Key와 Secret값 설정이 필요합니다.", Toast.LENGTH_SHORT).show();

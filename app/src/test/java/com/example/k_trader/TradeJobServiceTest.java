@@ -92,11 +92,14 @@ public class TradeJobServiceTest {
         final Context context = Mockito.mock(Context.class);
         Mockito.when(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs);
 
-        Mockito.when(sharedPrefs.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
-        Mockito.when(sharedPrefs.getString("API_KEY", "")).thenReturn("");
-        Mockito.when(sharedPrefs.getString("API_SECRET", "")).thenReturn("");
-        Mockito.when(sharedPrefs.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
-        Mockito.when(sharedPrefs.getBoolean("FILE_LOG_ENABLED", false)).thenReturn(false);
+        GlobalSettings.getInstance().setApiKey(null);
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.UNIT_PRICE_KEY_NAME, GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_KEY_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_SECRET_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
+        Mockito.when(sharedPrefs.getBoolean(GlobalSettings.FILE_LOG_ENABLED_KEY_NAME, false)).thenReturn(false);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE)).thenReturn(1.0f);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE)).thenReturn(0.5f);
 
         isOrderAdded = false;
 
@@ -204,11 +207,14 @@ public class TradeJobServiceTest {
         final Context context = Mockito.mock(Context.class);
         Mockito.when(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs);
 
-        Mockito.when(sharedPrefs.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
-        Mockito.when(sharedPrefs.getString("API_KEY", "")).thenReturn("");
-        Mockito.when(sharedPrefs.getString("API_SECRET", "")).thenReturn("");
-        Mockito.when(sharedPrefs.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
-        Mockito.when(sharedPrefs.getBoolean("FILE_LOG_ENABLED", false)).thenReturn(false);
+        GlobalSettings.getInstance().setApiKey(null);
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.UNIT_PRICE_KEY_NAME, GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_KEY_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_SECRET_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
+        Mockito.when(sharedPrefs.getBoolean(GlobalSettings.FILE_LOG_ENABLED_KEY_NAME, false)).thenReturn(false);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE)).thenReturn(1.0f);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE)).thenReturn(0.5f);
 
         isOrderAdded = false;
 
@@ -300,11 +306,14 @@ public class TradeJobServiceTest {
         final Context context = Mockito.mock(Context.class);
         Mockito.when(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs);
 
-        Mockito.when(sharedPrefs.getInt("UNIT_PRICE", GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
-        Mockito.when(sharedPrefs.getString("API_KEY", "")).thenReturn("");
-        Mockito.when(sharedPrefs.getString("API_SECRET", "")).thenReturn("");
-        Mockito.when(sharedPrefs.getInt("TRADE_INTERVAL", GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
-        Mockito.when(sharedPrefs.getBoolean("FILE_LOG_ENABLED", false)).thenReturn(false);
+        GlobalSettings.getInstance().setApiKey(null);
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.UNIT_PRICE_KEY_NAME, GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_KEY_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_SECRET_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
+        Mockito.when(sharedPrefs.getBoolean(GlobalSettings.FILE_LOG_ENABLED_KEY_NAME, false)).thenReturn(false);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE)).thenReturn(1.0f);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE)).thenReturn(0.5f);
 
         isOrderAdded = false;
 
@@ -317,5 +326,112 @@ public class TradeJobServiceTest {
 
         assertEquals(true, isOrderAdded);
         assertEquals(49000000, buyPrice);
+    }
+
+    class DummyApiClient4 extends Api_Client {
+        @Override
+        public JSONObject callApi(String method, String endpoint, HashMap<String, String> params) {
+            if (endpoint.equals("/info/balance")) { // getBalance
+                JSONObject data = new JSONObject();
+                data.put("total_krw", "0");
+                data.put("available_btc", "0.00001808");
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+                JSONObject price = new JSONObject();
+                price.put("price", "49390000"); // currentPrice
+
+                JSONArray bids = new JSONArray();
+                bids.add(price);
+
+                JSONObject data = new JSONObject();
+                data.put("bids", bids);
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/info/orders")) { // getPlacedOrderList
+                JSONObject item = new JSONObject();
+                item.put("order_id", "0");
+                item.put("type", "ask");
+                item.put("units_remaining", "0.0123");
+                item.put("price", "49,600,000");
+                item.put("order_date", "1000");
+
+                JSONObject item2 = new JSONObject();
+                item2.put("order_id", "0");
+                item2.put("type", "ask");
+                item2.put("units_remaining", "0.0123");
+                item2.put("price", "49,700,000");
+                item2.put("order_date", "1000");
+
+                JSONArray data = new JSONArray();
+                data.add(item);
+                data.add(item2);
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/info/user_transactions")) { // getProcessedOrderList
+//                JSONObject item = new JSONObject();
+//                price.put("search", "0");
+
+                JSONArray data = new JSONArray();
+//                data.add(item);
+
+                JSONObject obj = new JSONObject();
+                obj.put("status", "0000");
+                obj.put("data", data);
+                return obj;
+            } else if (endpoint.equals("/trade/place")) { // addOrder
+                isOrderAdded = true;
+                String price = params.get("price");
+                buyPrice = Integer.valueOf(price);
+            }
+            JSONObject obj = new JSONObject();
+            obj.put("status", "0000");
+            return obj;
+        }
+    }
+
+    class DummyTradeApiService4 implements OrderManager.TradeApiService {
+        @Override
+        public Api_Client getApiService() {
+            return new DummyApiClient4();
+        }
+    }
+
+    // slot interval이 default value(0.5%)가 아니더라도 정상 동작하는지 확인
+    @Test
+    public void tradeBusinessLogic_issuingBuyOrder_slotIntervalCheck() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        final SharedPreferences sharedPrefs = Mockito.mock(SharedPreferences.class);
+        final Context context = Mockito.mock(Context.class);
+        Mockito.when(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs);
+
+        GlobalSettings.getInstance().setApiKey(null);
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.UNIT_PRICE_KEY_NAME, GlobalSettings.UNIT_PRICE_DEFAULT_VALUE)).thenReturn(1*1200*1000);
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_KEY_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getString(GlobalSettings.API_SECRET_KEY_NAME, "")).thenReturn("");
+        Mockito.when(sharedPrefs.getInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)).thenReturn(60);
+        Mockito.when(sharedPrefs.getBoolean(GlobalSettings.FILE_LOG_ENABLED_KEY_NAME, false)).thenReturn(false);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE)).thenReturn(1.0f);
+        Mockito.when(sharedPrefs.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE)).thenReturn(0.25f);
+
+        isOrderAdded = false;
+
+        TradeJobService job = new TradeJobService();
+        job.setContext(context);
+        job.setOrderManager(new OrderManager(new DummyTradeApiService4()));
+        Method method = job.getClass().getDeclaredMethod("tradeBusinessLogic");
+        method.setAccessible(true);
+        method.invoke(job);
+
+        assertEquals(true, isOrderAdded);
+        assertEquals(49100000, buyPrice);
     }
 }
