@@ -121,6 +121,9 @@ public class ProcessedOrderPage extends Fragment {
                         int offset = 0;
                         boolean condition = true;
 
+                        if (tradedataManager == null)
+                            return;
+
                         tradedataManager.clear();
                         Calendar currentTime = Calendar.getInstance();
                         {
@@ -190,7 +193,8 @@ public class ProcessedOrderPage extends Fragment {
             ListviewAdapter adapter = new ListviewAdapter(mainActivity.getApplicationContext(), R.layout.list_item, list);
             listView.setAdapter(adapter);
 
-            addToUiList();
+            if (tradedataManager != null)
+                addToUiList();
         }
 
         return layout;
