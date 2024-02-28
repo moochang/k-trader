@@ -329,18 +329,18 @@ public class OrderManager {
 
         try {
             HashMap param = new HashMap();
-            param.put("count", "200");
+            param.put("count", "300");
             param.put("order_currency", "BTC");
 
             result = api.callApi("POST", "/info/orders", param);
 
             if (result == null) {
-                log_info(tag + " : " + "/info/orders : null");
+                log_info(tag + " : " + "/info/orders : 1 : null");
                 throw new Exception("returns null");
             }
 
             if (result.get("status") instanceof Long) {
-                log_info(tag + " : " + "/info/orders : " + result.toString());
+                log_info(tag + " : " + "/info/orders : 2 : " + result.toString());
                 throw new Exception("returns null");
             }
 
@@ -352,13 +352,14 @@ public class OrderManager {
             }
 
             if (!((String) result.get("status")).equals("0000")) {
-                log_info(tag + " : " + "/info/orders : " + result.toString());
+                log_info(tag + " : " + "/info/orders : 3 : " + result.toString());
                 throw new Exception("returns null");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            log_info(tag + " : " + "/info/orders : " + e.getMessage());
-            throw new Exception("returns null");
+            log_info(tag + " : " + "/info/orders : 4 : " + e.getMessage());
+            JSONArray jarr = new JSONArray();
+            return jarr;
         }
 
         return (JSONArray)result.get("data");
