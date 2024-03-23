@@ -1,3 +1,6 @@
+유사한 전략으로 달러 투자를 하는 분의 영상입니다. 먼저 보시면 K-Trader의 전략을 이해하는데 도움이 될겁니다.
+https://www.youtube.com/watch?v=elo2jaXaypY
+
 # k-trader
 
 BitThumb 거래소용 Bitcoin 자동 매매 Android app 프로그램입니다.  
