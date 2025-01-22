@@ -305,7 +305,9 @@ public class TradeJobService extends JobService {
 
         // 현재 매도 걸려 있는 order들이 전부 매도 완료되었을 때 예상 잔고
         log_info("예상잔고 : " + String.format(Locale.getDefault(), "%,d"
-                , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableBtcBalance * currentPrice)));
+                , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableBtcBalance * currentPrice))
+                + " , 주문가능원화 (" + String.format(Locale.getDefault(), "%,d"
+                , (long)(krwBalance)) +")" );
 
         // 매수/매도 완료 이력을 가져온다.
         {
