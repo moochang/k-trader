@@ -271,7 +271,19 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            result = api.callApi("POST", "/info/balance", null);
+            /*
+            HashMap<String, String> requestParams = new HashMap<>();
+            requestParams.put("currency", "ETH");
+            // 필요한 다른 파라미터들도 추가할 수 있습니다.
+            // requestParams.put("key", "value");
+            // callApi 함수 호출
+            JSONObject response = callApi("GET", "/some/endpoint", requestParams);
+            */
+            HashMap<String, String> requestParams = new HashMap<>();
+            requestParams.put("currency", "ETH");
+
+            //result = api.callApi("POST", "/info/balance", null);
+            result = api.callApi("POST", "/info/balance",requestParams);
 
             if (result == null) {
                 log_info(tag + " : " + "/info/balance : null");
