@@ -280,7 +280,7 @@ public class OrderManager {
             JSONObject response = callApi("GET", "/some/endpoint", requestParams);
             */
             HashMap<String, String> requestParams = new HashMap<>();
-            requestParams.put("currency", "ETH");
+            requestParams.put("currency", "");
 
             //result = api.callApi("POST", "/info/balance", null);
             result = api.callApi("POST", "/info/balance",requestParams);
