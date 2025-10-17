@@ -124,7 +124,8 @@ public class OrderManager {
         JSONObject result;
         long requestTime = Calendar.getInstance().getTimeInMillis();
 
-        if (units < 0.0001) {
+        //if (units < 0.0001) {
+        if (units < 0.001) { // for eth
             log_info(tag + " : " + type.toString() + " 발행 취소 : " + String.format("%.4f", units) + " : " + "최소 수량 미달");
             return null;
         }
