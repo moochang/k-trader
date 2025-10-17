@@ -30,7 +30,8 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00011808");
+                //data.put("available_btc", "0.00011808");
+                data.put("available_eth", "0.00011808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
@@ -130,7 +131,8 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00001808");
+                //data.put("available_btc", "0.00001808");
+                data.put("available_eth", "0.00001808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
@@ -236,7 +238,8 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00001808");
+                //data.put("available_btc", "0.00001808");
+                data.put("available_eth", "0.00001808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
@@ -337,7 +340,8 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00001808");
+                //data.put("available_btc", "0.00001808");
+                data.put("available_eth", "0.00001808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");

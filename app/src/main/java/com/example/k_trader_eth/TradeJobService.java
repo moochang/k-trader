@@ -261,7 +261,8 @@ public class TradeJobService extends JobService {
         {
             JSONObject dataObj = orderManager.getBalance("");
             krwBalance = Double.parseDouble((String)dataObj.get("total_krw"));
-            availableBtcBalance = Double.parseDouble((String)dataObj.get("available_btc"));
+            //availableBtcBalance = Double.parseDouble((String)dataObj.get("available_btc"));
+            availableBtcBalance = Double.parseDouble((String)dataObj.get("available_eth"));
         }
 
         // 비트코인 현재가를 가져온다.
