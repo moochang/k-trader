@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 기본 문자열 정의 -->
+    <string name="start_trading">Start Trading</string>
+    <string name="stop_trading">Stop Trading</string>
+    <string name="settings">Settings</string>
+    <string name="refresh_order">Refresh Order</string>
+    <string name="market_buy">시장가 매수</string>
+    <string name="market_sell">시장가 매도</string>
+    <string name="scroll_to_bottom">Scroll to bottom</string>
+    <string name="auto_scroll">Auto Scroll</string>
+    
+    <!-- 탭 -->
+    <string name="transaction_log">Transaction log</string>
+    <string name="transaction_item">Transaction Item</string>
+    
+    <!-- Card View 항목들 -->
+    <string name="transaction_time">Transaction Time</string>
+    <string name="btc_current_price">BTC Current Price</string>
+    <string name="hourly_change">Hourly Change</string>
+    <string name="estimated_balance">Estimated Balance</string>
+    <string name="last_buy_price">Last Buy Price</string>
+    <string name="last_sell_price">Last Sell Price</string>
+    <string name="next_buy_price">Next Buy Price</string>
+    
+    <!-- Error Card 항목들 -->
+    <string name="error_occurred">Error Occurred</string>
+    <string name="error_type">Error Type</string>
+    <string name="error_message">Error Message</string>
+    <string name="error_code">Error Code</string>
+    <string name="retry_count">Retry Count</string>
+    
+    <!-- 메뉴 항목들 -->
+    <string name="up">⬆ Up</string>
+    <string name="down">⬇ Down</string>
+    <string name="warning_emoji">⚠️</string>
+    <string name="sample_time">2024-01-01 12:00:00</string>
+    <string name="sample_price">₩50,000,000</string>
+    <string name="sample_change">+2.5%</string>
+    <string name="sample_balance">₩1,000,000</string>
+    <string name="sample_buy_price">₩49,500,000 (12:30)</string>
+    <string name="sample_sell_price">₩50,200,000 (11:45)</string>
+    <string name="sample_next_buy">₩49,000,000 (12:35)</string>
+    <string name="network_error">Network Error</string>
+    <string name="network_error_message">네트워크 연결을 확인해주세요</string>
+    <string name="sample_error_code">ERR_001</string>
+    <string name="log_info">Log Info</string>
+    <string name="sample_log_info">OrderManager : /info/balance : null</string>
+    <string name="down_half">⬇ Down ½</string>
+    <string name="merge">🔗 Merge</string>
+    <string name="sell_10000">💰 Sell 10,000</string>
+    <string name="sell_50000">💰 Sell 50,000</string>
+    <string name="cancel">❌ Cancel</string>
+    
+    <!-- 에러 메시지 -->
+    <string name="error_network">네트워크 연결을 확인해주세요</string>
+    <string name="error_api">API 호출 중 오류가 발생했습니다</string>
+    <string name="error_unknown">알 수 없는 오류가 발생했습니다</string>
+</resources>

@@ -2,9 +2,12 @@ package com.example.k_trader.base;
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.example.k_trader.MainActivity;
 import com.example.k_trader.MainPage;
+import com.example.k_trader.KTraderApplication;
+import com.example.k_trader.TransactionLogFragment;
 import com.example.k_trader.bitthumb.lib.Api_Client;
 
 import org.json.simple.JSONArray;
@@ -17,6 +20,7 @@ import java.util.Locale;
 import static com.example.k_trader.base.TradeDataManager.Type.BUY;
 import static com.example.k_trader.base.TradeDataManager.Type.NONE;
 import static com.example.k_trader.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.ErrorCode.*;
 
 /**
  * Created by 김무창 on 2017-12-23.
@@ -24,15 +28,15 @@ import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 public class OrderManager {
     private static long lastRequestTimeInMillis = 0;
-    private static long safeIntervalInSec = 1;
+    private static final long safeIntervalInSec = 15;
     private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("OrderManager");
-    private TradeApiService tradeApiService;
+    private final TradeApiService tradeApiService;
 
     public interface TradeApiService {
         Api_Client getApiService();
     }
 
-    class DefaultTradeApiService implements TradeApiService {
+    static class DefaultTradeApiService implements TradeApiService {
         @Override
         public Api_Client getApiService() {
             return new Api_Client();
@@ -51,7 +55,7 @@ public class OrderManager {
         Api_Client api = tradeApiService.getApiService();
         JSONObject result;
 
-        HashMap<String, String> rgParams = new HashMap<String, String>();
+        HashMap<String, String> rgParams = new HashMap<>();
         if (data.getType() == BUY)
             rgParams.put("type", "bid");
         else
@@ -73,17 +77,23 @@ public class OrderManager {
             }
 
             if (result.get("status") instanceof Long) {
-                log_info(tag + " : " + "/trade/cancel : " + result.toString());
+                String logMessage = tag + " : " + "/trade/cancel : " + result.toString();
+                log_info(logMessage);
+                sendErrorCard("API Error", ERR_API_001.getDescription());
                 return false;
             }
 
             if (!((String) result.get("status")).equals("0000")) {
-                log_info(tag + " : " + "/trade/cancel : " + result.toString());
+                String logMessage = tag + " : " + "/trade/cancel : " + result.toString();
+                log_info(logMessage);
+                sendErrorCard("API Error", ERR_API_001.getDescription());
                 return false;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            log_info(tag + " : " + "/trade/cancel : " + e.getMessage());
+            String logMessage = tag + " : " + "/trade/cancel : " + e.getMessage();
+            log_info(logMessage);
+            sendErrorCard("API Error", ERR_API_001.getDescription());
             return false;
         }
 
@@ -95,8 +105,11 @@ public class OrderManager {
         JSONObject result = api.callApi("POST", "/info/orders", null);
         int cancelCount = 0;
 
-        if (result == null)
+        if (result == null) {
+            String logMessage = "/info/orders : null";
+            sendErrorCard("API Error", ERR_API_002.getDescription());
             return false;
+        }
 
         JSONArray dataArray = (JSONArray) result.get("data");
         if (dataArray != null) {
@@ -126,7 +139,9 @@ public class OrderManager {
 
         //if (units < 0.0001) {
         if (units < 0.001) { // for eth
-            log_info(tag + " : " + type.toString() + " 발행 취소 : " + String.format("%.4f", units) + " : " + "최소 수량 미달");
+            String logMessage = tag + " : " + type.toString() + " 발행 취소 : " + String.format("%.4f", units) + " : " + "최소 수량 미달";
+            log_info(logMessage);
+            sendErrorCard("Validation Error", ERR_VALIDATION_001.getDescription());
             return null;
         }
 
@@ -138,8 +153,8 @@ public class OrderManager {
 //            Log.d("KTrader", "sending progress : " + String.valueOf((15 * 1000) - (requestTime - lastRequestTimeInMillis)));
 
             intent.putExtra("progress", (int)((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis)));
-            if (MainPage.context != null)
-                LocalBroadcastManager.getInstance(MainPage.context).sendBroadcast(intent);
+            if (KTraderApplication.getAppContext() != null)
+                LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
 
             try {
                 Thread.sleep((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis));
@@ -150,7 +165,7 @@ public class OrderManager {
             requestTime = Calendar.getInstance().getTimeInMillis();
         }
 
-        HashMap<String, String> rgParams = new HashMap<String, String>();
+        HashMap<String, String> rgParams = new HashMap<>();
         //rgParams.put("order_currency", "BTC");
         rgParams.put("order_currency", "ETH");
         rgParams.put("Payment_currency", "KRW");
@@ -174,17 +189,23 @@ public class OrderManager {
             }
 
             if (result.get("status") instanceof Long) {
-                log_info(tag + " : " + "/trade/place : " + result.toString());
+                String logMessage = tag + " : " + "/trade/place : " + result.toString();
+                log_info(logMessage);
+                sendErrorCard("API Error", ERR_API_005.getDescription());
                 return null;
             }
 
             if (!((String) result.get("status")).equals("0000")) {
-                log_info(tag + " : " + "/trade/place : " + result.toString());
+                String logMessage = tag + " : " + "/trade/place : " + result.toString();
+                log_info(logMessage);
+                sendErrorCard("API Error", ERR_API_005.getDescription());
                 return null;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            log_info(tag + " : " + "/trade/place : " + e.getMessage());
+            String logMessage = tag + " : " + "/trade/place : " + e.getMessage();
+            log_info(logMessage);
+            sendErrorCard("API Error", ERR_API_005.getDescription());
             return null;
         }
 
@@ -196,10 +217,10 @@ public class OrderManager {
     private void log_info(final String log) {
         if (logger != null)
             logger.info(log);
-        Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
+        Intent intent = new Intent(TransactionLogFragment.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
-        if (MainPage.context != null)
-            LocalBroadcastManager.getInstance(MainPage.context).sendBroadcast(intent);
+        if (KTraderApplication.getAppContext() != null)
+            LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
     }
 
     public JSONObject addOrderWithMarketPrice(String tag, TradeDataManager.Type type, float units) {
@@ -215,7 +236,7 @@ public class OrderManager {
 //            Log.d("KTrader", "sending progress : " + String.valueOf((15 * 1000) - (requestTime - lastRequestTimeInMillis)));
 
             intent.putExtra("progress", (int)((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis)));
-            LocalBroadcastManager.getInstance(MainPage.context).sendBroadcast(intent);
+            LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
 
             try {
                 Thread.sleep((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis));
@@ -226,7 +247,7 @@ public class OrderManager {
             requestTime = Calendar.getInstance().getTimeInMillis();
         }
 
-        HashMap<String, String> rgParams = new HashMap<String, String>();
+        HashMap<String, String> rgParams = new HashMap<>();
         //rgParams.put("order_currency", "BTC");
         rgParams.put("order_currency", "ETH");
         rgParams.put("units", String.format("%.4f", units));
@@ -246,18 +267,24 @@ public class OrderManager {
             }
 
             if (result.get("status") instanceof Long) {
-                log_info(tag + " : " + "/trade/market_(buy/sell)1 : " + result.toString());
+                String logMessage = tag + " : " + "/trade/market_(buy/sell)1 : " + result.toString();
+                log_info(logMessage);
+                sendErrorCard("API Error", ERR_API_006.getDescription());
                 return null;
             }
 
             // {"message":"잠시 후 이용해 주십시오.[9900]","status":"5600"}
             if (!((String) result.get("status")).equals("0000")) {
-                log_info(tag + " : " + "/trade/market_(buy/sell)2 : " + result.toString());
+                String logMessage = tag + " : " + "/trade/market_(buy/sell)2 : " + result.toString();
+                log_info(logMessage);
+                sendErrorCard("API Error", ERR_API_006.getDescription());
                 return null;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            log_info(tag + " : " + "/trade/market_(buy/sell)3 : " + e.getMessage());
+            String logMessage = tag + " : " + "/trade/market_(buy/sell)3 : " + e.getMessage();
+            log_info(logMessage);
+            sendErrorCard("API Error", ERR_API_006.getDescription());
             return null;
         }
 
@@ -392,7 +419,7 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            HashMap<String, String> rgParams = new HashMap<String, String>();
+            HashMap<String, String> rgParams = new HashMap<>();
             rgParams.put("offset", String.valueOf(offset));
             rgParams.put("count", count); // 1~50, default = 20
             rgParams.put("searchGb", "0"); // 0 = all, 1 = buy
@@ -431,5 +458,23 @@ public class OrderManager {
             case "ask" : return SELL;
         }
         return NONE;
+    }
+    
+    private void sendErrorCard(String errorType, String errorMessage) {
+        try {
+            Calendar currentTime = Calendar.getInstance();
+            String errorTime = String.format(Locale.getDefault(), "%d/%02d/%02d %02d:%02d:%02d",
+                currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE),
+                currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), currentTime.get(Calendar.SECOND));
+            
+            Intent intent = new Intent("TRADE_ERROR_CARD");
+            intent.putExtra("errorTime", errorTime);
+            intent.putExtra("errorType", errorType);
+            intent.putExtra("errorMessage", errorMessage);
+            
+            LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.e("OrderManager", "에러 카드 전송 중 오류 발생", e);
+        }
     }
 }

@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.example.k_trader.MainActivity">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,82 +12,106 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="70dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <Button
                 android:id="@+id/button"
-                android:layout_width="116dp"
+                android:layout_width="0dp"
                 android:layout_height="53dp"
+                android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="4dp"
                 android:checked="true"
-                android:text="Start Trading"
-                android:textAllCaps="false" />
+                android:drawableStart="@drawable/ic_play"
+                android:drawablePadding="8dp"
+                android:text="@string/start_trading"
+                android:textAllCaps="false"
+                style="@style/ButtonModernSuccess" />
 
             <Button
                 android:id="@+id/button2"
-                android:layout_width="116dp"
-                android:layout_height="49dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="8dp"
-                android:text="Stop Trading"
-                android:textAllCaps="false" />
-
-            <ImageButton
-                android:id="@+id/imageButtonPreference"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_width="0dp"
+                android:layout_height="53dp"
                 android:layout_weight="1"
-                app:srcCompat="@android:drawable/ic_menu_preferences" />
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:drawableStart="@drawable/ic_stop"
+                android:drawablePadding="8dp"
+                android:text="@string/stop_trading"
+                android:textAllCaps="false"
+                style="@style/ButtonModernError" />
+
+            <Button
+                android:id="@+id/imageButtonPreference"
+                android:layout_width="0dp"
+                android:layout_height="53dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="8dp"
+                android:drawableStart="@drawable/ic_settings"
+                android:drawablePadding="8dp"
+                android:text="@string/settings"
+                android:textAllCaps="false"
+                style="@style/ButtonModernSecondary" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="70dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <CheckBox
                 android:id="@+id/checkBox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="80dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="16dp"
                 android:checked="true"
-                android:text="Auto Scroll" />
+                android:text="@string/auto_scroll"
+                style="@style/CheckBoxModern" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
             <Button
                 android:id="@+id/button3"
-                android:layout_width="147dp"
-                android:layout_height="47dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:layout_marginBottom="30dp"
-                android:text="Scroll to bottom"
-                android:textAllCaps="false" />
+                android:drawableStart="@drawable/ic_scroll_down"
+                android:drawablePadding="4dp"
+                android:text="@string/scroll_to_bottom"
+                android:textAllCaps="false"
+                android:gravity="center_horizontal|center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                style="@style/ButtonModernSecondary" />
 
         </LinearLayout>
 
-        <ScrollView
-            android:id="@+id/scrollView1"
+        <!-- TabLayout과 ViewPager -->
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tabLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/border">
+            android:layout_height="50dp"
+            android:background="@color/background_modern"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            app:tabIndicatorColor="@color/primary_modern"
+            app:tabSelectedTextColor="@color/primary_modern"
+            app:tabTextColor="@color/text_secondary_modern" />
 
-            <EditText
-                android:id="@+id/editText"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:background="@android:color/transparent"
-                android:ems="10"
-                android:focusableInTouchMode="false"
-                android:gravity="top"
-                android:textSize="14sp" />
-        </ScrollView>
+        <android.support.v4.view.ViewPager
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
     </LinearLayout>
 

@@ -15,6 +15,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import com.example.k_trader.MainPage;
+import com.example.k_trader.KTraderApplication;
+import com.example.k_trader.TransactionLogFragment;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -343,9 +346,9 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
     }
 
     private void log_info(final String log) {
-        Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
+        Intent intent = new Intent(TransactionLogFragment.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
-        LocalBroadcastManager.getInstance(MainPage.context).sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
     }
 
     @Override
