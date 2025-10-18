@@ -151,7 +151,7 @@ public class TradeJobService extends JobService {
     }
 
     private void scheduleRefresh() {
-        JobScheduler mJobScheduler = (JobScheduler)getApplicationContext().getSystemService(JOB_SCHEDULER_SERVICE);
+        JobScheduler mJobScheduler = (JobScheduler)getApplicationContext().getSystemService(Context.JOB_SCHEDULER_SERVICE);
         JobInfo.Builder mJobBuilder = new JobInfo.Builder(MainPage.JOB_ID_REGULAR, new ComponentName(getPackageName(), TradeJobService.class.getName()));
 
         /* For Android N and Upper Versions */

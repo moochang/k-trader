@@ -33,7 +33,7 @@
                 android:id="@+id/textTransactionTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="2024-01-01 12:00:00"
+                android:text="@string/sample_time"
                 android:textColor="@color/text_primary_modern"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -59,7 +59,7 @@
                 android:id="@+id/textBtcCurrentPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₩50,000,000"
+                android:text="@string/sample_price"
                 android:textColor="@color/text_primary_modern"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -85,7 +85,7 @@
                 android:id="@+id/textHourlyChange"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="+2.5%"
+                android:text="@string/sample_change"
                 android:textColor="@color/success_modern"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -111,7 +111,7 @@
                 android:id="@+id/textEstimatedBalance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₩1,000,000"
+                android:text="@string/sample_balance"
                 android:textColor="@color/text_primary_modern"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -137,7 +137,7 @@
                 android:id="@+id/textLastBuyPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₩49,500,000 (12:30)"
+                android:text="@string/sample_buy_price"
                 android:textColor="@color/buy_modern"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -163,7 +163,7 @@
                 android:id="@+id/textLastSellPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₩50,200,000 (11:45)"
+                android:text="@string/sample_sell_price"
                 android:textColor="@color/sell_modern"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -188,7 +188,7 @@
                 android:id="@+id/textNextBuyPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₩49,000,000 (12:35)"
+                android:text="@string/sample_next_buy"
                 android:textColor="@color/buy_modern"
                 android:textSize="12sp"
                 android:textStyle="bold" />

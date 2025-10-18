@@ -27,15 +27,15 @@ import static com.example.k_trader.base.ErrorCode.*;
 
 public class OrderManager {
     private static long lastRequestTimeInMillis = 0;
-    private static long safeIntervalInSec = 1;
+    private static final long safeIntervalInSec = 15;
     private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("OrderManager");
-    private TradeApiService tradeApiService;
+    private final TradeApiService tradeApiService;
 
     public interface TradeApiService {
         Api_Client getApiService();
     }
 
-    class DefaultTradeApiService implements TradeApiService {
+    static class DefaultTradeApiService implements TradeApiService {
         @Override
         public Api_Client getApiService() {
             return new Api_Client();
@@ -54,7 +54,7 @@ public class OrderManager {
         Api_Client api = tradeApiService.getApiService();
         JSONObject result;
 
-        HashMap<String, String> rgParams = new HashMap<String, String>();
+        HashMap<String, String> rgParams = new HashMap<>();
         if (data.getType() == BUY)
             rgParams.put("type", "bid");
         else
@@ -162,7 +162,7 @@ public class OrderManager {
             requestTime = Calendar.getInstance().getTimeInMillis();
         }
 
-        HashMap<String, String> rgParams = new HashMap<String, String>();
+        HashMap<String, String> rgParams = new HashMap<>();
         rgParams.put("order_currency", "BTC");
         rgParams.put("Payment_currency", "KRW");
         rgParams.put("units", String.format("%.4f", units));
@@ -243,7 +243,7 @@ public class OrderManager {
             requestTime = Calendar.getInstance().getTimeInMillis();
         }
 
-        HashMap<String, String> rgParams = new HashMap<String, String>();
+        HashMap<String, String> rgParams = new HashMap<>();
         rgParams.put("order_currency", "BTC");
         rgParams.put("units", String.format("%.4f", units));
         rgParams.put("payment_currency", "KRW");
@@ -396,7 +396,7 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            HashMap<String, String> rgParams = new HashMap<String, String>();
+            HashMap<String, String> rgParams = new HashMap<>();
             rgParams.put("offset", String.valueOf(offset));
             rgParams.put("count", count); // 1~50, default = 20
             rgParams.put("searchGb", "0"); // 0 = all, 1 = buy

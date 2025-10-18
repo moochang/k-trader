@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="⚠️"
+                android:text="@string/warning_emoji"
                 android:textSize="20sp"
                 android:layout_marginEnd="8dp" />
 
@@ -42,7 +42,7 @@
                 android:id="@+id/textErrorTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="2024-01-01 12:00:00"
+                android:text="@string/sample_time"
                 android:textColor="@color/text_on_primary"
                 android:textSize="12sp" />
 
@@ -67,7 +67,7 @@
                 android:id="@+id/textErrorType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Network Error"
+                android:text="@string/network_error"
                 android:textColor="@color/text_on_primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -95,7 +95,7 @@
             android:id="@+id/textErrorMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="네트워크 연결을 확인해주세요"
+            android:text="@string/network_error_message"
             android:textColor="@color/text_on_primary"
             android:textSize="12sp"
             android:layout_marginBottom="8dp"
@@ -121,7 +121,7 @@
                 android:id="@+id/textErrorCode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ERR_001"
+                android:text="@string/sample_error_code"
                 android:textColor="@color/text_on_primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -139,7 +139,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Log Info"
+                android:text="@string/log_info"
                 android:textColor="@color/text_on_primary"
                 android:textSize="12sp" />
 
@@ -149,7 +149,7 @@
             android:id="@+id/textLogInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OrderManager : /info/balance : null"
+            android:text="@string/sample_log_info"
             android:textColor="@color/text_on_primary"
             android:textSize="11sp"
             android:background="@color/overlay_modern"

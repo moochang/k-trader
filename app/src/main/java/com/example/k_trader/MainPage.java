@@ -363,7 +363,7 @@ public class MainPage extends Fragment {
 
     // CardAdapter 클래스
     public static class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-        private java.util.List<Object> cardList = new java.util.ArrayList<>();
+        private final java.util.List<Object> cardList = new java.util.ArrayList<>();
         
         private static final int TYPE_TRANSACTION = 0;
         private static final int TYPE_ERROR = 1;
@@ -499,11 +499,6 @@ public class MainPage extends Fragment {
         public void addErrorCard(ErrorCard card) {
             cardList.add(0, card); // 최신 에러 카드를 맨 위에 추가
             notifyItemInserted(0);
-        }
-
-        public void clearCards() {
-            cardList.clear();
-            notifyDataSetChanged();
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.example.k_trader.base;
 
+import android.support.annotation.NonNull;
+
 /**
  * API 에러 코드를 정의하는 enum 클래스
  * Created by K-Trader on 2024-12-25.
@@ -43,11 +45,13 @@ public enum ErrorCode {
         return description;
     }
 
+    @SuppressWarnings("unused")
     public String getApiEndpoint() {
         return apiEndpoint;
     }
 
     @Override
+    @NonNull
     public String toString() {
         return code;
     }

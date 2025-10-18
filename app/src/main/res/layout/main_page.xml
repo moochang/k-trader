@@ -121,7 +121,9 @@
                 android:ems="10"
                 android:focusableInTouchMode="false"
                 android:gravity="top"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                android:inputType="textMultiLine"
+                android:hint="@string/transaction_log" />
         </ScrollView>
 
         <android.support.v7.widget.RecyclerView
