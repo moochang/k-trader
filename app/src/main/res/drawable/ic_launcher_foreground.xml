@@ -1,0 +1,25 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108">
+    
+    <!-- 중앙 원형 배경 (흰색) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,20C35.16,20 20,35.16 20,54C20,72.84 35.16,88 54,88C72.84,88 88,72.84 88,54C88,35.16 72.84,20 54,20Z" />
+    
+    <!-- K 글자 - 주황색으로 -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M48,40L48,60L52,60L52,50L56,50L60,60L64,60L58,48L64,40L60,40L56,48L52,48L52,40L48,40Z" />
+    
+    <!-- 상하 화살표로 트레이딩 표현 -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M54,25L58,29L50,29Z" />
+    
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M54,75L50,71L58,71Z" />
+</vector>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 모던 트렌디 색상 팔레트 -->
+    <color name="primary_modern">#6366F1</color>
+    <color name="primary_dark_modern">#4F46E5</color>
+    <color name="primary_light_modern">#818CF8</color>
+    
+    <color name="secondary_modern">#EC4899</color>
+    <color name="secondary_dark_modern">#DB2777</color>
+    
+    <color name="success_modern">#10B981</color>
+    <color name="warning_modern">#F59E0B</color>
+    <color name="error_modern">#EF4444</color>
+    
+    <!-- 중성 색상 -->
+    <color name="surface_modern">#FFFFFF</color>
+    <color name="surface_dark_modern">#1F2937</color>
+    <color name="background_modern">#F8FAFC</color>
+    
+    <!-- 텍스트 색상 -->
+    <color name="text_primary_modern">#111827</color>
+    <color name="text_secondary_modern">#6B7280</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    
+    <!-- 트레이딩 색상 -->
+    <color name="buy_modern">#10B981</color>
+    <color name="sell_modern">#EF4444</color>
+    <color name="neutral_modern">#6B7280</color>
+    
+    <!-- 투명도 -->
+    <color name="transparent">#00000000</color>
+    <color name="overlay_modern">#80000000</color>
+    
+    <!-- 기존 색상 (호환성) -->
+    <color name="primary_color">#FF6B35</color>
+    <color name="primary_dark">#E55A2B</color>
+    <color name="accent_color">#4CAF50</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="background_light">#FAFAFA</color>
+    <color name="background_dark">#303030</color>
+    <color name="buy_color">#4CAF50</color>
+    <color name="sell_color">#F44336</color>
+    <color name="neutral_color">#FFC107</color>
+</resources>

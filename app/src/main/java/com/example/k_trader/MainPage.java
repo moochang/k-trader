@@ -22,11 +22,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ScrollView;
 
 import com.example.k_trader.base.GlobalSettings;
-import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 import com.google.gson.Gson;
 
@@ -50,14 +48,11 @@ public class MainPage extends Fragment {
 
     private final static int MAX_BUFFER = 10000;
 
-    public static Context context;
-    private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("MainPage");
-
     EditText editText;
     Button btnStartTrading;
     Button btnStopTrading;
     Button btnScrollToBottom;
-    ImageButton btnPreference;
+    Button btnPreference;
     ScrollView scrollView;
     CheckBox checkBox;
 
@@ -73,13 +68,13 @@ public class MainPage extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         ConstraintLayout layout = (ConstraintLayout)inflater.inflate(R.layout.main_page, container,false);
         mainActivity = (MainActivity) getActivity();
-        editText = (EditText) layout.findViewById(R.id.editText);
+        editText = layout.findViewById(R.id.editText);
         btnStartTrading = layout.findViewById(R.id.button);
         btnStopTrading = layout.findViewById(R.id.button2);
         btnScrollToBottom = layout.findViewById(R.id.button3);
         btnPreference = layout.findViewById(R.id.imageButtonPreference);
-        scrollView = (ScrollView)layout.findViewById(R.id.scrollView1);
-        checkBox = (CheckBox)layout.findViewById(R.id.checkBox);
+        scrollView = layout.findViewById(R.id.scrollView1);
+        checkBox = layout.findViewById(R.id.checkBox);
 
         if (savedInstanceState != null) {
             isTradingStarted = savedInstanceState.getBoolean(KEY_TRADING_STATE);
@@ -103,9 +98,6 @@ public class MainPage extends Fragment {
             logReceiver = new LogReceiver();
             LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(logReceiver, theFilter);
         }
-
-        if (mainActivity.getApplicationContext() != null)
-            context = mainActivity.getApplicationContext();
 
         btnStartTrading.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
