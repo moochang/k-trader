@@ -57,16 +57,11 @@ public class TradeJobService extends JobService {
     private static final int PRICE_SAVING_QUEUE_COUNT = 60;  // 1시간 분량의 시장가를 저장해 두고 분석에 사용한다.
     private static final int SELL_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 위까지 매도점을 찾아본다.
     private static final int BUY_SLOT_LOOK_ASIDE_MAX = 3;
+    private static final double TRADING_VALUE_MIN = 0.0001;
+    
     // Foreground Service 관련 상수
     private static final int FOREGROUND_SERVICE_ID = 1001;
     private static final String CHANNEL_ID = "k_trader_foreground_channel";
-
-    //private static final double TRADING_VALUE_MIN = 0.0001; // 1coin이 1000만원 이상 금액인 경우.
-    private static final double TRADING_VALUE_MIN = 0.001; // 1coin이 1000만원 이하 금액인 경우.
-    //private static final int PRICE_STEP = 10000;
-    //private static final int PRICE_STEP = 1000;
-
-    //private double krwBalance;
 
     public static int currentPrice;                  // 비트코인 현재 시장가
     public static long lastNotiTimeInMillis;        // 마지막 Notification 완료 시점
@@ -318,14 +313,12 @@ public class TradeJobService extends JobService {
                 , currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE)
                 , currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), currentTime.get(Calendar.SECOND)));
 
-
                 // 잔고를 가져와 업데이트 한다.
                 double krwBalance;
                 {
                     JSONObject dataObj = orderManager.getBalance("");
                     String totalKrw = (String) dataObj.get("total_krw");
-                    //String availableBtc = (String) dataObj.get("available_btc");
-                    String availableBtc = (String) dataObj.get("available_eth");
+                    String availableBtc = (String) dataObj.get("available_btc");
                     
                     if (totalKrw != null && availableBtc != null) {
                         krwBalance = Double.parseDouble(totalKrw);
@@ -357,16 +350,14 @@ public class TradeJobService extends JobService {
                 return;
             }
 
-
-            //log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
-            log_info("ETH 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
+            log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
             
             // 카드 데이터 전송
             sendCardData(currentPrice, krwBalance);
 
             // 빗썸은 0.0001 BTC가 최소 거래 단위이므로 체크
-            if (currentPrice / 1000 > GlobalSettings.getInstance().getUnitPrice()) { //PRICE_STEP
-                log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", GlobalSettings.getInstance().getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 1000 ) + " 보다 작습니다."); //PRICE_STEP
+            if (currentPrice / 10000 > GlobalSettings.getInstance().getUnitPrice()) {
+                log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", GlobalSettings.getInstance().getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
                 return;
             }
 
@@ -485,14 +476,12 @@ public class TradeJobService extends JobService {
 
                     // 매도 오더 발행 : 마지막 매수 오더가 완료되었다면 +INTERVAL_PRICE 가격에 매도 오더를 발행한다.
                     // 매수되었던 unit이 소수점 4자리 이하 일수도 있으니 다시 4자리로 절사 한다.
-                    float unit = (float)((int)(pData.getUnits() * 1000) / 1000.0); //PRICE_STEP / PRICE_STEP.0
+                    float unit = (float)((int)(pData.getUnits() * 10000) / 10000.0);
 
                     // 0.00005~9 만큼 남는다면 반올림한다.
-                    //if ((pData.getUnits() - unit) > 0.00005) {
-                    //    if ((availableBtcBalance - unit) > 0.0001) {
-                    if ((pData.getUnits() - unit) > 0.0005) { // for eth
-                        if ((availableBtcBalance - unit) > 0.001) { // for eth
-                            unit = (float)(Math.round(pData.getUnits() * 1000d) / 1000d);  //PRICE_STEPd / PRICE_STEPd
+                    if ((pData.getUnits() - unit) > 0.00005) {
+                        if ((availableBtcBalance - unit) > 0.0001) {
+                            unit = (float)(Math.round(pData.getUnits() * 10000d) / 10000d);
                             log_info(String.format(Locale.getDefault(), "매도 보정1 : %f -> %f", pData.getUnits(), unit));
                         }
                     }
@@ -501,7 +490,7 @@ public class TradeJobService extends JobService {
                     // 남은 잔고보다 계산 값이 큰 경우에는 서버 에러가 발생하므로 잔고만큼만 매도한다. (ex : 0.0047 vs 0.00469..)
                     if (unit > availableBtcBalance) {
                         log_info(String.format(Locale.getDefault(), "매도 보정2 : %f, %f", unit, availableBtcBalance));
-                        unit = (float)((int)(availableBtcBalance * 1000) / 1000.0); //PRICE_STEP / PRICE_STEP.0
+                        unit = (float)((int)(availableBtcBalance * 10000) / 10000.0);
                     }
 
                     // 매수된 내용이 있다면 가능한 상위 slot에 매도하도록 한다.
@@ -556,7 +545,7 @@ public class TradeJobService extends JobService {
             log_info("매도 필요 잔고 : " + String.format("%.4f", availableBtcBalance));
             // 현재가보다 상위에 비어 있는 slot 중 하나를 찾아보고 있다면 매도하도록 한다.
             int floorPrice = getFloorPrice(currentPrice);
-            double unit = Math.min(getUnitAmount4Price(floorPrice), (availableBtcBalance * 1000) / 1000.0);  //PRICE_STEP / PRICE_STEP.0
+            double unit = Math.min(getUnitAmount4Price(floorPrice), (availableBtcBalance * 10000) / 10000.0);
             int sellIntervalPrice = MainPage.getSlotIntervalPrice(floorPrice) ;
             for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                 int targetPrice = floorPrice + MainPage.getProfitPrice(floorPrice) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
@@ -621,7 +610,7 @@ public class TradeJobService extends JobService {
 
     // 주어진 가격 slot에 매수 가능한 BTC 개수를 구한다. 소수점 아래 4자리로 절사
     private double getUnitAmount4Price(int price) {
-        return (((double)GlobalSettings.getInstance().getUnitPrice() / price) * 1000) / 1000.0;  //PRICE_STEP / PRICE_STEP.0
+        return (((double)GlobalSettings.getInstance().getUnitPrice() / price) * 10000) / 10000.0;
     }
 
     public void setContext(Context ctx) {
