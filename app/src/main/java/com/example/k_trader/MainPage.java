@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -25,9 +25,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
 
-import com.example.k_trader_eth.base.GlobalSettings;
-import com.example.k_trader_eth.base.Log4jHelper;
-import com.example.k_trader_eth.base.OrderManager;
+import com.example.k_trader.base.GlobalSettings;
+import com.example.k_trader.base.Log4jHelper;
+import com.example.k_trader.base.OrderManager;
 import com.google.gson.Gson;
 
 import org.json.simple.JSONArray;

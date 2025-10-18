@@ -1,4 +1,4 @@
-package com.example.k_trader_eth.base;
+package com.example.k_trader.base;
 
 import android.text.Editable;
 import android.text.TextWatcher;

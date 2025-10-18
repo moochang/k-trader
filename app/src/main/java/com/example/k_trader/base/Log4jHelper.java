@@ -1,11 +1,11 @@
-package com.example.k_trader_eth.base;
+package com.example.k_trader.base;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
 
-import com.example.k_trader_eth.MainActivity;
+import com.example.k_trader.MainActivity;
 
 import org.apache.log4j.chainsaw.Main;
 

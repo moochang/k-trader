@@ -1,4 +1,4 @@
-package com.example.k_trader_eth.bitthumb.lib;
+package com.example.k_trader.bitthumb.lib;
 
 /*
  * Copyright (c) 2014 Kevin Sawicki <kevinsawicki@gmail.com>

@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import static com.example.k_trader.base.TradeDataManager.Type.BUY;
 import static org.junit.Assert.assertNotEquals;

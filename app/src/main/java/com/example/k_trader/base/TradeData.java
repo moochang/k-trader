@@ -1,12 +1,12 @@
-package com.example.k_trader_eth.base;
+package com.example.k_trader.base;
 
 import android.util.Log;
 
 import java.util.Calendar;
 import java.util.Locale;
 
-import static com.example.k_trader_eth.base.TradeDataManager.Type.BUY;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.TradeDataManager.Type.BUY;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-24.

@@ -1,10 +1,10 @@
-package com.example.k_trader_eth.base;
+package com.example.k_trader.base;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.example.k_trader_eth.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-23.

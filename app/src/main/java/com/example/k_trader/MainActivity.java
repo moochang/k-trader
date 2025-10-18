@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import android.Manifest;
 import android.app.Notification;
@@ -26,7 +26,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.example.k_trader_eth.base.GlobalSettings;
+import com.example.k_trader.base.GlobalSettings;
 
 import java.util.Timer;
 import java.util.TimerTask;

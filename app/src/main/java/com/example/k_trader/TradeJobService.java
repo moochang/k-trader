@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -19,11 +19,11 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.example.k_trader_eth.base.GlobalSettings;
-import com.example.k_trader_eth.base.Log4jHelper;
-import com.example.k_trader_eth.base.OrderManager;
-import com.example.k_trader_eth.base.TradeData;
-import com.example.k_trader_eth.base.TradeDataManager;
+import com.example.k_trader.base.GlobalSettings;
+import com.example.k_trader.base.Log4jHelper;
+import com.example.k_trader.base.OrderManager;
+import com.example.k_trader.base.TradeData;
+import com.example.k_trader.base.TradeDataManager;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -36,11 +36,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-import static com.example.k_trader_eth.base.TradeDataManager.Status.PLACED;
-import static com.example.k_trader_eth.base.TradeDataManager.Status.PROCESSED;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.BUY;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.NONE;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.TradeDataManager.Status.PLACED;
+import static com.example.k_trader.base.TradeDataManager.Status.PROCESSED;
+import static com.example.k_trader.base.TradeDataManager.Type.BUY;
+import static com.example.k_trader.base.TradeDataManager.Type.NONE;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-17.

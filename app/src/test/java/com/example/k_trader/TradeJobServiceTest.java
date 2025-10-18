@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyInt;

@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -23,10 +23,10 @@ import android.widget.PopupMenu;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.example.k_trader_eth.base.GlobalSettings;
-import com.example.k_trader_eth.base.OrderManager;
-import com.example.k_trader_eth.base.TradeData;
-import com.example.k_trader_eth.base.TradeDataManager;
+import com.example.k_trader.base.GlobalSettings;
+import com.example.k_trader.base.OrderManager;
+import com.example.k_trader.base.TradeData;
+import com.example.k_trader.base.TradeDataManager;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,10 +38,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-import static com.example.k_trader_eth.base.TradeDataManager.Status.PLACED;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.BUY;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.NONE;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.TradeDataManager.Status.PLACED;
+import static com.example.k_trader.base.TradeDataManager.Type.BUY;
+import static com.example.k_trader.base.TradeDataManager.Type.NONE;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-20.

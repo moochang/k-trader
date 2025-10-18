@@ -1,11 +1,11 @@
-package com.example.k_trader_eth.base;
+package com.example.k_trader.base;
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.example.k_trader_eth.MainActivity;
-import com.example.k_trader_eth.MainPage;
-import com.example.k_trader_eth.bitthumb.lib.Api_Client;
+import com.example.k_trader.MainActivity;
+import com.example.k_trader.MainPage;
+import com.example.k_trader.bitthumb.lib.Api_Client;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -14,9 +14,9 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 
-import static com.example.k_trader_eth.base.TradeDataManager.Type.BUY;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.NONE;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.TradeDataManager.Type.BUY;
+import static com.example.k_trader.base.TradeDataManager.Type.NONE;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-23.
@@ -280,7 +280,7 @@ public class OrderManager {
             JSONObject response = callApi("GET", "/some/endpoint", requestParams);
             */
             HashMap<String, String> requestParams = new HashMap<>();
-            requestParams.put("currency", "");
+            requestParams.put("currency", "ETH");
 
             //result = api.callApi("POST", "/info/balance", null);
             result = api.callApi("POST", "/info/balance",requestParams);

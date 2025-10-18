@@ -1,4 +1,4 @@
-package com.example.k_trader_eth.base;
+package com.example.k_trader.base;
 
 public class GlobalSettings {
     public static String API_KEY_KEY_NAME = "API_KEY";

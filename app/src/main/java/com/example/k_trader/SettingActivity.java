@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,8 +9,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.k_trader_eth.base.GlobalSettings;
-import com.example.k_trader_eth.base.NumberTextWatcherForThousand;
+import com.example.k_trader.base.GlobalSettings;
+import com.example.k_trader.base.NumberTextWatcherForThousand;
 
 public class SettingActivity extends AppCompatActivity {
     Button btnSave;

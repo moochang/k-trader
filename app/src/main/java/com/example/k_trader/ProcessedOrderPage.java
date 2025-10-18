@@ -1,4 +1,4 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,9 +15,9 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.example.k_trader_eth.base.OrderManager;
-import com.example.k_trader_eth.base.TradeData;
-import com.example.k_trader_eth.base.TradeDataManager;
+import com.example.k_trader.base.OrderManager;
+import com.example.k_trader.base.TradeData;
+import com.example.k_trader.base.TradeDataManager;
 import com.google.gson.Gson;
 
 import org.json.simple.JSONArray;
@@ -27,10 +27,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 
-import static com.example.k_trader_eth.base.TradeDataManager.Status.PROCESSED;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.BUY;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.NONE;
-import static com.example.k_trader_eth.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.TradeDataManager.Status.PROCESSED;
+import static com.example.k_trader.base.TradeDataManager.Type.BUY;
+import static com.example.k_trader.base.TradeDataManager.Type.NONE;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-20.

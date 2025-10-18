@@ -1,7 +1,7 @@
-package com.example.k_trader_eth.bitthumb.lib;
+package com.example.k_trader.bitthumb.lib;
 
-import com.example.k_trader_eth.base.GlobalSettings;
-import com.example.k_trader_eth.base.Log4jHelper;
+import com.example.k_trader.base.GlobalSettings;
+import com.example.k_trader.base.Log4jHelper;
 
 import org.apache.commons.codec.binary.Hex;
 import org.json.simple.JSONObject;

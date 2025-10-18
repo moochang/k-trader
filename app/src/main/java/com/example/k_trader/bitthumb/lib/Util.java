@@ -1,4 +1,4 @@
-package com.example.k_trader_eth.bitthumb.lib;
+package com.example.k_trader.bitthumb.lib;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;

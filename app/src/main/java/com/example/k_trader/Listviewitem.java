@@ -1,6 +1,6 @@
-package com.example.k_trader_eth;
+package com.example.k_trader;
 
-import com.example.k_trader_eth.base.TradeData;
+import com.example.k_trader.base.TradeData;
 
 /**
  * Created by 김무창 on 2017-12-20.
