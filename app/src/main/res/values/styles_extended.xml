@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 트렌디한 모던 버튼 스타일 -->
+    <style name="ButtonModern" parent="Widget.AppCompat.Button">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:paddingStart">@dimen/button_padding</item>
+        <item name="android:paddingEnd">@dimen/button_padding</item>
+        <item name="android:textSize">@dimen/text_size_medium</item>
+        <item name="android:textColor">@color/text_on_primary</item>
+        <item name="android:background">@drawable/button_modern_background</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+    
+    <style name="ButtonModernPrimary" parent="ButtonModern">
+        <item name="android:background">@drawable/button_primary_background</item>
+    </style>
+    
+    <style name="ButtonModernSecondary" parent="ButtonModern">
+        <item name="android:textColor">@color/text_primary_modern</item>
+        <item name="android:background">@drawable/button_secondary_background</item>
+    </style>
+    
+    <style name="ButtonModernSuccess" parent="ButtonModern">
+        <item name="android:background">@drawable/button_success_background</item>
+    </style>
+    
+    <style name="ButtonModernError" parent="ButtonModern">
+        <item name="android:background">@drawable/button_error_background</item>
+    </style>
+    
+    <style name="ButtonModernBuy" parent="ButtonModernSuccess">
+        <!-- 매수 버튼은 성공 색상 사용 -->
+    </style>
+    
+    <style name="ButtonModernSell" parent="ButtonModernError">
+        <!-- 매도 버튼은 에러 색상 사용 -->
+    </style>
+    
+    <style name="CheckBoxModern" parent="Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="android:textColor">@color/text_primary_modern</item>
+        <item name="android:textSize">@dimen/text_size_medium</item>
+        <item name="android:buttonTint">@color/primary_modern</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+    
+    <!-- 기존 스타일 (호환성) -->
+    <style name="ButtonPrimary" parent="Widget.AppCompat.Button">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:paddingStart">@dimen/button_padding</item>
+        <item name="android:paddingEnd">@dimen/button_padding</item>
+        <item name="android:textSize">@dimen/text_size_medium</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:background">@color/primary_color</item>
+    </style>
+    
+    <style name="ButtonSecondary" parent="Widget.AppCompat.Button">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:paddingStart">@dimen/button_padding</item>
+        <item name="android:paddingEnd">@dimen/button_padding</item>
+        <item name="android:textSize">@dimen/text_size_medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:background">@android:color/white</item>
+    </style>
+    
+    <style name="ButtonBuy" parent="ButtonPrimary">
+        <item name="android:background">@color/buy_color</item>
+    </style>
+    
+    <style name="ButtonSell" parent="ButtonPrimary">
+        <item name="android:background">@color/sell_color</item>
+    </style>
+</resources>

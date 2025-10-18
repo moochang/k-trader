@@ -2,31 +2,27 @@ package com.example.k_trader;
 
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ScrollView;
 
 import com.example.k_trader.base.GlobalSettings;
-import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 import com.google.gson.Gson;
 
@@ -40,31 +36,22 @@ import org.json.simple.JSONObject;
 
 public class MainPage extends Fragment {
 
-    public static final String BROADCAST_LOG_MESSAGE = "TRADE_LOG";
-
     public static final int JOB_ID_FIRST = 1;
     public static final int JOB_ID_REGULAR = 2;
 
     private static final String KEY_TRADING_STATE = "KEY_TRADING_STATE";
-    private static final String LOG_RECEIVER_STATE = "LOG_RECEIVER_STATE";
 
-    private final static int MAX_BUFFER = 10000;
+    private Button btnStartTrading;
+    private Button btnStopTrading;
+    private Button btnScrollToBottom;
+    private Button btnPreference;
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
+    private TransactionPagerAdapter pagerAdapter;
 
-    public static Context context;
-    private static final org.apache.log4j.Logger logger = Log4jHelper.getLogger("MainPage");
-
-    EditText editText;
-    Button btnStartTrading;
-    Button btnStopTrading;
-    Button btnScrollToBottom;
-    ImageButton btnPreference;
-    ScrollView scrollView;
-    CheckBox checkBox;
-
-    ComponentName component;
-    MainActivity mainActivity;
-    boolean isTradingStarted = false;
-    LogReceiver logReceiver;
+    private ComponentName component;
+    private MainActivity mainActivity;
+    private boolean isTradingStarted = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {super.onCreate(savedInstanceState);}
@@ -73,146 +60,128 @@ public class MainPage extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         ConstraintLayout layout = (ConstraintLayout)inflater.inflate(R.layout.main_page, container,false);
         mainActivity = (MainActivity) getActivity();
-        editText = (EditText) layout.findViewById(R.id.editText);
+        
+        // UI 컴포넌트 초기화
         btnStartTrading = layout.findViewById(R.id.button);
         btnStopTrading = layout.findViewById(R.id.button2);
         btnScrollToBottom = layout.findViewById(R.id.button3);
         btnPreference = layout.findViewById(R.id.imageButtonPreference);
-        scrollView = (ScrollView)layout.findViewById(R.id.scrollView1);
-        checkBox = (CheckBox)layout.findViewById(R.id.checkBox);
+        tabLayout = layout.findViewById(R.id.tabLayout);
+        viewPager = layout.findViewById(R.id.viewPager);
 
+        // ViewPager와 TabLayout 설정
+        setupViewPagerAndTabs();
+
+        // 상태 복원
         if (savedInstanceState != null) {
             isTradingStarted = savedInstanceState.getBoolean(KEY_TRADING_STATE);
-            String json = savedInstanceState.getString(LOG_RECEIVER_STATE);
-            Gson gson = new Gson();
-            logReceiver = gson.fromJson(json, LogReceiver.class);
         }
 
         btnStartTrading.setEnabled(!isTradingStarted);
         btnStopTrading.setEnabled(isTradingStarted);
 
-        // page switching으로 인한 재방문이 아닌 첫 방문일 때만 초기화 한다.
-        if (mainActivity.jobScheduler == null) {
-            component = new ComponentName(mainActivity, TradeJobService.class.getName());
+        // JobScheduler 초기화
+        initializeJobScheduler();
 
-            if (logReceiver != null) {
-                LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).unregisterReceiver(logReceiver);
-            }
-            IntentFilter theFilter = new IntentFilter();
-            theFilter.addAction(BROADCAST_LOG_MESSAGE);
-            logReceiver = new LogReceiver();
-            LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(logReceiver, theFilter);
-        }
-
-        if (mainActivity.getApplicationContext() != null)
-            context = mainActivity.getApplicationContext();
-
-        btnStartTrading.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                String packageName = mainActivity.getPackageName();
-                PowerManager pm = (PowerManager) mainActivity.getSystemService(Context.POWER_SERVICE);
-
-                if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                    Intent i = new Intent();
-                    i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                    i.setData(Uri.parse("package:" + packageName));
-                    startActivity(i);
-                }
-
-                // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
-                new Thread() {
-                    public void run() {
-                        // cancel all buy request
-                        OrderManager orderManager = new OrderManager();
-                        orderManager.cancelAllBuyOrders();
-                    }
-                }.start();
-
-                // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
-                JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
-                        .setMinimumLatency(1000) // 1000 ms
-                        .build();
-
-                JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
-                        .setMinimumLatency(GlobalSettings.getInstance().getTradeInterval() * 1000)
-                        .build();
-
-                mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                mainActivity.jobScheduler.schedule(firstTradeJob);
-                mainActivity.jobScheduler.schedule(tradeJob);
-
-                isTradingStarted = true;
-                btnStartTrading.setEnabled(!isTradingStarted);
-                btnStopTrading.setEnabled(isTradingStarted);
-            }
-        });
-
-        btnStopTrading.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if (mainActivity.jobScheduler != null) {
-                    mainActivity.jobScheduler.cancelAll();
-                }
-
-                isTradingStarted = false;
-                btnStartTrading.setEnabled(!isTradingStarted);
-                btnStopTrading.setEnabled(isTradingStarted);
-            }
-        });
-
-        btnScrollToBottom.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                scrollView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        scrollView.fullScroll(View.FOCUS_DOWN);
-                    }
-                });
-            }
-        });
-
-        btnPreference.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                startActivity(new Intent(mainActivity, SettingActivity.class));
-            }
-        });
+        // 버튼 이벤트 설정
+        setupButtonListeners();
 
         return layout;
     }
 
-    private void log_info(final String log) {
-        Runnable runnable = new Runnable() {
-            public void run() {
-                mainActivity.runOnUiThread(new Runnable() {
-                    public void run() {
-                        editText.append(log + "\r\n");
-
-                        CharSequence charSequence = editText.getText();
-                        if (charSequence.length() > MAX_BUFFER)
-                            editText.getEditableText().delete(0, charSequence.length() - MAX_BUFFER);
-
-                        // scroll to bottom
-                        if (checkBox.isChecked()) {
-                            scrollView.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    scrollView.fullScroll(View.FOCUS_DOWN);
-                                }
-                            });
-                        }
-                    }
-                });
-            }
-        };
-        runnable.run();
-
-        Log.d("KTrader", log);
+    /**
+     * ViewPager와 TabLayout을 설정하는 메서드
+     */
+    private void setupViewPagerAndTabs() {
+        // ViewPager 어댑터 설정
+        pagerAdapter = new TransactionPagerAdapter(getChildFragmentManager());
+        viewPager.setAdapter(pagerAdapter);
+        
+        // TabLayout과 ViewPager 연결
+        tabLayout.setupWithViewPager(viewPager);
+        
+        // 기본 탭을 Transaction Item으로 설정 (첫 번째 탭)
+        viewPager.setCurrentItem(0);
     }
 
-    private class LogReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            log_info(intent.getStringExtra("log"));
+    /**
+     * JobScheduler를 초기화하는 메서드
+     */
+    private void initializeJobScheduler() {
+        // page switching으로 인한 재방문이 아닌 첫 방문일 때만 초기화 한다.
+        if (mainActivity.jobScheduler == null) {
+            component = new ComponentName(mainActivity, TradeJobService.class.getName());
         }
+    }
+
+    /**
+     * 버튼 이벤트 리스너를 설정하는 메서드
+     */
+    private void setupButtonListeners() {
+        btnStartTrading.setOnClickListener(v -> {
+            String packageName = mainActivity.getPackageName();
+            PowerManager pm = (PowerManager) mainActivity.getSystemService(Context.POWER_SERVICE);
+
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                Intent i = new Intent();
+                i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                i.setData(Uri.parse("package:" + packageName));
+                startActivity(i);
+            }
+
+            // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
+            new Thread(() -> {
+                // cancel all buy request
+                OrderManager orderManager = new OrderManager();
+                orderManager.cancelAllBuyOrders();
+            }).start();
+
+            // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
+            JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
+                    .setMinimumLatency(1000) // 1000 ms
+                    .build();
+
+            JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
+                    .setMinimumLatency((long) GlobalSettings.getInstance().getTradeInterval() * 1000)
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                    .build();
+
+            mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            mainActivity.jobScheduler.schedule(firstTradeJob);
+            mainActivity.jobScheduler.schedule(tradeJob);
+
+            isTradingStarted = true;
+            btnStartTrading.setEnabled(!isTradingStarted);
+            btnStopTrading.setEnabled(isTradingStarted);
+        });
+
+        btnStopTrading.setOnClickListener(v -> {
+            if (mainActivity.jobScheduler != null) {
+                mainActivity.jobScheduler.cancelAll();
+            }
+
+            isTradingStarted = false;
+            btnStartTrading.setEnabled(!isTradingStarted);
+            btnStopTrading.setEnabled(isTradingStarted);
+        });
+
+        btnScrollToBottom.setOnClickListener(v -> {
+            // 현재 선택된 Fragment가 TransactionLogFragment인지 확인하고 스크롤
+            TransactionLogFragment logFragment = (TransactionLogFragment) pagerAdapter.getItem(viewPager.getCurrentItem());
+            if (logFragment != null) {
+                logFragment.scrollToBottom();
+            }
+        });
+
+        btnPreference.setOnClickListener(v -> {
+            startActivity(new Intent(mainActivity, SettingActivity.class));
+        });
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_TRADING_STATE, isTradingStarted);
     }
 
     // 주어진 bitcoin 가격에 대한 이익금(EARNINGS_RATIO)을 리턴한다.
@@ -239,24 +208,16 @@ public class MainPage extends Fragment {
         }
 
         JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
-        if (dataArray != null) {
+        if (dataArray != null && !dataArray.isEmpty()) {
             JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
-            currentPrice = (int) Double.parseDouble((String) item.get("price"));
-            return getProfitPrice(currentPrice);
+            String priceStr = (String) item.get("price");
+            if (priceStr != null) {
+                currentPrice = (int) Double.parseDouble(priceStr);
+                return getProfitPrice(currentPrice);
+            }
         }
 
         throw new Exception("dataObj == null");
-    }
-
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        outState.putBoolean(KEY_TRADING_STATE, isTradingStarted);
-
-        Gson gson = new Gson();
-        String json = gson.toJson(logReceiver);
-        outState.putString(LOG_RECEIVER_STATE, json);
     }
 
     public static int getFloorPrice(int price) {
@@ -279,5 +240,44 @@ public class MainPage extends Fragment {
         }
 
         return floor;
+    }
+
+    /**
+     * Transaction Fragment들을 관리하는 PagerAdapter
+     */
+    public static class TransactionPagerAdapter extends FragmentPagerAdapter {
+        
+        public TransactionPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    return new TransactionItemFragment();
+                case 1:
+                    return new TransactionLogFragment();
+                default:
+                    return new TransactionItemFragment();
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return "Transaction Item";
+                case 1:
+                    return "Transaction Log";
+                default:
+                    return "Transaction Item";
+            }
+        }
     }
 }
