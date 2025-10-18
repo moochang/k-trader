@@ -2,6 +2,7 @@ package com.example.k_trader;
 
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -27,11 +28,14 @@ public class SettingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
         
-        // Status bar 색상을 App bar와 동일하게 설정
-        getWindow().setStatusBarColor(Color.parseColor("#FF8C42"));
+        // 테마에 따라 Status Bar 색상 동적 설정
+        setStatusBarColorByTheme();
         
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        
+        // App bar 색상 설정
+        setAppBarColorByTheme();
 
         btnSave = findViewById(R.id.buttonSave);
         txtApiKey = findViewById(R.id.editTextApiKey);
@@ -83,5 +87,88 @@ public class SettingActivity extends AppCompatActivity {
             Toast.makeText(SettingActivity.this, "설정이 저장되었습니다.", Toast.LENGTH_SHORT).show();
             finish();
         });
+    }
+    
+    /**
+     * 현재 테마에 따라 Status Bar 색상을 설정하는 메서드
+     */
+    private void setStatusBarColorByTheme() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // 현재 테마가 Light 테마인지 확인
+            boolean isLightTheme = isLightTheme();
+            
+            int statusBarColor;
+            if (isLightTheme) {
+                statusBarColor = getResources().getColor(R.color.status_bar_light);
+                // Light 테마에서는 Status bar 아이콘을 어둡게 설정
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    // API 23 이상에서 SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 제거
+                    int flags = getWindow().getDecorView().getSystemUiVisibility();
+                    flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                }
+            } else {
+                statusBarColor = getResources().getColor(R.color.status_bar_dark);
+                // Dark 테마에서는 Status bar 아이콘을 밝게 설정
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    // API 23 이상에서 SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 추가
+                    int flags = getWindow().getDecorView().getSystemUiVisibility();
+                    flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                }
+            }
+            
+            getWindow().setStatusBarColor(statusBarColor);
+        }
+    }
+    
+    /**
+     * 현재 테마가 Light 테마인지 확인하는 메서드
+     */
+    private boolean isLightTheme() {
+        // 현재 앱이 Light 테마를 사용하고 있는지 확인
+        // AppTheme의 parent가 Theme.AppCompat.Light.DarkActionBar이므로 Light 테마
+        return true; // 현재 앱은 Light 테마 사용
+    }
+    
+    /**
+     * 현재 테마에 따라 App Bar 색상을 설정하는 메서드
+     */
+    private void setAppBarColorByTheme() {
+        // 현재 테마가 Light 테마인지 확인
+        boolean isLightTheme = isLightTheme();
+        
+        int appBarColor;
+        if (isLightTheme) {
+            appBarColor = getResources().getColor(R.color.app_bar_light);
+        } else {
+            appBarColor = getResources().getColor(R.color.app_bar_dark);
+        }
+        
+        // Toolbar 색상 설정
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            toolbar.setBackgroundColor(appBarColor);
+            
+            // Toolbar 그림자 효과 제거
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                toolbar.setElevation(0);
+            }
+            
+            // 텍스트 색상 설정 (흰색 배경에서는 어두운 색 사용)
+            if (isLightTheme) {
+                // Light 테마에서는 어두운 텍스트 색상 사용
+                toolbar.setTitleTextColor(getResources().getColor(android.R.color.black));
+            } else {
+                // Dark 테마에서는 밝은 텍스트 색상 사용
+                toolbar.setTitleTextColor(getResources().getColor(android.R.color.white));
+            }
+        }
+        
+        // AppBarLayout 그림자 효과 제거
+        android.support.design.widget.AppBarLayout appBarLayout = findViewById(R.id.appbar);
+        if (appBarLayout != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            appBarLayout.setElevation(0);
+        }
     }
 }

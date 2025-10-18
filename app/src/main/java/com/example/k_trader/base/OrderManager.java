@@ -7,6 +7,7 @@ import android.util.Log;
 import com.example.k_trader.MainActivity;
 import com.example.k_trader.MainPage;
 import com.example.k_trader.KTraderApplication;
+import com.example.k_trader.TransactionLogFragment;
 import com.example.k_trader.bitthumb.lib.Api_Client;
 
 import org.json.simple.JSONArray;
@@ -77,21 +78,21 @@ public class OrderManager {
             if (result.get("status") instanceof Long) {
                 String logMessage = tag + " : " + "/trade/cancel : " + result.toString();
                 log_info(logMessage);
-                sendErrorCard("API Error", ERR_API_001.getDescription(), ERR_API_001.getCode(), logMessage);
+                sendErrorCard("API Error", ERR_API_001.getDescription());
                 return false;
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 String logMessage = tag + " : " + "/trade/cancel : " + result.toString();
                 log_info(logMessage);
-                sendErrorCard("API Error", ERR_API_001.getDescription(), ERR_API_001.getCode(), logMessage);
+                sendErrorCard("API Error", ERR_API_001.getDescription());
                 return false;
             }
         } catch (Exception e) {
             e.printStackTrace();
             String logMessage = tag + " : " + "/trade/cancel : " + e.getMessage();
             log_info(logMessage);
-            sendErrorCard("API Error", ERR_API_001.getDescription(), ERR_API_001.getCode(), logMessage);
+            sendErrorCard("API Error", ERR_API_001.getDescription());
             return false;
         }
 
@@ -105,7 +106,7 @@ public class OrderManager {
 
         if (result == null) {
             String logMessage = "/info/orders : null";
-            sendErrorCard("API Error", ERR_API_002.getDescription(), ERR_API_002.getCode(), logMessage);
+            sendErrorCard("API Error", ERR_API_002.getDescription());
             return false;
         }
 
@@ -138,7 +139,7 @@ public class OrderManager {
         if (units < 0.0001) {
             String logMessage = tag + " : " + type.toString() + " 발행 취소 : " + String.format("%.4f", units) + " : " + "최소 수량 미달";
             log_info(logMessage);
-            sendErrorCard("Validation Error", ERR_VALIDATION_001.getDescription(), ERR_VALIDATION_001.getCode(), logMessage);
+            sendErrorCard("Validation Error", ERR_VALIDATION_001.getDescription());
             return null;
         }
 
@@ -187,21 +188,21 @@ public class OrderManager {
             if (result.get("status") instanceof Long) {
                 String logMessage = tag + " : " + "/trade/place : " + result.toString();
                 log_info(logMessage);
-                sendErrorCard("API Error", ERR_API_005.getDescription(), ERR_API_005.getCode(), logMessage);
+                sendErrorCard("API Error", ERR_API_005.getDescription());
                 return null;
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 String logMessage = tag + " : " + "/trade/place : " + result.toString();
                 log_info(logMessage);
-                sendErrorCard("API Error", ERR_API_005.getDescription(), ERR_API_005.getCode(), logMessage);
+                sendErrorCard("API Error", ERR_API_005.getDescription());
                 return null;
             }
         } catch (Exception e) {
             e.printStackTrace();
             String logMessage = tag + " : " + "/trade/place : " + e.getMessage();
             log_info(logMessage);
-            sendErrorCard("API Error", ERR_API_005.getDescription(), ERR_API_005.getCode(), logMessage);
+            sendErrorCard("API Error", ERR_API_005.getDescription());
             return null;
         }
 
@@ -213,7 +214,7 @@ public class OrderManager {
     private void log_info(final String log) {
         if (logger != null)
             logger.info(log);
-        Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
+        Intent intent = new Intent(TransactionLogFragment.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
         if (KTraderApplication.getAppContext() != null)
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
@@ -264,7 +265,7 @@ public class OrderManager {
             if (result.get("status") instanceof Long) {
                 String logMessage = tag + " : " + "/trade/market_(buy/sell)1 : " + result.toString();
                 log_info(logMessage);
-                sendErrorCard("API Error", ERR_API_006.getDescription(), ERR_API_006.getCode(), logMessage);
+                sendErrorCard("API Error", ERR_API_006.getDescription());
                 return null;
             }
 
@@ -272,14 +273,14 @@ public class OrderManager {
             if (!((String) result.get("status")).equals("0000")) {
                 String logMessage = tag + " : " + "/trade/market_(buy/sell)2 : " + result.toString();
                 log_info(logMessage);
-                sendErrorCard("API Error", ERR_API_006.getDescription(), ERR_API_006.getCode(), logMessage);
+                sendErrorCard("API Error", ERR_API_006.getDescription());
                 return null;
             }
         } catch (Exception e) {
             e.printStackTrace();
             String logMessage = tag + " : " + "/trade/market_(buy/sell)3 : " + e.getMessage();
             log_info(logMessage);
-            sendErrorCard("API Error", ERR_API_006.getDescription(), ERR_API_006.getCode(), logMessage);
+            sendErrorCard("API Error", ERR_API_006.getDescription());
             return null;
         }
 
@@ -436,7 +437,7 @@ public class OrderManager {
         return NONE;
     }
     
-    private void sendErrorCard(String errorType, String errorMessage, String errorCode, String logInfo) {
+    private void sendErrorCard(String errorType, String errorMessage) {
         try {
             Calendar currentTime = Calendar.getInstance();
             String errorTime = String.format(Locale.getDefault(), "%d/%02d/%02d %02d:%02d:%02d",
@@ -447,8 +448,6 @@ public class OrderManager {
             intent.putExtra("errorTime", errorTime);
             intent.putExtra("errorType", errorType);
             intent.putExtra("errorMessage", errorMessage);
-            intent.putExtra("errorCode", errorCode);
-            intent.putExtra("logInfo", logInfo);
             
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
         } catch (Exception e) {

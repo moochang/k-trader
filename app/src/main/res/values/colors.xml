@@ -3,4 +3,16 @@
     <color name="colorPrimary">#FF8C42</color>
     <color name="colorPrimaryDark">#FF6B35</color>
     <color name="colorAccent">#FFB366</color>
+    
+    <!-- 테마별 Status Bar 색상 -->
+    <color name="status_bar_light">#FFFFFF</color>
+    <color name="status_bar_dark">#000000</color>
+    
+    <!-- 테마별 Notification 색상 -->
+    <color name="notification_light">#F8FAFC</color>
+    <color name="notification_dark">#000000</color>
+    
+    <!-- 테마별 App Bar 색상 -->
+    <color name="app_bar_light">#FFFFFF</color>
+    <color name="app_bar_dark">#000000</color>
 </resources>

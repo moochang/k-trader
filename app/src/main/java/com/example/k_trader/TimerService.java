@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import com.example.k_trader.MainPage;
 import com.example.k_trader.KTraderApplication;
+import com.example.k_trader.TransactionLogFragment;
 
 /**
  * Created by 김무창 on 2018-03-04.
@@ -41,7 +42,7 @@ public class TimerService extends Service {
     }
 
     private void log_info(final String log) {
-        Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
+        Intent intent = new Intent(TransactionLogFragment.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
         LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
     }

@@ -28,6 +28,8 @@ import static com.example.k_trader.base.TradeDataManager.Type.BUY;
 import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 import static com.example.k_trader.base.ErrorCode.*;
 import com.example.k_trader.KTraderApplication;
+import com.example.k_trader.TransactionLogFragment;
+import com.example.k_trader.TransactionItemFragment;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -95,7 +97,7 @@ public class TradeJobService extends JobService {
                 log_info("Trade business logic error: " + e.getMessage());
                 
                 // 에러 카드 전송
-                sendErrorCard("Trade Business Logic Error", ERR_BUSINESS_001.getDescription(), ERR_BUSINESS_001.getCode(), "Trade business logic error: " + e.getMessage());
+                sendErrorCard("Trade Business Logic Error", ERR_BUSINESS_001.getDescription());
             }
 
             if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
@@ -145,7 +147,7 @@ public class TradeJobService extends JobService {
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                    .setColor(Color.parseColor("#FF8C42")); // 앱바와 동일한 진한 주황색 파스텔 톤
+                    .setColor(getNotificationColorByTheme()); // 테마에 따른 동적 색상 설정
 
         startForeground(FOREGROUND_SERVICE_ID, builder.build());
     }
@@ -170,7 +172,7 @@ public class TradeJobService extends JobService {
             logger.info(log);
         }
 
-        Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
+        Intent intent = new Intent(TransactionLogFragment.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
         if (KTraderApplication.getAppContext() != null) {
             LocalBroadcastManager manager = LocalBroadcastManager.getInstance(KTraderApplication.getAppContext());
@@ -323,7 +325,7 @@ public class TradeJobService extends JobService {
                         availableBtcBalance = Double.parseDouble(availableBtc);
                     } else {
                         log_info("잔고 정보를 가져올 수 없습니다.");
-                        sendErrorCard("Balance Error", ERR_API_003.getDescription(), ERR_API_003.getCode(), "잔고 정보를 가져올 수 없습니다.");
+                        sendErrorCard("Balance Error", ERR_API_003.getDescription());
                         return;
                     }
                 }
@@ -339,12 +341,12 @@ public class TradeJobService extends JobService {
                     currentPrice = (int)Double.parseDouble(priceStr);
                 } else {
                     log_info("현재가 정보를 가져올 수 없습니다.");
-                    sendErrorCard("Price Error", ERR_API_004.getDescription(), ERR_API_004.getCode(), "현재가 정보를 가져올 수 없습니다.");
+                    sendErrorCard("Price Error", ERR_API_004.getDescription());
                     return;
                 }
             } else {
                 log_info("매수 정보를 가져올 수 없습니다.");
-                sendErrorCard("Buy Order Error", ERR_API_002.getDescription(), ERR_API_002.getCode(), "매수 정보를 가져올 수 없습니다.");
+                sendErrorCard("Buy Order Error", ERR_API_002.getDescription());
                 return;
             }
 
@@ -677,11 +679,11 @@ public class TradeJobService extends JobService {
             Log.e("TradeJobService", "카드 데이터 전송 중 오류 발생", e);
             
             // 에러 카드 전송
-            sendErrorCard("Card Data Send Error", ERR_CARD_DATA_001.getDescription(), ERR_CARD_DATA_001.getCode(), "카드 데이터 전송 중 오류 발생: " + e.getMessage());
+            sendErrorCard("Card Data Send Error", ERR_CARD_DATA_001.getDescription());
         }
     }
     
-    private void sendErrorCard(String errorType, String errorMessage, String errorCode, String logInfo) {
+    private void sendErrorCard(String errorType, String errorMessage) {
         try {
             Calendar currentTime = Calendar.getInstance();
             String errorTime = String.format(Locale.getDefault(), "%d/%02d/%02d %02d:%02d:%02d",
@@ -692,12 +694,33 @@ public class TradeJobService extends JobService {
             intent.putExtra("errorTime", errorTime);
             intent.putExtra("errorType", errorType);
             intent.putExtra("errorMessage", errorMessage);
-            intent.putExtra("errorCode", errorCode);
-            intent.putExtra("logInfo", logInfo);
             
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
         } catch (Exception e) {
             Log.e("TradeJobService", "에러 카드 전송 중 오류 발생", e);
         }
+    }
+    
+    /**
+     * 현재 테마에 따라 Notification 색상을 반환하는 메서드
+     */
+    private int getNotificationColorByTheme() {
+        // 현재 테마가 Light 테마인지 확인
+        boolean isLightTheme = isLightTheme();
+        
+        if (isLightTheme) {
+            return getResources().getColor(R.color.notification_light);
+        } else {
+            return getResources().getColor(R.color.notification_dark);
+        }
+    }
+    
+    /**
+     * 현재 테마가 Light 테마인지 확인하는 메서드
+     */
+    private boolean isLightTheme() {
+        // 현재 앱이 Light 테마를 사용하고 있는지 확인
+        // AppTheme의 parent가 Theme.AppCompat.Light.DarkActionBar이므로 Light 테마
+        return true; // 현재 앱은 Light 테마 사용
     }
 }
