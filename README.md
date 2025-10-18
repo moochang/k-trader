@@ -35,7 +35,8 @@ BitThumb 거래소용 Bitcoin 자동 매매 Android app 프로그램입니다.
    - https://www.bithumb.com/react/api-support/management-apiAndroid:
    - 핸드폰 IP 고정 방법
      1. 개발자 옵션 활성화
-     2. 모바일 데이터 항상 활성화 설정   
+     2. 모바일 데이터 항상 활성화 설정
+     3. 핸드폰 IP 확인 방법 : http://www.whatismyip.com
 3. 빗썸 사이트에서 투자금 입금 (100만원 이상 추천)
 4. App실행 후 세팅 화면으로 가서 API_KEY와 API_SECRET, 거래 단위 금액 값을 입력
    - 거래 단위 금액은 '1만원~120만원' 검증 완료, 그 이하/이상 금액은 검증 필요
