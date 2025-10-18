@@ -14,12 +14,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -41,7 +41,9 @@ public class MainActivity extends AppCompatActivity {
     public static final int STORAGE_PERMISSION_REQUEST = 0;
 
     public static final String BROADCAST_PROGRESS_MESSAGE = "PROGRESS_MESSAGE";
+    @SuppressWarnings("FieldCanBeLocal") // static 필드로 여러 인스턴스에서 공유됨
     private static Timer mTimer;
+    @SuppressWarnings({"deprecation", "FieldCanBeLocal"}) // ProgressDialog는 API 26에서 deprecated되었지만 대체할 수 있는 적절한 방법이 없음
     private static ProgressDialog dialog;
     static int progress;
 
@@ -54,9 +56,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         
         // 테마에 따라 Status Bar 색상 동적 설정
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            setStatusBarColorByTheme();
-        }
+        setStatusBarColorByTheme();
         
         // App bar 색상 설정
         setAppBarColorByTheme();
@@ -82,22 +82,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // 마시멜로우 이상 버전이면
-            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    Toast.makeText(this, "Log 저장을 위해 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
-                }
-                requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_REQUEST);
+        // 마시멜로우 이상 버전이면
+        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                Toast.makeText(this, "Log 저장을 위해 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
             }
+            requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_REQUEST);
+        }
 
-            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
                 SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
                 prefsEditr.putBoolean("FILE_LOG_ENABLED", true);
                 prefsEditr.apply();
                 logger = org.apache.log4j.Logger.getLogger("MainActivity");
             }
-        }
 
         IntentFilter theFilter = new IntentFilter();
         theFilter.addAction(BROADCAST_PROGRESS_MESSAGE);
@@ -128,9 +127,12 @@ public class MainActivity extends AppCompatActivity {
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
 
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent contentIntent = PendingIntent.getActivity(
+            this, 0, notificationIntent, 
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "exit_channel");
 
         builder.setContentTitle("Exit program")
                 .setContentText("OnDestroy is called")
@@ -143,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                 .setDefaults(Notification.DEFAULT_ALL);
 
         builder.setCategory(Notification.CATEGORY_MESSAGE)
-                .setPriority(Notification.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setVisibility(Notification.VISIBILITY_PUBLIC);
 
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -191,8 +193,11 @@ public class MainActivity extends AppCompatActivity {
             mTimer = new Timer();
             mTimer.schedule(new MyTask(), 0, progress);
 
-            dialog = ProgressDialog.show(MainActivity.this, "Wait",
+            // ProgressDialog는 API 26에서 deprecated되었지만 대체할 수 있는 적절한 방법이 없음
+            @SuppressWarnings("deprecation")
+            ProgressDialog progressDialog = ProgressDialog.show(MainActivity.this, "Wait",
                     "다음 Request가 허용될 때까지 대기.. 최대 10초", true);
+            dialog = progressDialog;
         }
     }
 
@@ -238,27 +243,21 @@ public class MainActivity extends AppCompatActivity {
      * 현재 테마에 따라 Status Bar 색상을 설정하는 메서드
      */
     private void setStatusBarColorByTheme() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // 현재 테마가 Light 테마인지 확인
-            boolean isLightTheme = isLightTheme();
-            
-            int statusBarColor;
-            if (isLightTheme) {
-                statusBarColor = getResources().getColor(R.color.status_bar_light);
-                // Light 테마에서는 Status bar 아이콘을 어둡게 설정
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-                }
-            } else {
-                statusBarColor = getResources().getColor(R.color.status_bar_dark);
-                // Dark 테마에서는 Status bar 아이콘을 밝게 설정
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    getWindow().getDecorView().setSystemUiVisibility(0);
-                }
-            }
-            
-            getWindow().setStatusBarColor(statusBarColor);
+        // 현재 테마가 Light 테마인지 확인
+        boolean isLightTheme = isLightTheme();
+        
+        int statusBarColor;
+        if (isLightTheme) {
+            statusBarColor = ContextCompat.getColor(this, R.color.status_bar_light);
+            // Light 테마에서는 Status bar 아이콘을 어둡게 설정
+            getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        } else {
+            statusBarColor = ContextCompat.getColor(this, R.color.status_bar_dark);
+            // Dark 테마에서는 Status bar 아이콘을 밝게 설정
+            getWindow().getDecorView().setSystemUiVisibility(0);
         }
+            
+        getWindow().setStatusBarColor(statusBarColor);
     }
     
     /**
@@ -279,9 +278,9 @@ public class MainActivity extends AppCompatActivity {
         
         int appBarColor;
         if (isLightTheme) {
-            appBarColor = getResources().getColor(R.color.app_bar_light);
+            appBarColor = ContextCompat.getColor(this, R.color.app_bar_light);
         } else {
-            appBarColor = getResources().getColor(R.color.app_bar_dark);
+            appBarColor = ContextCompat.getColor(this, R.color.app_bar_dark);
         }
         
         // ActionBar 색상 설정
@@ -289,17 +288,15 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(appBarColor));
             
             // ActionBar 그림자 효과 제거
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                getSupportActionBar().setElevation(0);
-            }
+            getSupportActionBar().setElevation(0);
             
             // 텍스트 색상 설정 (흰색 배경에서는 어두운 색 사용)
             if (isLightTheme) {
                 // Light 테마에서는 어두운 텍스트 색상 사용
-                setActionBarTitleColor(getResources().getColor(android.R.color.black));
+                setActionBarTitleColor(ContextCompat.getColor(this, android.R.color.black));
             } else {
                 // Dark 테마에서는 밝은 텍스트 색상 사용
-                setActionBarTitleColor(getResources().getColor(android.R.color.white));
+                setActionBarTitleColor(ContextCompat.getColor(this, android.R.color.white));
             }
         }
     }

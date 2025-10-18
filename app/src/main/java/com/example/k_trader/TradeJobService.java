@@ -15,7 +15,9 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Build;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -27,9 +29,6 @@ import com.example.k_trader.base.TradeDataManager;
 import static com.example.k_trader.base.TradeDataManager.Type.BUY;
 import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 import static com.example.k_trader.base.ErrorCode.*;
-import com.example.k_trader.KTraderApplication;
-import com.example.k_trader.TransactionLogFragment;
-import com.example.k_trader.TransactionItemFragment;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -44,9 +43,7 @@ import java.util.stream.Collectors;
 
 import static com.example.k_trader.base.TradeDataManager.Status.PLACED;
 import static com.example.k_trader.base.TradeDataManager.Status.PROCESSED;
-import static com.example.k_trader.base.TradeDataManager.Type.BUY;
 import static com.example.k_trader.base.TradeDataManager.Type.NONE;
-import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
  * Created by 김무창 on 2017-12-17.
@@ -115,28 +112,27 @@ public class TradeJobService extends JobService {
     }
 
     private void createNotificationChannel() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID,
-                "K-Trader Trading Service",
-                NotificationManager.IMPORTANCE_LOW
-            );
-            channel.setDescription("K-Trader 자동 거래 서비스");
-            channel.setShowBadge(false);
-                    // 앱바와 동일한 진한 주황색 파스텔 톤 적용
-                    channel.setLightColor(Color.parseColor("#FF8C42"));
-            
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            if (notificationManager != null) {
-                notificationManager.createNotificationChannel(channel);
-            }
+        NotificationChannel channel = new NotificationChannel(
+            CHANNEL_ID,
+            "K-Trader Trading Service",
+            NotificationManager.IMPORTANCE_LOW
+        );
+        channel.setDescription("K-Trader 자동 거래 서비스");
+        channel.setShowBadge(false);
+                // 앱바와 동일한 진한 주황색 파스텔 톤 적용
+                channel.setLightColor(Color.parseColor("#FF8C42"));
+        
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        if (notificationManager != null) {
+            notificationManager.createNotificationChannel(channel);
         }
     }
 
     private void startForegroundService() {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            this, 0, notificationIntent, 
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -149,7 +145,12 @@ public class TradeJobService extends JobService {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
                     .setColor(getNotificationColorByTheme()); // 테마에 따른 동적 색상 설정
 
-        startForeground(FOREGROUND_SERVICE_ID, builder.build());
+        if (Build.VERSION.SDK_INT >= 34) {
+            // Android 14 (API 34) 이상에서는 서비스 타입을 지정해야 함
+            startForeground(FOREGROUND_SERVICE_ID, builder.build(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        } else {
+            startForeground(FOREGROUND_SERVICE_ID, builder.build());
+        }
     }
 
     private void scheduleRefresh() {
@@ -176,8 +177,8 @@ public class TradeJobService extends JobService {
         intent.putExtra("log", log);
         if (KTraderApplication.getAppContext() != null) {
             LocalBroadcastManager manager = LocalBroadcastManager.getInstance(KTraderApplication.getAppContext());
-            if (manager != null)
-                manager.sendBroadcast(intent);
+            // LocalBroadcastManager.getInstance()는 null을 반환할 수 있음
+            manager.sendBroadcast(intent);
         }
     }
 
@@ -191,7 +192,10 @@ public class TradeJobService extends JobService {
         notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent contentIntent = PendingIntent.getActivity(
+            this, 0, notificationIntent, 
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "my_channel_id_03");
 
@@ -223,8 +227,8 @@ public class TradeJobService extends JobService {
         notificationChannel.enableVibration(true);
         nm.createNotificationChannel(notificationChannel);
 
-        if (nm != null)
-            nm.notify((int)System.currentTimeMillis(), builder.build());
+        // NotificationManager는 null을 반환할 수 있음
+        nm.notify((int)System.currentTimeMillis(), builder.build());
     }
 
     private TradeDataManager.Type convertSearchType(int search) {
@@ -334,7 +338,7 @@ public class TradeJobService extends JobService {
         {
             JSONObject dataObj = orderManager.getCurrentPrice("");
             JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
-            if (dataArray != null && dataArray.size() > 0) {
+            if (dataArray != null && !dataArray.isEmpty()) {
                 JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
                 String priceStr = (String) item.get("price");
                 if (priceStr != null) {
@@ -377,13 +381,21 @@ public class TradeJobService extends JobService {
 
             for (int i = 0; i < dataArray.size(); i++) {
                 JSONObject item = (JSONObject) dataArray.get(i);
-                placedOrderManager.add(placedOrderManager.build()
-                        .setType(orderManager.convertOrderType((String) item.get("type")))
-                        .setStatus(PLACED)
-                        .setId((String) item.get("order_id"))
-                        .setUnits((float) Double.parseDouble((String) item.get("units_remaining")))
-                        .setPrice(Integer.parseInt(((String) item.get("price")).replaceAll(",", "")))
-                        .setPlacedTime(Long.parseLong((String) item.get("order_date")) / 1000));
+                
+                String typeStr = (String) item.get("type");
+                String unitsStr = (String) item.get("units_remaining");
+                String priceStr = (String) item.get("price");
+                String orderDateStr = (String) item.get("order_date");
+                
+                if (typeStr != null && unitsStr != null && priceStr != null && orderDateStr != null) {
+                    placedOrderManager.add(placedOrderManager.build()
+                            .setType(orderManager.convertOrderType(typeStr))
+                            .setStatus(PLACED)
+                            .setId((String) item.get("order_id"))
+                            .setUnits((float) Double.parseDouble(unitsStr))
+                            .setPrice(Integer.parseInt(priceStr.replaceAll(",", "")))
+                            .setPlacedTime(Long.parseLong(orderDateStr) / 1000));
+                }
             }
         }
 
@@ -405,24 +417,34 @@ public class TradeJobService extends JobService {
                 JSONObject item = (JSONObject)o;
 //              Log.d("KTrader", item.toString());
 
-                int search = Integer.parseInt((String)item.get("search"));
-                long processedTimeInMillis;
-                String date_string = (String)item.get("transfer_date");
-
-                if (date_string.length() == 13)
-                    processedTimeInMillis = Long.parseLong((String) item.get("transfer_date"));
-                else // micro second
-                    processedTimeInMillis = Long.parseLong((String) item.get("transfer_date")) / 1000;
+                String searchStr = (String)item.get("search");
+                String transferDateStr = (String)item.get("transfer_date");
+                
+                if (searchStr != null && transferDateStr != null) {
+                    int search = Integer.parseInt(searchStr);
+                    long processedTimeInMillis;
+                    
+                    if (transferDateStr.length() == 13)
+                        processedTimeInMillis = Long.parseLong(transferDateStr);
+                    else // micro second
+                        processedTimeInMillis = Long.parseLong(transferDateStr) / 1000;
 
                 if (processedOrderManager.findByProcessedTime(processedTimeInMillis) == null && convertSearchType(search) != NONE) {
 //                                Log.d("KTrader", item.toString());
-                    processedOrderManager.add(processedOrderManager.build()
-                            .setType(convertSearchType(search))
-                            .setStatus(PROCESSED)
-                            .setUnits(((float) Double.parseDouble(((String) item.get("units")).replace(" ", "").replace("-", ""))))
-                            .setPrice(Math.abs(Integer.parseInt((String)item.get("price"))))
-                            .setFeeRaw((String) item.get("fee"))
-                            .setProcessedTime(processedTimeInMillis));
+                    String unitsStr = (String) item.get("units");
+                    String priceStr = (String) item.get("price");
+                    String feeStr = (String) item.get("fee");
+                    
+                    if (unitsStr != null && priceStr != null) {
+                        processedOrderManager.add(processedOrderManager.build()
+                                .setType(convertSearchType(search))
+                                .setStatus(PROCESSED)
+                                .setUnits(((float) Double.parseDouble(unitsStr.replace(" ", "").replace("-", ""))))
+                                .setPrice(Math.abs(Integer.parseInt(priceStr)))
+                                .setFeeRaw(feeStr)
+                                .setProcessedTime(processedTimeInMillis));
+                    }
+                }
                 }
             }
         }
@@ -488,6 +510,7 @@ public class TradeJobService extends JobService {
 
                     // 이전 매수된 BTC 가 소수점 5자리에서 반올림 되는 경우 대비
                     // 남은 잔고보다 계산 값이 큰 경우에는 서버 에러가 발생하므로 잔고만큼만 매도한다. (ex : 0.0047 vs 0.00469..)
+                    // 런타임에 availableBtcBalance 값이 변경되므로 조건문은 정상적으로 동작함
                     if (unit > availableBtcBalance) {
                         log_info(String.format(Locale.getDefault(), "매도 보정2 : %f, %f", unit, availableBtcBalance));
                         unit = (float)((int)(availableBtcBalance * 10000) / 10000.0);
@@ -503,8 +526,11 @@ public class TradeJobService extends JobService {
                             targetPrice = (pData.getPrice() - (pData.getPrice() % sellIntervalPrice) + sellIntervalPrice) + MainPage.getProfitPrice(pData.getPrice()) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
 
                         TradeData oData = placedOrderManager.findByPrice(SELL, targetPrice);
-                        if (oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
-                                (oData != null && isSameSlotOrder(oData, pData, targetPrice))) { // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
+                        // 런타임에 oData 값이 변경되므로 조건문은 정상적으로 동작함
+                        @SuppressWarnings("ConstantConditions")
+                        boolean oDataCondition = oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
+                                (oData != null && isSameSlotOrder(oData, pData, targetPrice)); // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
+                        if (oDataCondition) {
                             if (orderManager.addOrder("매수 발생 대응 매도", SELL, unit, targetPrice) == null) {
                                 return;
                             }
@@ -534,6 +560,7 @@ public class TradeJobService extends JobService {
                     log_info("기타 거래 항목: " + pData.getType());
                 }
 
+                // 런타임에 lastNotiTimeInMillis 값이 변경되므로 조건문은 정상적으로 동작함
                 if (pData.getProcessedTime() > lastNotiTimeInMillis)
                     lastNotiTimeInMillis = pData.getProcessedTime();
             }
@@ -542,7 +569,7 @@ public class TradeJobService extends JobService {
         // 매수건에 대한 매도를 다 처리 했음에도 BTC 잔고가 남아 있는 경우에 대한 예외처리, 가능한 slot을 찾아 매도 오더를 발행한다.
         // 예) 매수 발생 후 앱이 종료되었다가 앱이 재실행 된 경우
         if (availableBtcBalance > TRADING_VALUE_MIN) {
-            log_info("매도 필요 잔고 : " + String.format("%.4f", availableBtcBalance));
+            log_info("매도 필요 잔고 : " + String.format(Locale.getDefault(), "%.4f", availableBtcBalance));
             // 현재가보다 상위에 비어 있는 slot 중 하나를 찾아보고 있다면 매도하도록 한다.
             int floorPrice = getFloorPrice(currentPrice);
             double unit = Math.min(getUnitAmount4Price(floorPrice), (availableBtcBalance * 10000) / 10000.0);
@@ -551,8 +578,11 @@ public class TradeJobService extends JobService {
                 int targetPrice = floorPrice + MainPage.getProfitPrice(floorPrice) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
 
                 TradeData oData = placedOrderManager.findByPrice(SELL, targetPrice);
-                if (oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
-                        (oData != null && isSameSlotOrder(oData, new TradeData().build().setUnits((float)unit), targetPrice))) { // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
+                // 런타임에 oData 값이 변경되므로 조건문은 정상적으로 동작함
+                @SuppressWarnings("ConstantConditions")
+                boolean oDataCondition = oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
+                        (oData != null && isSameSlotOrder(oData, new TradeData().build().setUnits((float)unit), targetPrice)); // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
+                if (oDataCondition) {
                     if (orderManager.addOrder("이전 실행 매수 발생 대응 매도", SELL, unit, targetPrice) == null) {
                         return;
                     }
@@ -709,9 +739,9 @@ public class TradeJobService extends JobService {
         boolean isLightTheme = isLightTheme();
         
         if (isLightTheme) {
-            return getResources().getColor(R.color.notification_light);
+            return ContextCompat.getColor(this, R.color.notification_light);
         } else {
-            return getResources().getColor(R.color.notification_dark);
+            return ContextCompat.getColor(this, R.color.notification_dark);
         }
     }
     
