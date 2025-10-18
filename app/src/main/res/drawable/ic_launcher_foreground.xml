@@ -10,119 +10,63 @@
         android:fillColor="#FFFFFF"
         android:pathData="M0,0h108v108h-108z" />
     
-    <!-- 주황색 K 문자 - 두껍고 우측으로 기울어진 서예 스타일 -->
-    <!-- 세로 막대 (두껍게) -->
+    <!-- 주황색 T 문자 - 빗썸 스타일 -->
+    <!-- 상단 가로 막대 (두껍고 세련된) -->
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M38,20L48,20L48,88L38,88Z" />
+        android:pathData="M20,25L88,25L88,40L20,40Z" />
     
-    <!-- K의 상단 대각선 (우측으로 기울어진 두꺼운 선) -->
+    <!-- 세로 막대 (중앙에 위치) -->
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M48,35L48,45L52,45L52,35L48,35Z" />
+        android:pathData="M49,40L59,40L59,88L49,88Z" />
     
+    <!-- 볼드 효과를 위한 추가 레이어들 -->
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M52,30L52,40L56,40L56,30L52,30Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M56,25L56,35L60,35L60,25L56,25Z" />
+        android:pathData="M21,26L87,26L87,39L21,39Z" />
     
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M60,20L60,30L64,30L64,20L60,20Z" />
+        android:pathData="M22,27L86,27L86,38L22,38Z" />
     
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M64,15L64,25L68,25L68,15L64,15Z" />
+        android:pathData="M23,28L85,28L85,37L23,37Z" />
+    
+    <!-- 세로 막대 볼드 효과 -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M50,41L58,41L58,87L50,87Z" />
     
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M68,10L68,20L72,20L72,10L68,10Z" />
-    
-    <!-- K의 하단 대각선 (우측으로 기울어진 두꺼운 선) -->
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M48,45L48,55L52,55L52,45L48,45Z" />
+        android:pathData="M51,42L57,42L57,86L51,86Z" />
     
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M52,50L52,60L56,60L56,50L52,50Z" />
+        android:pathData="M52,43L56,43L56,85L52,85Z" />
+    
+    <!-- 세련된 끝부분 처리 -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M19,24L21,24L21,41L19,41Z" />
     
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M56,55L56,65L60,65L60,55L56,55Z" />
+        android:pathData="M87,24L89,24L89,41L87,41Z" />
     
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M60,60L60,70L64,70L64,60L60,60Z" />
+        android:pathData="M48,39L50,39L50,89L48,89Z" />
     
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M64,65L64,75L68,75L68,65L64,65Z" />
+        android:pathData="M58,39L60,39L60,89L58,89Z" />
     
+    <!-- 하단 끝부분 세련된 처리 -->
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M68,70L68,80L72,80L72,70L68,70Z" />
-    
-    <!-- 추가 볼드 효과를 위한 레이어들 -->
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M39,21L47,21L47,87L39,87Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M40,22L46,22L46,86L40,86Z" />
-    
-    <!-- 상단 대각선 볼드 효과 -->
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M49,36L51,36L51,44L49,44Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M53,31L55,31L55,39L53,39Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M57,26L59,26L59,34L57,34Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M61,21L63,21L63,29L61,29Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M65,16L67,16L67,24L65,24Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M69,11L71,11L71,19L69,19Z" />
-    
-    <!-- 하단 대각선 볼드 효과 -->
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M49,46L51,46L51,54L49,54Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M53,51L55,51L55,59L53,59Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M57,56L59,56L59,64L57,64Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M61,61L63,61L63,69L61,69Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M65,66L67,66L67,74L65,74Z" />
-    
-    <path
-        android:fillColor="#FF6B35"
-        android:pathData="M69,71L71,71L71,79L69,79Z" />
+        android:pathData="M47,87L61,87L61,90L47,90Z" />
     
 </vector>
