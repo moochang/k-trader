@@ -30,13 +30,15 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00011808");
+                //data.put("available_btc", "0.00011808");
+                data.put("available_eth", "0.00011808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
                 obj.put("data", data);
                 return obj;
-            } else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            //} else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            } else if (endpoint.equals("/public/orderbook/ETH")) { // getCurrentPrice
                 JSONObject price = new JSONObject();
                 price.put("price", "51234567"); // currentPrice
 
@@ -129,13 +131,15 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00001808");
+                //data.put("available_btc", "0.00001808");
+                data.put("available_eth", "0.00001808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
                 obj.put("data", data);
                 return obj;
-            } else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            //} else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            } else if (endpoint.equals("/public/orderbook/ETH")) { // getCurrentPrice
                 JSONObject price = new JSONObject();
                 price.put("price", "51234567"); // currentPrice
 
@@ -234,13 +238,15 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00001808");
+                //data.put("available_btc", "0.00001808");
+                data.put("available_eth", "0.00001808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
                 obj.put("data", data);
                 return obj;
-            } else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            //} else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            } else if (endpoint.equals("/public/orderbook/ETH")) { // getCurrentPrice
                 JSONObject price = new JSONObject();
                 price.put("price", "49390000"); // currentPrice
 
@@ -334,13 +340,15 @@ public class TradeJobServiceTest {
             if (endpoint.equals("/info/balance")) { // getBalance
                 JSONObject data = new JSONObject();
                 data.put("total_krw", "0");
-                data.put("available_btc", "0.00001808");
+                //data.put("available_btc", "0.00001808");
+                data.put("available_eth", "0.00001808");
 
                 JSONObject obj = new JSONObject();
                 obj.put("status", "0000");
                 obj.put("data", data);
                 return obj;
-            } else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            //} else if (endpoint.equals("/public/orderbook/BTC")) { // getCurrentPrice
+            } else if (endpoint.equals("/public/orderbook/ETH")) { // getCurrentPrice
                 JSONObject price = new JSONObject();
                 price.put("price", "49390000"); // currentPrice
 

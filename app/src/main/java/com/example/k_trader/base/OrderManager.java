@@ -61,7 +61,8 @@ public class OrderManager {
         else
             rgParams.put("type", "ask");
 
-        rgParams.put("order_currency", "BTC");
+        //rgParams.put("order_currency", "BTC");
+        rgParams.put("order_currency", "ETH");
         rgParams.put("order_id", data.getId());
         rgParams.put("payment_currency", "KRW");
 
@@ -136,7 +137,8 @@ public class OrderManager {
         JSONObject result;
         long requestTime = Calendar.getInstance().getTimeInMillis();
 
-        if (units < 0.0001) {
+        //if (units < 0.0001) {
+        if (units < 0.001) { // for eth
             String logMessage = tag + " : " + type.toString() + " 발행 취소 : " + String.format("%.4f", units) + " : " + "최소 수량 미달";
             log_info(logMessage);
             sendErrorCard("Validation Error", ERR_VALIDATION_001.getDescription());
@@ -164,7 +166,8 @@ public class OrderManager {
         }
 
         HashMap<String, String> rgParams = new HashMap<>();
-        rgParams.put("order_currency", "BTC");
+        //rgParams.put("order_currency", "BTC");
+        rgParams.put("order_currency", "ETH");
         rgParams.put("Payment_currency", "KRW");
         rgParams.put("units", String.format("%.4f", units));
         rgParams.put("price", String.valueOf(price));
@@ -245,7 +248,8 @@ public class OrderManager {
         }
 
         HashMap<String, String> rgParams = new HashMap<>();
-        rgParams.put("order_currency", "BTC");
+        //rgParams.put("order_currency", "BTC");
+        rgParams.put("order_currency", "ETH");
         rgParams.put("units", String.format("%.4f", units));
         rgParams.put("payment_currency", "KRW");
 
@@ -294,7 +298,19 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            result = api.callApi("POST", "/info/balance", null);
+            /*
+            HashMap<String, String> requestParams = new HashMap<>();
+            requestParams.put("currency", "ETH");
+            // 필요한 다른 파라미터들도 추가할 수 있습니다.
+            // requestParams.put("key", "value");
+            // callApi 함수 호출
+            JSONObject response = callApi("GET", "/some/endpoint", requestParams);
+            */
+            HashMap<String, String> requestParams = new HashMap<>();
+            requestParams.put("currency", "ETH");
+
+            //result = api.callApi("POST", "/info/balance", null);
+            result = api.callApi("POST", "/info/balance",requestParams);
 
             if (result == null) {
                 log_info(tag + " : " + "/info/balance : null");
@@ -324,26 +340,31 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            result = api.callApi("GET", "/public/orderbook/BTC", null);
+            //result = api.callApi("GET", "/public/orderbook/BTC", null);
+            result = api.callApi("GET", "/public/orderbook/ETH", null);
 
             if (result == null) {
-                log_info(tag + " : " + "/public/orderbook/BTC : null");
+                //log_info(tag + " : " + "/public/orderbook/BTC : null");
+                log_info(tag + " : " + "/public/orderbook/ETH : null");
                 throw new Exception("returns null");
             }
 
             if (result.get("status") instanceof Long) {
-                log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
+                //log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
+                log_info(tag + " : " + "/public/orderbook/ETH : " + result.toString());
                 throw new Exception("returns null");
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 // ex ) {"message":"Database Fail","status":"5400"}
-                log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
+                //log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
+                log_info(tag + " : " + "/public/orderbook/ETH : " + result.toString());
                 throw new Exception("returns null");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            log_info(tag + " : " + "/public/orderbook/BTC : " + e.getMessage());
+            //log_info(tag + " : " + "/public/orderbook/BTC : " + e.getMessage());
+            log_info(tag + " : " + "/public/orderbook/ETH : " + e.getMessage());
             throw new Exception("returns null");
         }
 
@@ -357,7 +378,8 @@ public class OrderManager {
         try {
             HashMap param = new HashMap();
             param.put("count", "300");
-            param.put("order_currency", "BTC");
+            //param.put("order_currency", "BTC");
+            param.put("order_currency", "ETH");
 
             result = api.callApi("POST", "/info/orders", param);
 
@@ -401,7 +423,8 @@ public class OrderManager {
             rgParams.put("offset", String.valueOf(offset));
             rgParams.put("count", count); // 1~50, default = 20
             rgParams.put("searchGb", "0"); // 0 = all, 1 = buy
-            rgParams.put("order_currency", "BTC");
+            //rgParams.put("order_currency", "BTC");
+            rgParams.put("order_currency", "ETH");
             rgParams.put("payment_currency", "KRW");
 
             result = api.callApi("POST", "/info/user_transactions", rgParams);

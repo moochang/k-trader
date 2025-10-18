@@ -19,7 +19,8 @@ public class Log4jHelper {
     }
 
     private static void configureLog4j() {
-        String fileName = Environment.getExternalStorageDirectory() + "/k-trader/k-trader.log.txt";
+        //String fileName = Environment.getExternalStorageDirectory() + "/k-trader/k-trader.log.txt";
+        String fileName = Environment.getExternalStorageDirectory() + "/k-trader-eth/k-trader-eth.log.txt";
         //String filePattern = "%d - [%c] - %p : %m%n";
         String filePattern = "%m%n";
         int maxBackupSize = 2;

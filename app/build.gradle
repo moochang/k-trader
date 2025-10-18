@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "com.example.k_trader"
+        applicationId "com.example.k_trader_eth"
         minSdkVersion 26
         //noinspection EditedTargetSdkVersion,ExpiredTargetSdkVersion
         targetSdkVersion 28
