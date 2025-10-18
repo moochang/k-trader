@@ -32,8 +32,8 @@ BitThumb 거래소용 Bitcoin 자동 매매 Android app 프로그램입니다.
 
 * 사용법
 1. 빗썸 사이트에서 API_KEY와 API_SECRET 값을 생성 (보안을 위해 입출금 권한은 빼는 것 추천)
-   https://www.bithumb.com/react/api-support/management-apiAndroid:
-   1.1 핸드폰 IP 고정 방법
+   1.1 https://www.bithumb.com/react/api-support/management-apiAndroid:
+   1.2 핸드폰 IP 고정 방법
     - 개발자 옵션 활성화
     - 모바일 데이터 항상 활성화 설정   
 2. 빗썸 사이트에서 투자금 입금 (100만원 이상 추천)
