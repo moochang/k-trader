@@ -238,4 +238,25 @@ public class TransactionItemFragment extends Fragment {
             notifyItemInserted(0);
         }
     }
+
+    /**
+     * RecyclerView를 맨 아래로 스크롤하는 메서드
+     */
+    public void scrollToBottom() {
+        if (recyclerViewCards != null && cardAdapter != null) {
+            int itemCount = cardAdapter.getItemCount();
+            if (itemCount > 0) {
+                recyclerViewCards.smoothScrollToPosition(itemCount - 1);
+            }
+        }
+    }
+
+    /**
+     * Auto scroll 기능을 활성화/비활성화하는 메서드
+     */
+    public void setAutoScroll(boolean enabled) {
+        // Auto scroll 기능은 카드가 추가될 때마다 자동으로 스크롤하는 기능
+        // 현재는 카드가 추가될 때마다 맨 위에 추가되므로 별도의 auto scroll 로직이 필요하지 않음
+        // 필요시 나중에 구현 가능
+    }
 }

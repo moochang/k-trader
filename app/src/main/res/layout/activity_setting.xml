@@ -36,13 +36,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="12dp">
 
             <!-- API 설정 섹션 -->
             <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="@color/surface_modern"
@@ -54,7 +54,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:layout_width="match_parent"
@@ -63,14 +63,14 @@
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary_modern"
-                        android:layout_marginBottom="16dp" />
+                        android:layout_marginBottom="12dp" />
 
                     <!-- API Key -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="16dp">
+                        android:layout_marginBottom="12dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -83,7 +83,7 @@
                         <EditText
                             android:id="@+id/editTextApiKey"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="44dp"
                             android:background="@drawable/edit_text_modern_background"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
@@ -112,7 +112,7 @@
                         <EditText
                             android:id="@+id/editTextApiSecret"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="44dp"
                             android:background="@drawable/edit_text_modern_background"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
@@ -132,7 +132,7 @@
             <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="@color/surface_modern"
@@ -144,7 +144,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:layout_width="match_parent"
@@ -153,14 +153,14 @@
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary_modern"
-                        android:layout_marginBottom="16dp" />
+                        android:layout_marginBottom="12dp" />
 
                     <!-- 1회 거래 금액 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="16dp">
+                        android:layout_marginBottom="12dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -173,7 +173,7 @@
                         <EditText
                             android:id="@+id/editTextUnitPrice"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="44dp"
                             android:background="@drawable/edit_text_modern_background"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
@@ -190,7 +190,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="16dp">
+                        android:layout_marginBottom="12dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -203,7 +203,7 @@
                         <EditText
                             android:id="@+id/editTextTradingInterval"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="44dp"
                             android:background="@drawable/edit_text_modern_background"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
@@ -220,7 +220,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="16dp">
+                        android:layout_marginBottom="12dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -233,7 +233,7 @@
                         <EditText
                             android:id="@+id/editTextEarningRate"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="44dp"
                             android:background="@drawable/edit_text_modern_background"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
@@ -262,7 +262,7 @@
                         <EditText
                             android:id="@+id/editTextSlotIntervalRate"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
+                            android:layout_height="44dp"
                             android:background="@drawable/edit_text_modern_background"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
@@ -283,7 +283,7 @@
                 android:id="@+id/buttonSave"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="8dp"
                 android:text="설정 저장"
                 android:textSize="16sp"
                 android:textStyle="bold"

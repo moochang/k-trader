@@ -247,19 +247,13 @@ public class MainActivity extends AppCompatActivity {
                 statusBarColor = getResources().getColor(R.color.status_bar_light);
                 // Light 테마에서는 Status bar 아이콘을 어둡게 설정
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    // API 23 이상에서 SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 제거
-                    int flags = getWindow().getDecorView().getSystemUiVisibility();
-                    flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                    getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
                 }
             } else {
                 statusBarColor = getResources().getColor(R.color.status_bar_dark);
                 // Dark 테마에서는 Status bar 아이콘을 밝게 설정
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    // API 23 이상에서 SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 추가
-                    int flags = getWindow().getDecorView().getSystemUiVisibility();
-                    flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                    getWindow().getDecorView().setSystemUiVisibility(0);
                 }
             }
             
@@ -271,9 +265,9 @@ public class MainActivity extends AppCompatActivity {
      * 현재 테마가 Light 테마인지 확인하는 메서드
      */
     private boolean isLightTheme() {
-        // 현재 앱이 Light 테마를 사용하고 있는지 확인
-        // AppTheme의 parent가 Theme.AppCompat.Light.DarkActionBar이므로 Light 테마
-        return true; // 현재 앱은 Light 테마 사용
+        // Android 시스템의 다크 모드 설정 확인
+        int nightModeFlags = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return nightModeFlags != android.content.res.Configuration.UI_MODE_NIGHT_YES;
     }
     
     /**

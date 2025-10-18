@@ -166,10 +166,20 @@ public class MainPage extends Fragment {
         });
 
         btnScrollToBottom.setOnClickListener(v -> {
-            // 현재 선택된 Fragment가 TransactionLogFragment인지 확인하고 스크롤
-            TransactionLogFragment logFragment = (TransactionLogFragment) pagerAdapter.getItem(viewPager.getCurrentItem());
-            if (logFragment != null) {
-                logFragment.scrollToBottom();
+            // 현재 선택된 Fragment에 따라 스크롤 기능 실행
+            int currentItem = viewPager.getCurrentItem();
+            if (currentItem == 0) {
+                // Transaction Item 탭
+                TransactionItemFragment itemFragment = (TransactionItemFragment) pagerAdapter.getItem(currentItem);
+                if (itemFragment != null) {
+                    itemFragment.scrollToBottom();
+                }
+            } else if (currentItem == 1) {
+                // Transaction Log 탭
+                TransactionLogFragment logFragment = (TransactionLogFragment) pagerAdapter.getItem(currentItem);
+                if (logFragment != null) {
+                    logFragment.scrollToBottom();
+                }
             }
         });
 
