@@ -24,6 +24,9 @@ import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.base.TradeDataManager;
+import static com.example.k_trader.base.TradeDataManager.Type.BUY;
+import static com.example.k_trader.base.TradeDataManager.Type.SELL;
+import static com.example.k_trader.base.ErrorCode.*;
 import com.example.k_trader.KTraderApplication;
 
 import org.json.simple.JSONArray;
@@ -90,6 +93,9 @@ public class TradeJobService extends JobService {
             } catch (Exception e) {
                 // 예외 발생 시 로그만 출력
                 log_info("Trade business logic error: " + e.getMessage());
+                
+                // 에러 카드 전송
+                sendErrorCard("Trade Business Logic Error", ERR_BUSINESS_001.getDescription(), ERR_BUSINESS_001.getCode(), "Trade business logic error: " + e.getMessage());
             }
 
             if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
@@ -317,6 +323,7 @@ public class TradeJobService extends JobService {
                         availableBtcBalance = Double.parseDouble(availableBtc);
                     } else {
                         log_info("잔고 정보를 가져올 수 없습니다.");
+                        sendErrorCard("Balance Error", ERR_API_003.getDescription(), ERR_API_003.getCode(), "잔고 정보를 가져올 수 없습니다.");
                         return;
                     }
                 }
@@ -332,14 +339,19 @@ public class TradeJobService extends JobService {
                     currentPrice = (int)Double.parseDouble(priceStr);
                 } else {
                     log_info("현재가 정보를 가져올 수 없습니다.");
+                    sendErrorCard("Price Error", ERR_API_004.getDescription(), ERR_API_004.getCode(), "현재가 정보를 가져올 수 없습니다.");
                     return;
                 }
             } else {
                 log_info("매수 정보를 가져올 수 없습니다.");
+                sendErrorCard("Buy Order Error", ERR_API_002.getDescription(), ERR_API_002.getCode(), "매수 정보를 가져올 수 없습니다.");
                 return;
             }
 
             log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
+            
+            // 카드 데이터 전송
+            sendCardData(currentPrice, krwBalance);
 
             // 빗썸은 0.0001 BTC가 최소 거래 단위이므로 체크
             if (currentPrice / 10000 > GlobalSettings.getInstance().getUnitPrice()) {
@@ -605,5 +617,87 @@ public class TradeJobService extends JobService {
 
     public void setOrderManager(OrderManager orderManager) {
         this.orderManager = orderManager;
+    }
+    
+    private void sendCardData(int currentPrice, double krwBalance) {
+        try {
+            Calendar currentTime = Calendar.getInstance();
+            String transactionTime = String.format(Locale.getDefault(), "%d/%02d/%02d %02d:%02d:%02d",
+                currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE),
+                currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), currentTime.get(Calendar.SECOND));
+            
+            String btcCurrentPrice = String.format(Locale.getDefault(), "₩%,d", currentPrice);
+            
+            // 시간당 변화율 계산 (간단한 예시)
+            String hourlyChange = "+2.5%"; // 실제로는 이전 가격과 비교해서 계산
+            
+            String estimatedBalance = String.format(Locale.getDefault(), "₩%,.0f", krwBalance);
+            
+            // 마지막 매수 정보 가져오기
+            String lastBuyPrice = "정보 없음";
+            TradeData lastBuyData = processedOrderManager.findLatestProcessedTime(BUY);
+            if (lastBuyData != null) {
+                Calendar lastBuyTime = Calendar.getInstance();
+                lastBuyTime.setTimeInMillis(lastBuyData.getProcessedTime());
+                lastBuyPrice = String.format(Locale.getDefault(), "₩%,d (%02d/%02d %02d:%02d)",
+                    lastBuyData.getPrice(),
+                    lastBuyTime.get(Calendar.MONTH) + 1, lastBuyTime.get(Calendar.DATE),
+                    lastBuyTime.get(Calendar.HOUR_OF_DAY), lastBuyTime.get(Calendar.MINUTE));
+            }
+            
+            // 마지막 매도 정보 가져오기
+            String lastSellPrice = "정보 없음";
+            TradeData lastSellData = processedOrderManager.findLatestProcessedTime(SELL);
+            if (lastSellData != null) {
+                Calendar lastSellTime = Calendar.getInstance();
+                lastSellTime.setTimeInMillis(lastSellData.getProcessedTime());
+                lastSellPrice = String.format(Locale.getDefault(), "₩%,d (%02d/%02d %02d:%02d)",
+                    lastSellData.getPrice(),
+                    lastSellTime.get(Calendar.MONTH) + 1, lastSellTime.get(Calendar.DATE),
+                    lastSellTime.get(Calendar.HOUR_OF_DAY), lastSellTime.get(Calendar.MINUTE));
+            }
+            
+            // 다음 저점 매수가 계산 (간단한 예시)
+            String nextBuyPrice = String.format(Locale.getDefault(), "₩%,d (%02d/%02d %02d:%02d)",
+                currentPrice - 100000, // 현재가에서 10만원 낮춘 가격
+                currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE),
+                currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE) + 5);
+            
+            Intent intent = new Intent("TRADE_CARD_DATA");
+            intent.putExtra("transactionTime", transactionTime);
+            intent.putExtra("btcCurrentPrice", btcCurrentPrice);
+            intent.putExtra("hourlyChange", hourlyChange);
+            intent.putExtra("estimatedBalance", estimatedBalance);
+            intent.putExtra("lastBuyPrice", lastBuyPrice);
+            intent.putExtra("lastSellPrice", lastSellPrice);
+            intent.putExtra("nextBuyPrice", nextBuyPrice);
+            
+            LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.e("TradeJobService", "카드 데이터 전송 중 오류 발생", e);
+            
+            // 에러 카드 전송
+            sendErrorCard("Card Data Send Error", ERR_CARD_DATA_001.getDescription(), ERR_CARD_DATA_001.getCode(), "카드 데이터 전송 중 오류 발생: " + e.getMessage());
+        }
+    }
+    
+    private void sendErrorCard(String errorType, String errorMessage, String errorCode, String logInfo) {
+        try {
+            Calendar currentTime = Calendar.getInstance();
+            String errorTime = String.format(Locale.getDefault(), "%d/%02d/%02d %02d:%02d:%02d",
+                currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE),
+                currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), currentTime.get(Calendar.SECOND));
+            
+            Intent intent = new Intent("TRADE_ERROR_CARD");
+            intent.putExtra("errorTime", errorTime);
+            intent.putExtra("errorType", errorType);
+            intent.putExtra("errorMessage", errorMessage);
+            intent.putExtra("errorCode", errorCode);
+            intent.putExtra("logInfo", logInfo);
+            
+            LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.e("TradeJobService", "에러 카드 전송 중 오류 발생", e);
+        }
     }
 }

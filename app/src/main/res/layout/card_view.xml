@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/surface_modern">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Transaction Time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/transaction_time"
+                android:textColor="@color/text_secondary_modern"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textTransactionTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2024-01-01 12:00:00"
+                android:textColor="@color/text_primary_modern"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- BTC Current Price -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/btc_current_price"
+                android:textColor="@color/text_secondary_modern"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textBtcCurrentPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₩50,000,000"
+                android:textColor="@color/text_primary_modern"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Hourly Change -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/hourly_change"
+                android:textColor="@color/text_secondary_modern"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textHourlyChange"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+2.5%"
+                android:textColor="@color/success_modern"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Estimated Balance -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/estimated_balance"
+                android:textColor="@color/text_secondary_modern"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textEstimatedBalance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₩1,000,000"
+                android:textColor="@color/text_primary_modern"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Last Buy Price -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/last_buy_price"
+                android:textColor="@color/text_secondary_modern"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textLastBuyPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₩49,500,000 (12:30)"
+                android:textColor="@color/buy_modern"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Last Sell Price -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/last_sell_price"
+                android:textColor="@color/text_secondary_modern"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textLastSellPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₩50,200,000 (11:45)"
+                android:textColor="@color/sell_modern"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Next Buy Price -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/next_buy_price"
+                android:textColor="@color/text_secondary_modern"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/textNextBuyPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₩49,000,000 (12:35)"
+                android:textColor="@color/buy_modern"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>

@@ -10,6 +10,26 @@
     <string name="scroll_to_bottom">Scroll to bottom</string>
     <string name="auto_scroll">Auto Scroll</string>
     
+    <!-- 탭 -->
+    <string name="transaction_log">Transaction log</string>
+    <string name="transaction_item">Transaction Item</string>
+    
+    <!-- Card View 항목들 -->
+    <string name="transaction_time">Transaction Time</string>
+    <string name="btc_current_price">BTC Current Price</string>
+    <string name="hourly_change">Hourly Change</string>
+    <string name="estimated_balance">Estimated Balance</string>
+    <string name="last_buy_price">Last Buy Price</string>
+    <string name="last_sell_price">Last Sell Price</string>
+    <string name="next_buy_price">Next Buy Price</string>
+    
+    <!-- Error Card 항목들 -->
+    <string name="error_occurred">Error Occurred</string>
+    <string name="error_type">Error Type</string>
+    <string name="error_message">Error Message</string>
+    <string name="error_code">Error Code</string>
+    <string name="retry_count">Retry Count</string>
+    
     <!-- 메뉴 항목들 -->
     <string name="up">⬆ Up</string>
     <string name="down">⬇ Down</string>

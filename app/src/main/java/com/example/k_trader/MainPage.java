@@ -13,6 +13,7 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -23,6 +24,9 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ScrollView;
+import android.widget.TextView;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.LinearLayoutManager;
 
 import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.OrderManager;
@@ -39,6 +43,8 @@ import org.json.simple.JSONObject;
 public class MainPage extends Fragment {
 
     public static final String BROADCAST_LOG_MESSAGE = "TRADE_LOG";
+    public static final String BROADCAST_CARD_DATA = "TRADE_CARD_DATA";
+    public static final String BROADCAST_ERROR_CARD = "TRADE_ERROR_CARD";
 
     public static final int JOB_ID_FIRST = 1;
     public static final int JOB_ID_REGULAR = 2;
@@ -53,7 +59,10 @@ public class MainPage extends Fragment {
     Button btnStopTrading;
     Button btnScrollToBottom;
     Button btnPreference;
+    TabLayout tabLayout;
     ScrollView scrollView;
+    RecyclerView recyclerViewCards;
+    CardAdapter cardAdapter;
     CheckBox checkBox;
 
     ComponentName component;
@@ -73,7 +82,14 @@ public class MainPage extends Fragment {
         btnStopTrading = layout.findViewById(R.id.button2);
         btnScrollToBottom = layout.findViewById(R.id.button3);
         btnPreference = layout.findViewById(R.id.imageButtonPreference);
+        tabLayout = layout.findViewById(R.id.tabLayout);
         scrollView = layout.findViewById(R.id.scrollView1);
+        recyclerViewCards = layout.findViewById(R.id.recyclerViewCards);
+        
+        // RecyclerView 설정
+        recyclerViewCards.setLayoutManager(new LinearLayoutManager(getContext()));
+        cardAdapter = new CardAdapter();
+        recyclerViewCards.setAdapter(cardAdapter);
         checkBox = layout.findViewById(R.id.checkBox);
 
         if (savedInstanceState != null) {
@@ -95,6 +111,8 @@ public class MainPage extends Fragment {
             }
             IntentFilter theFilter = new IntentFilter();
             theFilter.addAction(BROADCAST_LOG_MESSAGE);
+            theFilter.addAction(BROADCAST_CARD_DATA);
+            theFilter.addAction(BROADCAST_ERROR_CARD);
             logReceiver = new LogReceiver();
             LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(logReceiver, theFilter);
         }
@@ -154,7 +172,61 @@ public class MainPage extends Fragment {
             startActivity(new Intent(mainActivity, SettingActivity.class));
         });
 
+        // TabLayout 초기화 및 탭 추가
+        setupTabLayout();
+
         return layout;
+    }
+
+    private void setupTabLayout() {
+        if (tabLayout != null) {
+            // Transaction Item 탭 추가 (첫 번째 탭)
+            TabLayout.Tab itemTab = tabLayout.newTab();
+            itemTab.setText(R.string.transaction_item);
+            tabLayout.addTab(itemTab);
+            
+            // Transaction log 탭 추가 (두 번째 탭)
+            TabLayout.Tab logTab = tabLayout.newTab();
+            logTab.setText(R.string.transaction_log);
+            tabLayout.addTab(logTab);
+            
+            // 기본 탭을 Transaction Item으로 설정 (첫 번째 탭)
+            TabLayout.Tab defaultTab = tabLayout.getTabAt(0);
+            if (defaultTab != null) {
+                defaultTab.select();
+            }
+            
+            // 탭 선택 리스너 설정
+            tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                @Override
+                public void onTabSelected(TabLayout.Tab tab) {
+                    // 탭이 선택되었을 때의 동작
+                    if (tab.getText().equals(getString(R.string.transaction_log))) {
+                        // Transaction log 탭 선택 시
+                        scrollView.setVisibility(View.VISIBLE);
+                        recyclerViewCards.setVisibility(View.GONE);
+                    } else if (tab.getText().equals(getString(R.string.transaction_item))) {
+                        // Transaction Item 탭 선택 시
+                        scrollView.setVisibility(View.GONE);
+                        recyclerViewCards.setVisibility(View.VISIBLE);
+                    }
+                }
+
+                @Override
+                public void onTabUnselected(TabLayout.Tab tab) {
+                    // 탭이 선택 해제되었을 때의 동작
+                }
+
+                @Override
+                public void onTabReselected(TabLayout.Tab tab) {
+                    // 같은 탭이 다시 선택되었을 때의 동작
+                }
+            });
+            
+            // 초기 상태 설정 (Transaction Item 탭이 기본으로 선택됨)
+            scrollView.setVisibility(View.GONE);
+            recyclerViewCards.setVisibility(View.VISIBLE);
+        }
     }
 
     private void log_info(final String log) {
@@ -180,7 +252,43 @@ public class MainPage extends Fragment {
     private class LogReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            log_info(intent.getStringExtra("log"));
+            if (intent.getAction().equals(BROADCAST_LOG_MESSAGE)) {
+                String log = intent.getStringExtra("log");
+                log_info(log);
+            } else if (intent.getAction().equals(BROADCAST_CARD_DATA)) {
+                // 카드 데이터 처리
+                String transactionTime = intent.getStringExtra("transactionTime");
+                String btcCurrentPrice = intent.getStringExtra("btcCurrentPrice");
+                String hourlyChange = intent.getStringExtra("hourlyChange");
+                String estimatedBalance = intent.getStringExtra("estimatedBalance");
+                String lastBuyPrice = intent.getStringExtra("lastBuyPrice");
+                String lastSellPrice = intent.getStringExtra("lastSellPrice");
+                String nextBuyPrice = intent.getStringExtra("nextBuyPrice");
+                
+                CardAdapter.TransactionCard card = new CardAdapter.TransactionCard(
+                    transactionTime, btcCurrentPrice, hourlyChange, estimatedBalance,
+                    lastBuyPrice, lastSellPrice, nextBuyPrice
+                );
+                
+                if (cardAdapter != null) {
+                    cardAdapter.addCard(card);
+                }
+            } else if (intent.getAction().equals(BROADCAST_ERROR_CARD)) {
+                // 에러 카드 데이터 처리
+                String errorTime = intent.getStringExtra("errorTime");
+                String errorType = intent.getStringExtra("errorType");
+                String errorMessage = intent.getStringExtra("errorMessage");
+                String errorCode = intent.getStringExtra("errorCode");
+                String logInfo = intent.getStringExtra("logInfo");
+                
+                CardAdapter.ErrorCard errorCard = new CardAdapter.ErrorCard(
+                    errorTime, errorType, errorMessage, errorCode, logInfo
+                );
+                
+                if (cardAdapter != null) {
+                    cardAdapter.addErrorCard(errorCard);
+                }
+            }
         }
     }
 
@@ -251,5 +359,151 @@ public class MainPage extends Fragment {
         }
 
         return floor;
+    }
+
+    // CardAdapter 클래스
+    public static class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        private java.util.List<Object> cardList = new java.util.ArrayList<>();
+        
+        private static final int TYPE_TRANSACTION = 0;
+        private static final int TYPE_ERROR = 1;
+
+        public static class TransactionCard {
+            public String transactionTime;
+            public String btcCurrentPrice;
+            public String hourlyChange;
+            public String estimatedBalance;
+            public String lastBuyPrice;
+            public String lastSellPrice;
+            public String nextBuyPrice;
+
+            public TransactionCard(String transactionTime, String btcCurrentPrice, String hourlyChange,
+                                String estimatedBalance, String lastBuyPrice, String lastSellPrice, String nextBuyPrice) {
+                this.transactionTime = transactionTime;
+                this.btcCurrentPrice = btcCurrentPrice;
+                this.hourlyChange = hourlyChange;
+                this.estimatedBalance = estimatedBalance;
+                this.lastBuyPrice = lastBuyPrice;
+                this.lastSellPrice = lastSellPrice;
+                this.nextBuyPrice = nextBuyPrice;
+            }
+        }
+
+        public static class ErrorCard {
+            public String errorTime;
+            public String errorType;
+            public String errorMessage;
+            public String errorCode;
+            public String logInfo;
+
+            public ErrorCard(String errorTime, String errorType, String errorMessage, String errorCode, String logInfo) {
+                this.errorTime = errorTime;
+                this.errorType = errorType;
+                this.errorMessage = errorMessage;
+                this.errorCode = errorCode;
+                this.logInfo = logInfo;
+            }
+        }
+
+        public static class CardViewHolder extends RecyclerView.ViewHolder {
+            TextView textTransactionTime;
+            TextView textBtcCurrentPrice;
+            TextView textHourlyChange;
+            TextView textEstimatedBalance;
+            TextView textLastBuyPrice;
+            TextView textLastSellPrice;
+            TextView textNextBuyPrice;
+
+            public CardViewHolder(View itemView) {
+                super(itemView);
+                textTransactionTime = itemView.findViewById(R.id.textTransactionTime);
+                textBtcCurrentPrice = itemView.findViewById(R.id.textBtcCurrentPrice);
+                textHourlyChange = itemView.findViewById(R.id.textHourlyChange);
+                textEstimatedBalance = itemView.findViewById(R.id.textEstimatedBalance);
+                textLastBuyPrice = itemView.findViewById(R.id.textLastBuyPrice);
+                textLastSellPrice = itemView.findViewById(R.id.textLastSellPrice);
+                textNextBuyPrice = itemView.findViewById(R.id.textNextBuyPrice);
+            }
+        }
+
+        public static class ErrorViewHolder extends RecyclerView.ViewHolder {
+            TextView textErrorTime;
+            TextView textErrorType;
+            TextView textErrorMessage;
+            TextView textErrorCode;
+            TextView textLogInfo;
+
+            public ErrorViewHolder(View itemView) {
+                super(itemView);
+                textErrorTime = itemView.findViewById(R.id.textErrorTime);
+                textErrorType = itemView.findViewById(R.id.textErrorType);
+                textErrorMessage = itemView.findViewById(R.id.textErrorMessage);
+                textErrorCode = itemView.findViewById(R.id.textErrorCode);
+                textLogInfo = itemView.findViewById(R.id.textLogInfo);
+            }
+        }
+
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            if (viewType == TYPE_TRANSACTION) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view, parent, false);
+                return new CardViewHolder(view);
+            } else {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.error_card_view, parent, false);
+                return new ErrorViewHolder(view);
+            }
+        }
+
+        @Override
+        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            if (holder instanceof CardViewHolder) {
+                TransactionCard card = (TransactionCard) cardList.get(position);
+                CardViewHolder cardHolder = (CardViewHolder) holder;
+                cardHolder.textTransactionTime.setText(card.transactionTime);
+                cardHolder.textBtcCurrentPrice.setText(card.btcCurrentPrice);
+                cardHolder.textHourlyChange.setText(card.hourlyChange);
+                cardHolder.textEstimatedBalance.setText(card.estimatedBalance);
+                cardHolder.textLastBuyPrice.setText(card.lastBuyPrice);
+                cardHolder.textLastSellPrice.setText(card.lastSellPrice);
+                cardHolder.textNextBuyPrice.setText(card.nextBuyPrice);
+            } else if (holder instanceof ErrorViewHolder) {
+                ErrorCard card = (ErrorCard) cardList.get(position);
+                ErrorViewHolder errorHolder = (ErrorViewHolder) holder;
+                errorHolder.textErrorTime.setText(card.errorTime);
+                errorHolder.textErrorType.setText(card.errorType);
+                errorHolder.textErrorMessage.setText(card.errorMessage);
+                errorHolder.textErrorCode.setText(card.errorCode);
+                errorHolder.textLogInfo.setText(card.logInfo);
+            }
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            if (cardList.get(position) instanceof TransactionCard) {
+                return TYPE_TRANSACTION;
+            } else {
+                return TYPE_ERROR;
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return cardList.size();
+        }
+
+        public void addCard(TransactionCard card) {
+            cardList.add(0, card); // 최신 카드를 맨 위에 추가
+            notifyItemInserted(0);
+        }
+
+        public void addErrorCard(ErrorCard card) {
+            cardList.add(0, card); // 최신 에러 카드를 맨 위에 추가
+            notifyItemInserted(0);
+        }
+
+        public void clearCards() {
+            cardList.clear();
+            notifyDataSetChanged();
+        }
     }
 }

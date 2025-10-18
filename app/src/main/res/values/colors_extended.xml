@@ -25,7 +25,7 @@
     <!-- 트레이딩 색상 -->
     <color name="buy_modern">#10B981</color>
     <color name="sell_modern">#EF4444</color>
-    <color name="neutral_modern">#6B7280</color>
+    <color name="neutral_modern">#D1D5DB</color>
     
     <!-- 투명도 -->
     <color name="transparent">#00000000</color>

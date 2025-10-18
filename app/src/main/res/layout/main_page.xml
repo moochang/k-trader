@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -94,22 +95,40 @@
 
         </LinearLayout>
 
+        <!-- Log 탭 -->
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@color/background_modern"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            app:tabIndicatorColor="@color/primary_modern"
+            app:tabSelectedTextColor="@color/primary_modern"
+            app:tabTextColor="@color/text_secondary_modern" />
+
         <ScrollView
             android:id="@+id/scrollView1"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/border">
+            android:layout_height="match_parent">
 
             <EditText
                 android:id="@+id/editText"
                 android:layout_width="fill_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints=""
                 android:background="@android:color/transparent"
                 android:ems="10"
                 android:focusableInTouchMode="false"
                 android:gravity="top"
                 android:textSize="14sp" />
         </ScrollView>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerViewCards"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
 
     </LinearLayout>
 
