@@ -15,11 +15,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.k_trader.base.TradeData;
+import com.example.k_trader.database.DatabaseMonitor;
+
+import java.util.List;
+
 /**
  * Transaction Item 탭을 담당하는 Fragment
+ * DB 구독 시스템을 통해 실시간으로 주문 데이터를 표시
  * Created by K-Trader on 2024-12-25.
  */
-public class TransactionItemFragment extends Fragment {
+public class TransactionItemFragment extends Fragment implements DatabaseMonitor.DatabaseChangeListener {
 
     public static final String BROADCAST_CARD_DATA = "TRADE_CARD_DATA";
     public static final String BROADCAST_ERROR_CARD = "TRADE_ERROR_CARD";
@@ -27,6 +33,8 @@ public class TransactionItemFragment extends Fragment {
     private RecyclerView recyclerViewCards;
     private CardAdapter cardAdapter;
     private LogReceiver logReceiver;
+    private DatabaseMonitor databaseMonitor;
+    private String subscriberId;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -38,8 +46,17 @@ public class TransactionItemFragment extends Fragment {
         cardAdapter = new CardAdapter();
         recyclerViewCards.setAdapter(cardAdapter);
         
+        // Database Monitor 초기화
+        databaseMonitor = DatabaseMonitor.getInstance(getContext());
+        subscriberId = "TransactionItemFragment_" + System.currentTimeMillis();
+        
         // BroadcastReceiver 등록
-        registerBroadcastReceiver();
+        if (getContext() != null) {
+            registerBroadcastReceiver();
+        }
+        
+        // DB 구독 시작
+        subscribeToDatabase();
         
         return view;
     }
@@ -47,9 +64,38 @@ public class TransactionItemFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        // DB 구독 해제
+        if (databaseMonitor != null) {
+            databaseMonitor.unsubscribe(subscriberId);
+        }
+        
         // BroadcastReceiver 해제
-        if (logReceiver != null) {
+        if (logReceiver != null && getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(logReceiver);
+        }
+    }
+
+    /**
+     * DB 구독을 시작하는 메서드
+     */
+    private void subscribeToDatabase() {
+        if (databaseMonitor != null && getContext() != null) {
+            // 모든 주문 변경사항 구독
+            databaseMonitor.subscribeToAllOrders(this);
+        }
+    }
+
+    /**
+     * DB 변경 리스너 구현
+     */
+    @Override
+    public void onOrdersChanged(List<TradeData> orders) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                if (cardAdapter != null) {
+                    cardAdapter.updateOrders(orders);
+                }
+            });
         }
     }
 
@@ -62,7 +108,9 @@ public class TransactionItemFragment extends Fragment {
         filter.addAction(BROADCAST_ERROR_CARD);
         
         logReceiver = new LogReceiver();
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(logReceiver, filter);
+        if (getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(logReceiver, filter);
+        }
     }
 
     /**
@@ -71,7 +119,7 @@ public class TransactionItemFragment extends Fragment {
     private class LogReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BROADCAST_CARD_DATA)) {
+            if (intent.getAction() != null && intent.getAction().equals(BROADCAST_CARD_DATA)) {
                 // 카드 데이터 처리
                 String transactionTime = intent.getStringExtra("transactionTime");
                 String btcCurrentPrice = intent.getStringExtra("btcCurrentPrice");
@@ -89,7 +137,7 @@ public class TransactionItemFragment extends Fragment {
                 if (cardAdapter != null) {
                     cardAdapter.addCard(card);
                 }
-            } else if (intent.getAction().equals(BROADCAST_ERROR_CARD)) {
+            } else if (intent.getAction() != null && intent.getAction().equals(BROADCAST_ERROR_CARD)) {
                 // 에러 카드 데이터 처리
                 String errorTime = intent.getStringExtra("errorTime");
                 String errorType = intent.getStringExtra("errorType");
@@ -108,12 +156,14 @@ public class TransactionItemFragment extends Fragment {
 
     /**
      * CardAdapter 클래스 - TransactionItemFragment 내부에서 사용
+     * DB 기반 주문 데이터를 표시하도록 확장
      */
     public static class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private final java.util.List<Object> cardList = new java.util.ArrayList<>();
         
         private static final int TYPE_TRANSACTION = 0;
         private static final int TYPE_ERROR = 1;
+        private static final int TYPE_ORDER = 2;
 
         public static class TransactionCard {
             public String transactionTime;
@@ -145,6 +195,14 @@ public class TransactionItemFragment extends Fragment {
                 this.errorTime = errorTime;
                 this.errorType = errorType;
                 this.errorMessage = errorMessage;
+            }
+        }
+
+        public static class OrderCard {
+            public TradeData tradeData;
+
+            public OrderCard(TradeData tradeData) {
+                this.tradeData = tradeData;
             }
         }
 
@@ -182,19 +240,42 @@ public class TransactionItemFragment extends Fragment {
             }
         }
 
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            if (viewType == TYPE_TRANSACTION) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view, parent, false);
-                return new CardViewHolder(view);
-            } else {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.error_card_view, parent, false);
-                return new ErrorViewHolder(view);
+        public static class OrderViewHolder extends RecyclerView.ViewHolder {
+            TextView textOrderId;
+            TextView textOrderType;
+            TextView textOrderStatus;
+            TextView textUnits;
+            TextView textPrice;
+            TextView textPlacedTime;
+
+            public OrderViewHolder(View itemView) {
+                super(itemView);
+                textOrderId = itemView.findViewById(R.id.textOrderId);
+                textOrderType = itemView.findViewById(R.id.textOrderType);
+                textOrderStatus = itemView.findViewById(R.id.textOrderStatus);
+                textUnits = itemView.findViewById(R.id.textUnits);
+                textPrice = itemView.findViewById(R.id.textPrice);
+                textPlacedTime = itemView.findViewById(R.id.textPlacedTime);
             }
         }
 
         @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        @NonNull
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            if (viewType == TYPE_TRANSACTION) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view, parent, false);
+                return new CardViewHolder(view);
+            } else if (viewType == TYPE_ERROR) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.error_card_view, parent, false);
+                return new ErrorViewHolder(view);
+            } else {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.order_card_view, parent, false);
+                return new OrderViewHolder(view);
+            }
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             if (holder instanceof CardViewHolder) {
                 TransactionCard card = (TransactionCard) cardList.get(position);
                 CardViewHolder cardHolder = (CardViewHolder) holder;
@@ -211,16 +292,33 @@ public class TransactionItemFragment extends Fragment {
                 errorHolder.textErrorTime.setText(card.errorTime);
                 errorHolder.textErrorType.setText(card.errorType);
                 errorHolder.textErrorMessage.setText(card.errorMessage);
+            } else if (holder instanceof OrderViewHolder) {
+                OrderCard card = (OrderCard) cardList.get(position);
+                OrderViewHolder orderHolder = (OrderViewHolder) holder;
+                TradeData tradeData = card.tradeData;
+                
+                orderHolder.textOrderId.setText(tradeData.getId());
+                orderHolder.textOrderType.setText(tradeData.getType().toString());
+                orderHolder.textOrderStatus.setText(tradeData.getStatus().toString());
+                orderHolder.textUnits.setText(String.format(java.util.Locale.getDefault(), "%.4f", tradeData.getUnits()));
+                orderHolder.textPrice.setText(String.format(java.util.Locale.getDefault(), "%,d", tradeData.getPrice()));
+                
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.getDefault());
+                orderHolder.textPlacedTime.setText(sdf.format(new java.util.Date(tradeData.getPlacedTime())));
             }
         }
 
         @Override
         public int getItemViewType(int position) {
-            if (cardList.get(position) instanceof TransactionCard) {
+            Object item = cardList.get(position);
+            if (item instanceof TransactionCard) {
                 return TYPE_TRANSACTION;
-            } else {
+            } else if (item instanceof ErrorCard) {
                 return TYPE_ERROR;
+            } else if (item instanceof OrderCard) {
+                return TYPE_ORDER;
             }
+            return TYPE_TRANSACTION;
         }
 
         @Override
@@ -237,6 +335,32 @@ public class TransactionItemFragment extends Fragment {
             cardList.add(0, card); // 최신 에러 카드를 맨 위에 추가
             notifyItemInserted(0);
         }
+
+
+        public void updateOrders(List<TradeData> orders) {
+            int oldSize = cardList.size();
+            cardList.clear();
+            
+            for (TradeData order : orders) {
+                OrderCard orderCard = new OrderCard(order);
+                cardList.add(orderCard);
+            }
+            
+            // 데이터셋 크기에 따라 적절한 알림 사용
+            if (oldSize == 0) {
+                // 처음 로드되는 경우
+                notifyItemRangeInserted(0, cardList.size());
+            } else if (cardList.isEmpty()) {
+                // 모든 데이터가 삭제된 경우
+                notifyItemRangeRemoved(0, oldSize);
+            } else if (oldSize == cardList.size()) {
+                // 크기가 같은 경우 - 개별 아이템 변경으로 처리
+                notifyItemRangeChanged(0, cardList.size());
+            } else {
+                // 크기가 다른 경우에만 전체 데이터셋 교체
+                notifyDataSetChanged();
+            }
+        }
     }
 
     /**
@@ -246,17 +370,9 @@ public class TransactionItemFragment extends Fragment {
         if (recyclerViewCards != null && cardAdapter != null) {
             int itemCount = cardAdapter.getItemCount();
             if (itemCount > 0) {
-                recyclerViewCards.smoothScrollToPosition(itemCount - 1);
+                // RecyclerView가 레이아웃이 완료된 후 스크롤 실행
+                recyclerViewCards.post(() -> recyclerViewCards.smoothScrollToPosition(itemCount - 1));
             }
         }
-    }
-
-    /**
-     * Auto scroll 기능을 활성화/비활성화하는 메서드
-     */
-    public void setAutoScroll(boolean enabled) {
-        // Auto scroll 기능은 카드가 추가될 때마다 자동으로 스크롤하는 기능
-        // 현재는 카드가 추가될 때마다 맨 위에 추가되므로 별도의 auto scroll 로직이 필요하지 않음
-        // 필요시 나중에 구현 가능
     }
 }
