@@ -5,6 +5,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.example.k_trader.MainActivity;
 import com.example.k_trader.MainPage;
+import com.example.k_trader.KTraderApplication;
 import com.example.k_trader.bitthumb.lib.Api_Client;
 
 import org.json.simple.JSONArray;
@@ -136,8 +137,8 @@ public class OrderManager {
 //            Log.d("KTrader", "sending progress : " + String.valueOf((15 * 1000) - (requestTime - lastRequestTimeInMillis)));
 
             intent.putExtra("progress", (int)((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis)));
-            if (MainPage.context != null)
-                LocalBroadcastManager.getInstance(MainPage.context).sendBroadcast(intent);
+            if (KTraderApplication.getAppContext() != null)
+                LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
 
             try {
                 Thread.sleep((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis));
@@ -195,8 +196,8 @@ public class OrderManager {
             logger.info(log);
         Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
-        if (MainPage.context != null)
-            LocalBroadcastManager.getInstance(MainPage.context).sendBroadcast(intent);
+        if (KTraderApplication.getAppContext() != null)
+            LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
     }
 
     public JSONObject addOrderWithMarketPrice(String tag, TradeDataManager.Type type, float units) {
@@ -212,7 +213,7 @@ public class OrderManager {
 //            Log.d("KTrader", "sending progress : " + String.valueOf((15 * 1000) - (requestTime - lastRequestTimeInMillis)));
 
             intent.putExtra("progress", (int)((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis)));
-            LocalBroadcastManager.getInstance(MainPage.context).sendBroadcast(intent);
+            LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
 
             try {
                 Thread.sleep((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis));

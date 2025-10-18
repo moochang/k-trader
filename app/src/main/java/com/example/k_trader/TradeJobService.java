@@ -24,6 +24,7 @@ import com.example.k_trader.base.Log4jHelper;
 import com.example.k_trader.base.OrderManager;
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.base.TradeDataManager;
+import com.example.k_trader.KTraderApplication;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -100,8 +101,8 @@ public class TradeJobService extends JobService {
 
         Intent intent = new Intent(MainPage.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
-        if (MainPage.context != null) {
-            LocalBroadcastManager manager = LocalBroadcastManager.getInstance(MainPage.context);
+        if (KTraderApplication.getAppContext() != null) {
+            LocalBroadcastManager manager = LocalBroadcastManager.getInstance(KTraderApplication.getAppContext());
             if (manager != null)
                 manager.sendBroadcast(intent);
         }
