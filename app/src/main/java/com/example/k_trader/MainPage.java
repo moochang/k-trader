@@ -99,101 +99,78 @@ public class MainPage extends Fragment {
             LocalBroadcastManager.getInstance(mainActivity.getApplicationContext()).registerReceiver(logReceiver, theFilter);
         }
 
-        btnStartTrading.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                String packageName = mainActivity.getPackageName();
-                PowerManager pm = (PowerManager) mainActivity.getSystemService(Context.POWER_SERVICE);
+        btnStartTrading.setOnClickListener(v -> {
+            String packageName = mainActivity.getPackageName();
+            PowerManager pm = (PowerManager) mainActivity.getSystemService(Context.POWER_SERVICE);
 
-                if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                    Intent i = new Intent();
-                    i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                    i.setData(Uri.parse("package:" + packageName));
-                    startActivity(i);
-                }
-
-                // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
-                new Thread() {
-                    public void run() {
-                        // cancel all buy request
-                        OrderManager orderManager = new OrderManager();
-                        orderManager.cancelAllBuyOrders();
-                    }
-                }.start();
-
-                // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
-                JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
-                        .setMinimumLatency(1000) // 1000 ms
-                        .build();
-
-                JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
-                        .setMinimumLatency(GlobalSettings.getInstance().getTradeInterval() * 1000)
-                        .build();
-
-                mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                mainActivity.jobScheduler.schedule(firstTradeJob);
-                mainActivity.jobScheduler.schedule(tradeJob);
-
-                isTradingStarted = true;
-                btnStartTrading.setEnabled(!isTradingStarted);
-                btnStopTrading.setEnabled(isTradingStarted);
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                Intent i = new Intent();
+                i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                i.setData(Uri.parse("package:" + packageName));
+                startActivity(i);
             }
+
+            // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
+            new Thread(() -> {
+                // cancel all buy request
+                OrderManager orderManager = new OrderManager();
+                orderManager.cancelAllBuyOrders();
+            }).start();
+
+            // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
+            JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
+                    .setMinimumLatency(1000) // 1000 ms
+                    .build();
+
+            JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
+                    .setMinimumLatency((long) GlobalSettings.getInstance().getTradeInterval() * 1000)
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                    .build();
+
+            mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            mainActivity.jobScheduler.schedule(firstTradeJob);
+            mainActivity.jobScheduler.schedule(tradeJob);
+
+            isTradingStarted = true;
+            btnStartTrading.setEnabled(!isTradingStarted);
+            btnStopTrading.setEnabled(isTradingStarted);
         });
 
-        btnStopTrading.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if (mainActivity.jobScheduler != null) {
-                    mainActivity.jobScheduler.cancelAll();
-                }
-
-                isTradingStarted = false;
-                btnStartTrading.setEnabled(!isTradingStarted);
-                btnStopTrading.setEnabled(isTradingStarted);
+        btnStopTrading.setOnClickListener(v -> {
+            if (mainActivity.jobScheduler != null) {
+                mainActivity.jobScheduler.cancelAll();
             }
+
+            isTradingStarted = false;
+            btnStartTrading.setEnabled(!isTradingStarted);
+            btnStopTrading.setEnabled(isTradingStarted);
         });
 
-        btnScrollToBottom.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                scrollView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        scrollView.fullScroll(View.FOCUS_DOWN);
-                    }
-                });
-            }
+        btnScrollToBottom.setOnClickListener(v -> {
+            scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
         });
 
-        btnPreference.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                startActivity(new Intent(mainActivity, SettingActivity.class));
-            }
+        btnPreference.setOnClickListener(v -> {
+            startActivity(new Intent(mainActivity, SettingActivity.class));
         });
 
         return layout;
     }
 
     private void log_info(final String log) {
-        Runnable runnable = new Runnable() {
-            public void run() {
-                mainActivity.runOnUiThread(new Runnable() {
-                    public void run() {
-                        editText.append(log + "\r\n");
+        Runnable runnable = () -> {
+            mainActivity.runOnUiThread(() -> {
+                editText.append(log + "\r\n");
 
-                        CharSequence charSequence = editText.getText();
-                        if (charSequence.length() > MAX_BUFFER)
-                            editText.getEditableText().delete(0, charSequence.length() - MAX_BUFFER);
+                CharSequence charSequence = editText.getText();
+                if (charSequence.length() > MAX_BUFFER)
+                    editText.getEditableText().delete(0, charSequence.length() - MAX_BUFFER);
 
-                        // scroll to bottom
-                        if (checkBox.isChecked()) {
-                            scrollView.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    scrollView.fullScroll(View.FOCUS_DOWN);
-                                }
-                            });
-                        }
-                    }
-                });
-            }
+                // scroll to bottom
+                if (checkBox.isChecked()) {
+                    scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+                }
+            });
         };
         runnable.run();
 
@@ -231,10 +208,13 @@ public class MainPage extends Fragment {
         }
 
         JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
-        if (dataArray != null) {
+        if (dataArray != null && !dataArray.isEmpty()) {
             JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
-            currentPrice = (int) Double.parseDouble((String) item.get("price"));
-            return getProfitPrice(currentPrice);
+            String priceStr = (String) item.get("price");
+            if (priceStr != null) {
+                currentPrice = (int) Double.parseDouble(priceStr);
+                return getProfitPrice(currentPrice);
+            }
         }
 
         throw new Exception("dataObj == null");

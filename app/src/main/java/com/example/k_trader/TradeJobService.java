@@ -53,37 +53,49 @@ public class TradeJobService extends JobService {
     private static final int SELL_SLOT_LOOK_ASIDE_MAX = 3; // 3 단계 위까지 매도점을 찾아본다.
     private static final int BUY_SLOT_LOOK_ASIDE_MAX = 3;
     private static final double TRADING_VALUE_MIN = 0.0001;
-
-    private double krwBalance;
+    
+    // Foreground Service 관련 상수
+    private static final int FOREGROUND_SERVICE_ID = 1001;
+    private static final String CHANNEL_ID = "k_trader_foreground_channel";
 
     public static int currentPrice;                  // 비트코인 현재 시장가
     public static long lastNotiTimeInMillis;        // 마지막 Notification 완료 시점
     public static double availableBtcBalance;       // 현재 판매 가능한 비트코인 총량 = 현재 보유중인 비트코인 총량 - 매도 중인 비트코인 총량
 
-    private TradeDataManager placedOrderManager = new TradeDataManager();
-    private static TradeDataManager processedOrderManager = new TradeDataManager();
+    private final TradeDataManager placedOrderManager = new TradeDataManager();
+    private static final TradeDataManager processedOrderManager = new TradeDataManager();
 
-    private static List<Integer> priceQueue = new ArrayList<>();
+    private static final List<Integer> priceQueue = new ArrayList<>();
     private static org.apache.log4j.Logger logger = Log4jHelper.getLogger("TradeJobService");
     private Context ctx;
     private OrderManager orderManager;
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+    }
+
+    @Override
     public boolean onStartJob(final JobParameters jobParameters) {
-        new Thread() {
-            public void run() {
-                ctx = TradeJobService.this;
-                orderManager = new OrderManager();
+        // Foreground Service로 시작
+        startForegroundService();
+        
+        new Thread(() -> {
+            ctx = TradeJobService.this;
+            orderManager = new OrderManager();
 
-                try {
-                    tradeBusinessLogic();
-                } catch (Exception e) {}
-
-                if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
-                    scheduleRefresh();
-                jobFinished(jobParameters, false);
+            try {
+                tradeBusinessLogic();
+            } catch (Exception e) {
+                // 예외 발생 시 로그만 출력
+                log_info("Trade business logic error: " + e.getMessage());
             }
-        }.start();
+
+            if (jobParameters.getJobId() == MainPage.JOB_ID_REGULAR)
+                scheduleRefresh();
+            jobFinished(jobParameters, false);
+        }).start();
 
         // return true because new thread started.
         return true;
@@ -92,6 +104,59 @@ public class TradeJobService extends JobService {
     @Override
     public boolean onStopJob(JobParameters jobParameters) {
         return false;
+    }
+
+    private void createNotificationChannel() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                "K-Trader Trading Service",
+                NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("K-Trader 자동 거래 서비스");
+            channel.setShowBadge(false);
+                    // 앱바와 동일한 진한 주황색 파스텔 톤 적용
+                    channel.setLightColor(Color.parseColor("#FF8C42"));
+            
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void startForegroundService() {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("K-Trader 자동 거래")
+            .setContentText("백그라운드에서 자동 거래가 실행 중입니다")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                    .setColor(Color.parseColor("#FF8C42")); // 앱바와 동일한 진한 주황색 파스텔 톤
+
+        startForeground(FOREGROUND_SERVICE_ID, builder.build());
+    }
+
+    private void scheduleRefresh() {
+        JobScheduler mJobScheduler = (JobScheduler)getApplicationContext().getSystemService(JOB_SCHEDULER_SERVICE);
+        JobInfo.Builder mJobBuilder = new JobInfo.Builder(MainPage.JOB_ID_REGULAR, new ComponentName(getPackageName(), TradeJobService.class.getName()));
+
+        /* For Android N and Upper Versions */
+        mJobBuilder
+                .setMinimumLatency((long) GlobalSettings.getInstance().getTradeInterval() * 1000)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
+
+        if (mJobScheduler != null && mJobScheduler.schedule(mJobBuilder.build()) <= JobScheduler.RESULT_FAILURE) {
+            //Scheduled Failed/LOG or run fail safe measures
+            log_info("Unable to schedule trade job!");
+        }
     }
 
     private void log_info(final String log) {
@@ -108,20 +173,6 @@ public class TradeJobService extends JobService {
         }
     }
 
-    private void scheduleRefresh() {
-        JobScheduler mJobScheduler = (JobScheduler)getApplicationContext().getSystemService(JOB_SCHEDULER_SERVICE);
-        JobInfo.Builder mJobBuilder = new JobInfo.Builder(MainPage.JOB_ID_REGULAR, new ComponentName(getPackageName(), TradeJobService.class.getName()));
-
-        /* For Android N and Upper Versions */
-        mJobBuilder
-                .setMinimumLatency(GlobalSettings.getInstance().getTradeInterval() * 1000)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
-
-        if (mJobScheduler != null && mJobScheduler.schedule(mJobBuilder.build()) <= JobScheduler.RESULT_FAILURE) {
-            //Scheduled Failed/LOG or run fail safe measures
-            log_info("Unable to schedule trade job!");
-        }
-    }
 
     private void notificationTrade(String title, String text) {
         Resources res = getResources();
@@ -254,20 +305,38 @@ public class TradeJobService extends JobService {
                 , currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE)
                 , currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), currentTime.get(Calendar.SECOND)));
 
-        // 잔고를 가져와 업데이트 한다.
-        {
-            JSONObject dataObj = orderManager.getBalance("");
-            krwBalance = Double.parseDouble((String)dataObj.get("total_krw"));
-            availableBtcBalance = Double.parseDouble((String)dataObj.get("available_btc"));
-        }
+                // 잔고를 가져와 업데이트 한다.
+                double krwBalance;
+                {
+                    JSONObject dataObj = orderManager.getBalance("");
+                    String totalKrw = (String) dataObj.get("total_krw");
+                    String availableBtc = (String) dataObj.get("available_btc");
+                    
+                    if (totalKrw != null && availableBtc != null) {
+                        krwBalance = Double.parseDouble(totalKrw);
+                        availableBtcBalance = Double.parseDouble(availableBtc);
+                    } else {
+                        log_info("잔고 정보를 가져올 수 없습니다.");
+                        return;
+                    }
+                }
 
         // 비트코인 현재가를 가져온다.
         {
             JSONObject dataObj = orderManager.getCurrentPrice("");
             JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
-            if (dataArray != null) {
+            if (dataArray != null && dataArray.size() > 0) {
                 JSONObject item = (JSONObject) dataArray.get(0); // 기본 5개 아이템 중 첫번째 아이템 사용
-                currentPrice = (int)Double.parseDouble((String)item.get("price"));
+                String priceStr = (String) item.get("price");
+                if (priceStr != null) {
+                    currentPrice = (int)Double.parseDouble(priceStr);
+                } else {
+                    log_info("현재가 정보를 가져올 수 없습니다.");
+                    return;
+                }
+            } else {
+                log_info("매수 정보를 가져올 수 없습니다.");
+                return;
             }
 
             log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
@@ -447,7 +516,8 @@ public class TradeJobService extends JobService {
                             , time.get(Calendar.MONTH) + 1, time.get(Calendar.DATE)
                             , time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE)));
                 } else {
-                    // BUY, SELL  이외 수수료 쿠폰 구입 등의 항목일 경우에 여기로 올 수 있다.
+                    // BUY, SELL 이외 수수료 쿠폰 구입 등의 항목일 경우에 여기로 올 수 있다.
+                    log_info("기타 거래 항목: " + pData.getType());
                 }
 
                 if (pData.getProcessedTime() > lastNotiTimeInMillis)
@@ -517,12 +587,6 @@ public class TradeJobService extends JobService {
                 break;
             }
         }
-    }
-
-    // 주어진 가격 위쪽의 첫번째 매도 slot 가격을 구한다.
-    private int getCeilingPrice(int price) {
-        int floor = getFloorPrice(price);
-        return floor + MainPage.getProfitPrice(floor);
     }
 
     // 주어진 가격 아래쪽의 첫번째 매수 slot 가격을 구한다.
