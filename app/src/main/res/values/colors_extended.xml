@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 모던 트렌디 색상 팔레트 -->
-    <color name="primary_modern">#6366F1</color>
-    <color name="primary_dark_modern">#4F46E5</color>
-    <color name="primary_light_modern">#818CF8</color>
+    <color name="primary_modern">#FF8C42</color>
+    <color name="primary_dark_modern">#FF6B35</color>
+    <color name="primary_light_modern">#FFB366</color>
     
     <color name="secondary_modern">#EC4899</color>
     <color name="secondary_dark_modern">#DB2777</color>
