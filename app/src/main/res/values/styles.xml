@@ -9,7 +9,7 @@
         <!-- ActionBar 타이틀 텍스트 색상을 어두운 색으로 설정 -->
         <item name="android:textColorPrimary">@android:color/black</item>
         <item name="actionBarStyle">@style/CustomActionBarStyle</item>
-        <item name="android:statusBarColor">#ffffff</item>
+<!--        <item name="android:statusBarColor">#ffffff</item>-->
     </style>
 
     <!-- Custom ActionBar Style -->
@@ -21,8 +21,8 @@
         <!-- ActionBar 그림자 효과 제거 -->
         <item name="android:elevation">0dp</item>
         <item name="elevation">0dp</item>
-        <item name="android:statusBarColor">#ffffff</item>
-        <item name="android:windowLightStatusBar">true</item>
+<!--        <item name="android:statusBarColor">#ffffff</item>-->
+<!--        <item name="android:windowLightStatusBar">true</item>-->
     </style>
 
     <!-- Custom ActionBar Title Text Style -->
