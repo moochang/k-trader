@@ -37,6 +37,9 @@ public class ErrorEntity {
     @ColumnInfo(name = "is_resolved")
     public boolean isResolved;
     
+    @ColumnInfo(name = "api_error_details")
+    public String apiErrorDetails;
+    
     @ColumnInfo(name = "resolution_note")
     public String resolutionNote;
     
@@ -155,6 +158,14 @@ public class ErrorEntity {
 
     public void setUpdatedAt(long updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getApiErrorDetails() {
+        return apiErrorDetails;
+    }
+
+    public void setApiErrorDetails(String apiErrorDetails) {
+        this.apiErrorDetails = apiErrorDetails;
     }
 
     /**

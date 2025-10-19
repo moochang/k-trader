@@ -88,6 +88,21 @@ public class ErrorRepository {
     }
 
     /**
+     * API 상세 정보와 함께 에러 저장
+     */
+    public Single<Long> saveErrorWithApiDetails(long errorTime, String errorType, String errorMessage,
+                                               String transactionContext, Exception exception, String apiErrorDetails) {
+        String stackTrace = exception != null ? getStackTrace(exception) : null;
+        
+        ErrorEntity error = new ErrorEntity(errorTime, errorType, errorMessage);
+        error.setStackTrace(stackTrace);
+        error.setTransactionContext(transactionContext);
+        error.setApiErrorDetails(apiErrorDetails);
+        
+        return saveError(error);
+    }
+
+    /**
      * 모든 에러 조회
      */
     public Flowable<List<ErrorEntity>> getAllErrors() {

@@ -1,29 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 기본 상태 -->
-    <item android:state_enabled="true">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/primary_modern" />
-            <corners android:radius="12dp" />
-            <stroke android:width="0dp" />
-        </shape>
-    </item>
-    
-    <!-- 눌린 상태 -->
-    <item android:state_pressed="true">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/primary_dark_modern" />
-            <corners android:radius="12dp" />
-            <stroke android:width="0dp" />
-        </shape>
-    </item>
-    
-    <!-- 비활성 상태 -->
-    <item android:state_enabled="false">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/neutral_modern" />
-            <corners android:radius="12dp" />
-            <stroke android:width="0dp" />
-        </shape>
-    </item>
-</selector>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#2196F3" />
+    <corners android:radius="8dp" />
+</shape>

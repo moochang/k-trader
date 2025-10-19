@@ -17,9 +17,13 @@ import android.widget.TextView;
 
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.database.DatabaseMonitor;
+import com.example.k_trader.database.ApiCallResultRepository;
+import com.example.k_trader.database.ApiCallResultEntity;
 import com.example.k_trader.data.TransactionDataManager;
 import com.example.k_trader.dialog.TransactionDetailDialog;
 import com.example.k_trader.dialog.ErrorDetailDialog;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 import java.util.List;
 
@@ -39,6 +43,8 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
     private LogReceiver logReceiver;
     private DatabaseMonitor databaseMonitor;
     private TransactionDataManager transactionDataManager;
+    private ApiCallResultRepository apiCallResultRepository;
+    private CompositeDisposable disposables;
     private String subscriberId;
 
     @Override
@@ -59,6 +65,13 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         transactionDataManager = TransactionDataManager.getInstance(getContext());
         transactionDataManager.loadTransactionData();
         
+        // ApiCallResultRepository 초기화
+        apiCallResultRepository = ApiCallResultRepository.getInstance(
+            com.example.k_trader.database.OrderDatabase.getInstance(getContext()).apiCallResultDao());
+        
+        // CompositeDisposable 초기화
+        disposables = new CompositeDisposable();
+        
         // BroadcastReceiver 등록
         if (getContext() != null) {
             registerBroadcastReceiver();
@@ -66,6 +79,9 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         
         // DB 구독 시작
         subscribeToDatabase();
+        
+        // API 호출 결과 모니터링 시작
+        startApiCallResultMonitoring();
         
         return view;
     }
@@ -86,6 +102,119 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         // TransactionDataManager 정리
         if (transactionDataManager != null) {
             transactionDataManager.cleanup();
+        }
+        
+        // RxJava Disposables 정리
+        if (disposables != null) {
+            disposables.clear();
+        }
+    }
+
+    /**
+     * API 호출 결과 모니터링 시작
+     */
+    private void startApiCallResultMonitoring() {
+        if (apiCallResultRepository != null) {
+            // 최근 API 호출 결과 모니터링 (1시간 이내)
+            Disposable disposable = apiCallResultRepository.getRecentApiCallResults()
+                .subscribe(
+                    apiCallResults -> {
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> updateCardsFromApiResults(apiCallResults));
+                        }
+                    },
+                    throwable -> {
+                        android.util.Log.e("TransactionItemFragment", "Error monitoring API call results", throwable);
+                    }
+                );
+            
+            disposables.add(disposable);
+        }
+    }
+
+    /**
+     * API 호출 결과를 기반으로 카드 업데이트
+     */
+    private void updateCardsFromApiResults(List<ApiCallResultEntity> apiCallResults) {
+        if (cardAdapter == null) return;
+        
+        // 기존 에러 카드들 제거
+        cardAdapter.clearErrorCards();
+        
+        // 최신 API 호출 결과들을 카드로 변환
+        for (ApiCallResultEntity result : apiCallResults) {
+            if (result.hasError()) {
+                // 에러가 있는 경우 ErrorCard 생성 - 더 상세한 정보 포함
+                String errorMessage = result.getErrorMessage();
+                String apiEndpoint = result.getApiEndpoint();
+                String errorCode = result.getErrorCode();
+                String serverErrorMessage = result.getServerErrorMessage();
+                String responseData = result.getResponseData();
+                
+                // API endpoint가 없는 경우 기본값 설정
+                if (apiEndpoint == null || apiEndpoint.isEmpty()) {
+                    apiEndpoint = "/unknown";
+                }
+                
+                // 에러 코드가 없는 경우 기본값 설정
+                if (errorCode == null || errorCode.isEmpty()) {
+                    errorCode = "Unknown";
+                }
+                
+                // 서버 에러 메시지가 없는 경우 기본 에러 메시지 사용
+                if (serverErrorMessage == null || serverErrorMessage.isEmpty()) {
+                    serverErrorMessage = errorMessage != null ? errorMessage : "No error message";
+                }
+                
+                // Response data가 없는 경우 기본 에러 메시지 사용
+                if (responseData == null || responseData.isEmpty()) {
+                    responseData = errorMessage != null ? errorMessage : "No response data";
+                }
+                
+                // JSON 형태의 상세 에러 정보 생성
+                String jsonErrorDetails = createJsonErrorDetails(apiEndpoint, errorCode, serverErrorMessage, errorMessage);
+                
+                CardAdapter.ErrorCard errorCard = new CardAdapter.ErrorCard(
+                    String.valueOf(result.getCallTime()),
+                    "API Error",
+                    errorMessage != null ? errorMessage : "API call failed",
+                    apiEndpoint,
+                    errorCode,
+                    serverErrorMessage,
+                    jsonErrorDetails
+                );
+                cardAdapter.addErrorCard(errorCard);
+            } else if (result.isSuccessfulCall()) {
+                // 성공한 경우 TransactionCard 생성 (TransactionData가 있는 경우)
+                if (result.getTransactionData() != null) {
+                    // JSON에서 TransactionData 복원하여 카드 생성
+                    // 이 부분은 필요에 따라 구현
+                }
+            }
+        }
+    }
+
+    /**
+     * JSON 형태의 상세 에러 정보 생성
+     */
+    private String createJsonErrorDetails(String apiEndpoint, String errorCode, String serverErrorMessage, String errorMessage) {
+        try {
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{\n");
+            jsonBuilder.append("  \"server_url\": \"https://api.bithumb.com").append(apiEndpoint).append("\",\n");
+            jsonBuilder.append("  \"api_endpoint\": \"").append(apiEndpoint).append("\",\n");
+            jsonBuilder.append("  \"error_code\": \"").append(errorCode != null ? errorCode : "Unknown").append("\",\n");
+            jsonBuilder.append("  \"server_message\": \"").append(serverErrorMessage != null ? serverErrorMessage.replace("\"", "\\\"") : "No message").append("\",\n");
+            jsonBuilder.append("  \"original_error\": \"").append(errorMessage != null ? errorMessage.replace("\"", "\\\"").replace("\n", "\\n") : "No error message").append("\",\n");
+            jsonBuilder.append("  \"timestamp\": \"").append(System.currentTimeMillis()).append("\",\n");
+            jsonBuilder.append("  \"error_type\": \"API_CALL_FAILURE\",\n");
+            jsonBuilder.append("  \"api_provider\": \"Bithumb\",\n");
+            jsonBuilder.append("  \"request_method\": \"GET\"\n");
+            jsonBuilder.append("}");
+            return jsonBuilder.toString();
+        } catch (Exception e) {
+            return "{\"error\":\"Failed to create error details\",\"message\":\"" + 
+                (errorMessage != null ? errorMessage.replace("\"", "\\\"") : "No message") + "\"}";
         }
     }
 
@@ -157,9 +286,13 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 String errorTime = intent.getStringExtra("errorTime");
                 String errorType = intent.getStringExtra("errorType");
                 String errorMessage = intent.getStringExtra("errorMessage");
+                String apiEndpoint = intent.getStringExtra("apiEndpoint");
+                String errorCode = intent.getStringExtra("errorCode");
+                String serverErrorMessage = intent.getStringExtra("serverErrorMessage");
+                String apiErrorDetails = intent.getStringExtra("apiErrorDetails");
                 
                 CardAdapter.ErrorCard errorCard = new CardAdapter.ErrorCard(
-                    errorTime, errorType, errorMessage
+                    errorTime, errorType, errorMessage, apiEndpoint, errorCode, serverErrorMessage, apiErrorDetails
                 );
                 
                 if (cardAdapter != null) {
@@ -229,11 +362,26 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
             public String errorTime;
             public String errorType;
             public String errorMessage;
+            public String apiEndpoint;
+            public String errorCode;
+            public String serverErrorMessage;
+            public String apiErrorDetails;
 
             public ErrorCard(String errorTime, String errorType, String errorMessage) {
                 this.errorTime = errorTime;
                 this.errorType = errorType;
                 this.errorMessage = errorMessage;
+            }
+
+            public ErrorCard(String errorTime, String errorType, String errorMessage, 
+                           String apiEndpoint, String errorCode, String serverErrorMessage, String apiErrorDetails) {
+                this.errorTime = errorTime;
+                this.errorType = errorType;
+                this.errorMessage = errorMessage;
+                this.apiEndpoint = apiEndpoint;
+                this.errorCode = errorCode;
+                this.serverErrorMessage = serverErrorMessage;
+                this.apiErrorDetails = apiErrorDetails;
             }
         }
 
@@ -401,6 +549,18 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         public void addErrorCard(ErrorCard card) {
             cardList.add(0, card); // 최신 에러 카드를 맨 위에 추가
             notifyItemInserted(0);
+        }
+
+        /**
+         * 모든 ErrorCard 제거
+         */
+        public void clearErrorCards() {
+            for (int i = cardList.size() - 1; i >= 0; i--) {
+                if (cardList.get(i) instanceof ErrorCard) {
+                    cardList.remove(i);
+                    notifyItemRemoved(i);
+                }
+            }
         }
 
         /**

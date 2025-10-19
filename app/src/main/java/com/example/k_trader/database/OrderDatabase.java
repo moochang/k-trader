@@ -9,8 +9,8 @@ import android.content.Context;
  * Room 데이터베이스 설정
  */
 @Database(
-    entities = {OrderEntity.class, ErrorEntity.class},
-    version = 2,
+    entities = {OrderEntity.class, ErrorEntity.class, ApiCallResultEntity.class},
+    version = 3,
     exportSchema = false
 )
 public abstract class OrderDatabase extends RoomDatabase {
@@ -19,6 +19,7 @@ public abstract class OrderDatabase extends RoomDatabase {
 
     public abstract OrderDao orderDao();
     public abstract ErrorDao errorDao();
+    public abstract ApiCallResultDao apiCallResultDao();
 
     /**
      * 싱글톤 패턴으로 데이터베이스 인스턴스 반환

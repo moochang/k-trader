@@ -119,12 +119,14 @@ public class TransactionApiService {
             if (response != null && isSuccessResponse(response)) {
                 return response;
             } else {
-                String errorMessage = extractErrorMessage(response);
+                String errorMessage = extractDetailedErrorMessage(response, endpoint);
                 result.addError(endpoint, errorMessage);
                 return null;
             }
         } catch (Exception e) {
-            result.addError(endpoint, "Exception: " + e.getMessage());
+            String errorMessage = String.format("{\"endpoint\":\"%s\",\"error\":\"Exception\",\"message\":\"%s\"}", 
+                endpoint, e.getMessage());
+            result.addError(endpoint, errorMessage);
             return null;
         }
     }
@@ -138,12 +140,14 @@ public class TransactionApiService {
             if (response != null && isSuccessResponse(response)) {
                 return response;
             } else {
-                String errorMessage = extractErrorMessage(response);
+                String errorMessage = extractDetailedErrorMessage(response, endpoint);
                 result.addError(endpoint, errorMessage);
                 return null;
             }
         } catch (Exception e) {
-            result.addError(endpoint, "Exception: " + e.getMessage());
+            String errorMessage = String.format("{\"endpoint\":\"%s\",\"error\":\"Exception\",\"message\":\"%s\"}", 
+                endpoint, e.getMessage());
+            result.addError(endpoint, errorMessage);
             return null;
         }
     }
@@ -157,12 +161,14 @@ public class TransactionApiService {
             if (response != null && isSuccessResponse(response)) {
                 return response;
             } else {
-                String errorMessage = extractErrorMessage(response);
+                String errorMessage = extractDetailedErrorMessage(response, endpoint);
                 result.addError(endpoint, errorMessage);
                 return null;
             }
         } catch (Exception e) {
-            result.addError(endpoint, "Exception: " + e.getMessage());
+            String errorMessage = String.format("{\"endpoint\":\"%s\",\"error\":\"Exception\",\"message\":\"%s\"}", 
+                endpoint, e.getMessage());
+            result.addError(endpoint, errorMessage);
             return null;
         }
     }
@@ -346,5 +352,32 @@ public class TransactionApiService {
     public boolean isNetworkAvailable() {
         // 실제 네트워크 상태 확인 로직 구현
         return true;
+    }
+    
+    /**
+     * 상세한 에러 메시지 추출 (JSON 형태로 포맷)
+     */
+    private String extractDetailedErrorMessage(JSONObject response, String endpoint) {
+        if (response == null) {
+            return String.format("{\"endpoint\":\"%s\",\"error\":\"No Response\",\"message\":\"서버 응답이 없습니다\",\"timestamp\":\"%d\"}", 
+                endpoint, System.currentTimeMillis());
+        }
+        
+        String status = response.get("status") != null ? response.get("status").toString() : "Unknown";
+        String message = response.get("message") != null ? response.get("message").toString() : "No message";
+        String fullResponse = response.toString();
+        
+        // JSON 형태로 상세 정보 포맷팅
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{\n");
+        jsonBuilder.append("  \"server_url\": \"https://api.bithumb.com").append(endpoint).append("\",\n");
+        jsonBuilder.append("  \"api_endpoint\": \"").append(endpoint).append("\",\n");
+        jsonBuilder.append("  \"error_code\": \"").append(status).append("\",\n");
+        jsonBuilder.append("  \"server_message\": \"").append(message.replace("\"", "\\\"")).append("\",\n");
+        jsonBuilder.append("  \"full_response\": \"").append(fullResponse.replace("\"", "\\\"").replace("\n", "\\n")).append("\",\n");
+        jsonBuilder.append("  \"timestamp\": \"").append(System.currentTimeMillis()).append("\"\n");
+        jsonBuilder.append("}");
+        
+        return jsonBuilder.toString();
     }
 }

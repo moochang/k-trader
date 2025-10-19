@@ -1,6 +1,5 @@
 package com.example.k_trader;
 
-import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -11,10 +10,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -82,21 +79,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 마시멜로우 이상 버전이면
-        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                Toast.makeText(this, "Log 저장을 위해 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
-            }
-            requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_REQUEST);
-        }
-
-        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
-                SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
-                prefsEditr.putBoolean("FILE_LOG_ENABLED", true);
-                prefsEditr.apply();
-                logger = org.apache.log4j.Logger.getLogger("MainActivity");
-            }
+        // 로그 저장 기능 활성화 (권한 불필요 - 앱 내부 저장소 사용)
+//        enableFileLogging();
 
         IntentFilter theFilter = new IntentFilter();
         theFilter.addAction(BROADCAST_PROGRESS_MESSAGE);
@@ -218,27 +202,6 @@ public class MainActivity extends AppCompatActivity {
         moveTaskToBack(true);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == STORAGE_PERMISSION_REQUEST && grantResults.length > 0) {
-            SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
-            SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
-
-            if (grantResults[0] == 0) {
-                // 권한 승인 됨
-                prefsEditr.putBoolean("FILE_LOG_ENABLED", true);
-                GlobalSettings.getInstance().setFileLogEnabled(true);
-            } else {
-                prefsEditr.putBoolean("FILE_LOG_ENABLED", false);
-                GlobalSettings.getInstance().setFileLogEnabled(false);
-                Toast.makeText(this, "Log 저장을 위해 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
-            }
-            prefsEditr.apply();
-        }
-    }
-    
     /**
      * 현재 테마에 따라 Status Bar 색상을 설정하는 메서드
      */

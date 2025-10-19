@@ -49,7 +49,7 @@ public class ErrorDetailDialog extends Dialog {
         TextView textErrorTime = view.findViewById(R.id.textDetailErrorTime);
         TextView textErrorType = view.findViewById(R.id.textDetailErrorType);
         TextView textErrorMessage = view.findViewById(R.id.textDetailErrorMessage);
-        TextView textErrorDescription = view.findViewById(R.id.textDetailErrorDescription);
+        TextView textDetailApiError = view.findViewById(R.id.textDetailApiError);
         
         // 데이터 설정
         textErrorTime.setText(errorCard.errorTime != null ? 
@@ -59,9 +59,9 @@ public class ErrorDetailDialog extends Dialog {
         textErrorMessage.setText(errorCard.errorMessage != null ? 
             errorCard.errorMessage : "정보 없음");
         
-        // 에러 타입에 따른 상세 설명 설정
-        String errorDescription = getErrorDescription(errorCard.errorType);
-        textErrorDescription.setText(errorDescription);
+        // 서버 API 상세 에러 정보 표시
+        String apiErrorDetails = getApiErrorDetails();
+        textDetailApiError.setText(apiErrorDetails);
         
         // 시간 포맷팅 (타임스탬프인 경우)
         if (errorCard.errorTime != null && 
@@ -81,26 +81,103 @@ public class ErrorDetailDialog extends Dialog {
     }
 
     /**
-     * 에러 타입에 따른 상세 설명 반환
+     * 서버 API 상세 에러 정보 반환
      */
-    private String getErrorDescription(String errorType) {
-        if (errorType == null) return "알 수 없는 에러입니다.";
+    private String getApiErrorDetails() {
+        StringBuilder details = new StringBuilder();
+        boolean hasAnyInfo = false;
         
-        switch (errorType.toLowerCase()) {
-            case "network error":
-                return "네트워크 연결에 문제가 발생했습니다. 인터넷 연결을 확인해주세요.";
-            case "api error":
-                return "서버 API 호출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-            case "validation error":
-                return "입력 데이터에 문제가 있습니다. 입력값을 확인해주세요.";
-            case "authentication error":
-                return "인증에 실패했습니다. API 키를 확인해주세요.";
-            case "rate limit error":
-                return "API 호출 제한에 도달했습니다. 잠시 후 다시 시도해주세요.";
-            case "server error":
-                return "서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-            default:
-                return "예상치 못한 오류가 발생했습니다. 문제가 지속되면 고객지원에 문의해주세요.";
+        // API Endpoint 정보 (서버 URL 포함)
+        if (errorCard.apiEndpoint != null && !errorCard.apiEndpoint.isEmpty()) {
+            details.append("Server URL: https://api.bithumb.com").append(errorCard.apiEndpoint).append("\n\n");
+            details.append("API Endpoint: ").append(errorCard.apiEndpoint).append("\n\n");
+            hasAnyInfo = true;
+        }
+        
+        // 에러 코드 정보
+        if (errorCard.errorCode != null && !errorCard.errorCode.isEmpty()) {
+            details.append("Error Code: ").append(errorCard.errorCode).append("\n\n");
+            hasAnyInfo = true;
+        }
+        
+        // 서버 에러 메시지
+        if (errorCard.serverErrorMessage != null && !errorCard.serverErrorMessage.isEmpty()) {
+            details.append("Server Error Message:\n").append(errorCard.serverErrorMessage).append("\n\n");
+            hasAnyInfo = true;
+        }
+        
+        // API 상세 에러 정보 (JSON 형태)
+        if (errorCard.apiErrorDetails != null && !errorCard.apiErrorDetails.isEmpty()) {
+            details.append("Full Error Details (JSON):\n").append(errorCard.apiErrorDetails).append("\n\n");
+            hasAnyInfo = true;
+        }
+        
+        // 기본 에러 메시지가 JSON 형태인 경우 별도로 표시
+        if (errorCard.errorMessage != null && !errorCard.errorMessage.isEmpty()) {
+            if (isJsonFormat(errorCard.errorMessage)) {
+                details.append("Error Details (JSON Format):\n").append(formatJsonString(errorCard.errorMessage)).append("\n\n");
+            } else {
+                details.append("Error Message:\n").append(errorCard.errorMessage).append("\n\n");
+            }
+            hasAnyInfo = true;
+        }
+        
+        // 추가 디버깅 정보
+        if (hasAnyInfo) {
+            details.append("Debug Information:\n");
+            details.append("- Error occurred during API call\n");
+            details.append("- Check network connection\n");
+            details.append("- Verify API credentials\n");
+            details.append("- Review server status\n\n");
+        }
+        
+        // 정보가 없는 경우 - 기본 정보라도 표시
+        if (!hasAnyInfo) {
+            details.append("API Error Information:\n\n");
+            details.append("Error Time: ").append(errorCard.errorTime != null ? errorCard.errorTime : "Unknown").append("\n");
+            details.append("Error Type: ").append(errorCard.errorType != null ? errorCard.errorType : "Unknown").append("\n");
+            details.append("Error Message: ").append(errorCard.errorMessage != null ? errorCard.errorMessage : "No message available").append("\n\n");
+            
+            // API 호출 정보가 없는 경우 안내 메시지
+            details.append("Note: Detailed API information is not available.\n");
+            details.append("This error may have occurred during:\n");
+            details.append("- Network connection issues\n");
+            details.append("- Server API calls\n");
+            details.append("- Data processing errors\n\n");
+            details.append("Please check your network connection and try again.");
+        }
+        
+        return details.toString();
+    }
+
+    /**
+     * 문자열이 JSON 형태인지 확인
+     */
+    private boolean isJsonFormat(String text) {
+        if (text == null || text.isEmpty()) return false;
+        
+        String trimmed = text.trim();
+        return (trimmed.startsWith("{") && trimmed.endsWith("}")) || 
+               (trimmed.startsWith("[") && trimmed.endsWith("]"));
+    }
+    
+    /**
+     * JSON 문자열을 읽기 쉽게 포맷팅
+     */
+    private String formatJsonString(String jsonString) {
+        if (jsonString == null || jsonString.isEmpty()) return "";
+        
+        try {
+            // 간단한 JSON 포맷팅 (들여쓰기 추가)
+            String formatted = jsonString
+                .replace("{", "{\n  ")
+                .replace("}", "\n}")
+                .replace(",", ",\n  ")
+                .replace("\n  \n", "\n");
+            
+            return formatted;
+        } catch (Exception e) {
+            return jsonString; // 포맷팅 실패 시 원본 반환
         }
     }
 

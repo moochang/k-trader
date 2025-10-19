@@ -92,7 +92,7 @@
 
         </LinearLayout>
 
-        <!-- 에러 설명 -->
+        <!-- 서버 API 상세 에러 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -102,19 +102,19 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="해결 방법"
+                android:text="서버 API 상세 에러"
                 android:textColor="#666666"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="4dp" />
 
             <TextView
-                android:id="@+id/textDetailErrorDescription"
+                android:id="@+id/textDetailApiError"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="네트워크 연결에 문제가 발생했습니다. 인터넷 연결을 확인해주세요."
+                android:text="API 호출 실패: HTTP 500 Internal Server Error"
                 android:textColor="#000000"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:background="#F0F8FF"
                 android:padding="8dp" />
 

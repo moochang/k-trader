@@ -6,7 +6,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.example.k_trader.KTraderApplication;
 import com.example.k_trader.TransactionItemFragment;
 import com.example.k_trader.database.ErrorRepository;
+import com.example.k_trader.database.ApiCallResultRepository;
 import com.example.k_trader.api.TransactionApiService;
+import com.example.k_trader.api.TransactionApiResult;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,6 +25,7 @@ public class TransactionDataManager {
     private final TransactionCacheService cacheService;
     private final TransactionApiService apiService;
     private final ErrorRepository errorRepository;
+    private final ApiCallResultRepository apiCallResultRepository;
     private final ExecutorService executorService;
     private static volatile TransactionDataManager INSTANCE;
 
@@ -30,6 +33,8 @@ public class TransactionDataManager {
         this.cacheService = TransactionCacheService.getInstance(context);
         this.apiService = TransactionApiService.getInstance();
         this.errorRepository = ErrorRepository.getInstance(context);
+        this.apiCallResultRepository = ApiCallResultRepository.getInstance(
+            com.example.k_trader.database.OrderDatabase.getInstance(context).apiCallResultDao());
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -77,22 +82,78 @@ public class TransactionDataManager {
     private void syncWithServer() {
         executorService.execute(() -> {
             try {
-                CompletableFuture<TransactionData> future = apiService.fetchTransactionData();
-                TransactionData serverData = future.get();
+                TransactionApiResult result = apiService.fetchTransactionDataWithErrorInfo().get();
                 
-                if (serverData != null && serverData.isValid()) {
+                // API 호출 결과를 DB에 저장 (성공/실패 관계없이)
+                saveApiCallResultsToDatabase(result);
+                
+                if (result.getTransactionData() != null && result.getTransactionData().isValid()) {
                     // 서버 데이터를 캐시에 저장
-                    cacheService.saveToCache(serverData);
+                    cacheService.saveToCache(result.getTransactionData());
                     
                     // 서버 데이터로 UI 업데이트
-                    broadcastTransactionData(serverData, true);
+                    broadcastTransactionData(result.getTransactionData(), true);
                 }
+                
             } catch (Exception e) {
                 e.printStackTrace();
                 // 서버 동기화 실패 시 에러 처리
                 handleSyncError(e);
             }
         });
+    }
+
+    /**
+     * API 호출 결과를 DB에 저장
+     */
+    private void saveApiCallResultsToDatabase(TransactionApiResult result) {
+        try {
+            if (result.getTransactionData() != null && result.getTransactionData().isValid()) {
+                // 성공한 경우 - TransactionData 저장
+                String transactionDataJson = convertTransactionDataToJson(result.getTransactionData());
+                apiCallResultRepository.saveSuccessfulApiCall("TransactionData", 
+                    "Success", transactionDataJson)
+                    .subscribe(
+                        id -> android.util.Log.d("TransactionDataManager", "API call result saved with ID: " + id),
+                        throwable -> android.util.Log.e("TransactionDataManager", "Failed to save API call result", throwable)
+                    );
+            }
+            
+            // 에러가 있는 경우 각 에러별로 저장
+            if (result.hasErrors()) {
+                for (TransactionApiResult.ApiError apiError : result.getErrors()) {
+                    String errorCode = extractErrorCode(apiError.getErrorMessage());
+                    String serverMessage = extractServerMessage(apiError.getErrorMessage());
+                    
+                    // 전체 에러 메시지를 JSON 형태로 포맷팅 (더 상세한 정보 포함)
+                    String fullErrorMessage = formatDetailedErrorMessage(apiError.getApiEndpoint(), 
+                        errorCode, serverMessage, apiError.getErrorMessage());
+                    
+                    apiCallResultRepository.saveFailedApiCall(apiError.getApiEndpoint(), 
+                        errorCode, fullErrorMessage, serverMessage)
+                        .subscribe(
+                            id -> android.util.Log.d("TransactionDataManager", "API error saved with ID: " + id),
+                            throwable -> android.util.Log.e("TransactionDataManager", "Failed to save API error", throwable)
+                        );
+                }
+            }
+            
+        } catch (Exception e) {
+            android.util.Log.e("TransactionDataManager", "Exception while saving API call results", e);
+        }
+    }
+
+    /**
+     * TransactionData를 JSON 문자열로 변환
+     */
+    private String convertTransactionDataToJson(TransactionData data) {
+        try {
+            return String.format("{\"transactionTime\":\"%s\",\"btcCurrentPrice\":\"%s\",\"hourlyChange\":\"%s\",\"estimatedBalance\":\"%s\",\"lastBuyPrice\":\"%s\",\"lastSellPrice\":\"%s\",\"nextBuyPrice\":\"%s\"}",
+                data.getTransactionTime(), data.getBtcCurrentPrice(), data.getHourlyChange(),
+                data.getEstimatedBalance(), data.getLastBuyPrice(), data.getLastSellPrice(), data.getNextBuyPrice());
+        } catch (Exception e) {
+            return "{\"error\":\"Failed to convert TransactionData to JSON\"}";
+        }
     }
 
     /**
@@ -113,6 +174,124 @@ public class TransactionDataManager {
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext())
                     .sendBroadcast(intent);
         }
+    }
+
+    /**
+     * API 에러들 처리
+     */
+    private void handleApiErrors(TransactionApiResult result) {
+        long errorTime = System.currentTimeMillis();
+        String errorType = "API Error";
+        String errorMessage = "API 호출 중 에러 발생";
+        String apiErrorDetails = result.getErrorSummary();
+        
+        // 에러를 DB에 저장 (API 상세 정보 포함)
+        saveErrorToDatabaseWithApiDetails(errorTime, errorType, errorMessage, "TransactionDataManager.syncWithServer()", null, apiErrorDetails);
+    }
+
+    /**
+     * 에러 메시지에서 에러 코드 추출
+     */
+    private String extractErrorCode(String errorMessage) {
+        if (errorMessage == null) return "Unknown";
+        
+        // "Status: 5001, Message: ..." 형태에서 에러 코드 추출
+        if (errorMessage.contains("Status:")) {
+            String[] parts = errorMessage.split(",");
+            if (parts.length > 0) {
+                return parts[0].replace("Status:", "").trim();
+            }
+        }
+        
+        return "Unknown";
+    }
+
+    /**
+     * 에러 메시지에서 서버 메시지 추출
+     */
+    private String extractServerMessage(String errorMessage) {
+        if (errorMessage == null) return "No message";
+        
+        // "Status: 5001, Message: Invalid API Key" 형태에서 메시지 추출
+        if (errorMessage.contains("Message:")) {
+            String[] parts = errorMessage.split("Message:");
+            if (parts.length > 1) {
+                return parts[1].trim();
+            }
+        }
+        
+        return errorMessage;
+    }
+
+    /**
+     * 상세한 에러 메시지를 JSON 형태로 포맷팅 (더 많은 정보 포함)
+     */
+    private String formatDetailedErrorMessage(String apiEndpoint, String errorCode, String serverMessage, String originalMessage) {
+        try {
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{\n");
+            jsonBuilder.append("  \"server_url\": \"https://api.bithumb.com").append(apiEndpoint).append("\",\n");
+            jsonBuilder.append("  \"api_endpoint\": \"").append(apiEndpoint).append("\",\n");
+            jsonBuilder.append("  \"error_code\": \"").append(errorCode != null ? errorCode : "Unknown").append("\",\n");
+            jsonBuilder.append("  \"server_message\": \"").append(serverMessage != null ? serverMessage.replace("\"", "\\\"") : "No message").append("\",\n");
+            jsonBuilder.append("  \"original_error\": \"").append(originalMessage != null ? originalMessage.replace("\"", "\\\"").replace("\n", "\\n") : "No error message").append("\",\n");
+            jsonBuilder.append("  \"timestamp\": \"").append(System.currentTimeMillis()).append("\",\n");
+            jsonBuilder.append("  \"error_type\": \"API_CALL_FAILURE\",\n");
+            jsonBuilder.append("  \"api_provider\": \"Bithumb\",\n");
+            jsonBuilder.append("  \"request_method\": \"GET\"\n");
+            jsonBuilder.append("}");
+            return jsonBuilder.toString();
+        } catch (Exception e) {
+            return "{\"error\":\"Failed to format error message\",\"original\":\"" + 
+                (originalMessage != null ? originalMessage.replace("\"", "\\\"") : "No message") + "\"}";
+        }
+    }
+
+    /**
+     * 전체 에러 메시지를 JSON 형태로 포맷팅
+     */
+    private String formatFullErrorMessage(String apiEndpoint, String errorCode, String serverMessage, String originalMessage) {
+        try {
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{\n");
+            jsonBuilder.append("  \"server_url\": \"https://api.bithumb.com").append(apiEndpoint).append("\",\n");
+            jsonBuilder.append("  \"api_endpoint\": \"").append(apiEndpoint).append("\",\n");
+            jsonBuilder.append("  \"error_code\": \"").append(errorCode != null ? errorCode : "Unknown").append("\",\n");
+            jsonBuilder.append("  \"server_message\": \"").append(serverMessage != null ? serverMessage : "No message").append("\",\n");
+            jsonBuilder.append("  \"original_error\": \"").append(originalMessage != null ? originalMessage.replace("\"", "\\\"") : "No error message").append("\",\n");
+            jsonBuilder.append("  \"timestamp\": \"").append(System.currentTimeMillis()).append("\"\n");
+            jsonBuilder.append("}");
+            return jsonBuilder.toString();
+        } catch (Exception e) {
+            return "{\"error\":\"Failed to format error message\",\"original\":\"" + 
+                (originalMessage != null ? originalMessage.replace("\"", "\\\"") : "No message") + "\"}";
+        }
+    }
+
+    /**
+     * API 상세 정보와 함께 에러를 DB에 저장
+     */
+    private void saveErrorToDatabaseWithApiDetails(long errorTime, String errorType, String errorMessage,
+                                                   String transactionContext, Exception exception, String apiErrorDetails) {
+        executorService.execute(() -> {
+            try {
+                errorRepository.saveErrorWithApiDetails(errorTime, errorType, errorMessage,
+                    transactionContext, exception, apiErrorDetails)
+                    .subscribe(
+                        errorId -> {
+                            android.util.Log.d("TransactionDataManager",
+                                "Error with API details saved to database with ID: " + errorId);
+                        },
+                        throwable -> {
+                            android.util.Log.e("TransactionDataManager",
+                                "Failed to save error with API details to database", throwable);
+                        }
+                    );
+            } catch (Exception e) {
+                android.util.Log.e("TransactionDataManager",
+                    "Exception while saving error with API details to database", e);
+            }
+        });
     }
 
     /**
