@@ -174,6 +174,14 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 // JSON 형태의 상세 에러 정보 생성
                 String jsonErrorDetails = createJsonErrorDetails(apiEndpoint, errorCode, serverErrorMessage, errorMessage);
                 
+                // 디버깅을 위한 로그 추가
+                android.util.Log.d("TransactionItemFragment", "Creating ErrorCard with:");
+                android.util.Log.d("TransactionItemFragment", "  apiEndpoint: " + apiEndpoint);
+                android.util.Log.d("TransactionItemFragment", "  errorCode: " + errorCode);
+                android.util.Log.d("TransactionItemFragment", "  serverErrorMessage: " + serverErrorMessage);
+                android.util.Log.d("TransactionItemFragment", "  errorMessage: " + errorMessage);
+                android.util.Log.d("TransactionItemFragment", "  jsonErrorDetails: " + jsonErrorDetails);
+                
                 CardAdapter.ErrorCard errorCard = new CardAdapter.ErrorCard(
                     String.valueOf(result.getCallTime()),
                     "API Error",

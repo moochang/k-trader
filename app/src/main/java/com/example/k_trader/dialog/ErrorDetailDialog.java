@@ -87,6 +87,14 @@ public class ErrorDetailDialog extends Dialog {
         StringBuilder details = new StringBuilder();
         boolean hasAnyInfo = false;
         
+        // 디버깅을 위한 로그 추가
+        android.util.Log.d("", "ErrorCard data:");
+        android.util.Log.d("ErrorDetailDialog", "  apiEndpoint: " + errorCard.apiEndpoint);
+        android.util.Log.d("ErrorDetailDialog", "  errorCode: " + errorCard.errorCode);
+        android.util.Log.d("ErrorDetailDialog", "  serverErrorMessage: " + errorCard.serverErrorMessage);
+        android.util.Log.d("ErrorDetailDialog", "  apiErrorDetails: " + errorCard.apiErrorDetails);
+        android.util.Log.d("ErrorDetailDialog", "  errorMessage: " + errorCard.errorMessage);
+        
         // API Endpoint 정보 (서버 URL 포함)
         if (errorCard.apiEndpoint != null && !errorCard.apiEndpoint.isEmpty()) {
             details.append("Server URL: https://api.bithumb.com").append(errorCard.apiEndpoint).append("\n\n");
@@ -106,48 +114,93 @@ public class ErrorDetailDialog extends Dialog {
             hasAnyInfo = true;
         }
         
-        // API 상세 에러 정보 (JSON 형태)
+        // API 상세 에러 정보 (JSON 형태) - 강제로 표시
         if (errorCard.apiErrorDetails != null && !errorCard.apiErrorDetails.isEmpty()) {
             details.append("Full Error Details (JSON):\n").append(errorCard.apiErrorDetails).append("\n\n");
             hasAnyInfo = true;
+        } else {
+            // apiErrorDetails가 없는 경우 강제로 JSON 생성하여 표시
+            String forcedJson = createForcedJsonErrorDetails();
+            if (forcedJson != null && !forcedJson.isEmpty()) {
+                details.append("Full Error Details (JSON):\n").append(forcedJson).append("\n\n");
+                hasAnyInfo = true;
+            }
         }
         
         // 기본 에러 메시지가 JSON 형태인 경우 별도로 표시
         if (errorCard.errorMessage != null && !errorCard.errorMessage.isEmpty()) {
+            android.util.Log.d("ErrorDetailDialog", "Checking errorMessage for JSON: " + errorCard.errorMessage);
             if (isJsonFormat(errorCard.errorMessage)) {
+                android.util.Log.d("ErrorDetailDialog", "errorMessage is JSON format");
                 details.append("Error Details (JSON Format):\n").append(formatJsonString(errorCard.errorMessage)).append("\n\n");
             } else {
+                android.util.Log.d("ErrorDetailDialog", "errorMessage is not JSON format");
                 details.append("Error Message:\n").append(errorCard.errorMessage).append("\n\n");
             }
             hasAnyInfo = true;
         }
         
-        // 추가 디버깅 정보
-        if (hasAnyInfo) {
-            details.append("Debug Information:\n");
-            details.append("- Error occurred during API call\n");
-            details.append("- Check network connection\n");
-            details.append("- Verify API credentials\n");
-            details.append("- Review server status\n\n");
-        }
-        
+
         // 정보가 없는 경우 - 기본 정보라도 표시
         if (!hasAnyInfo) {
             details.append("API Error Information:\n\n");
             details.append("Error Time: ").append(errorCard.errorTime != null ? errorCard.errorTime : "Unknown").append("\n");
             details.append("Error Type: ").append(errorCard.errorType != null ? errorCard.errorType : "Unknown").append("\n");
             details.append("Error Message: ").append(errorCard.errorMessage != null ? errorCard.errorMessage : "No message available").append("\n\n");
-            
-            // API 호출 정보가 없는 경우 안내 메시지
-            details.append("Note: Detailed API information is not available.\n");
-            details.append("This error may have occurred during:\n");
-            details.append("- Network connection issues\n");
-            details.append("- Server API calls\n");
-            details.append("- Data processing errors\n\n");
-            details.append("Please check your network connection and try again.");
         }
         
         return details.toString();
+    }
+
+    /**
+     * 강제로 JSON 에러 정보 생성 (apiErrorDetails가 없는 경우)
+     */
+    private String createForcedJsonErrorDetails() {
+        try {
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{\n");
+            
+            // API endpoint 정보
+            if (errorCard.apiEndpoint != null && !errorCard.apiEndpoint.isEmpty()) {
+                jsonBuilder.append("  \"server_url\": \"https://api.bithumb.com").append(errorCard.apiEndpoint).append("\",\n");
+                jsonBuilder.append("  \"api_endpoint\": \"").append(errorCard.apiEndpoint).append("\",\n");
+            } else {
+                jsonBuilder.append("  \"server_url\": \"https://api.bithumb.com/unknown\",\n");
+                jsonBuilder.append("  \"api_endpoint\": \"/unknown\",\n");
+            }
+            
+            // 에러 코드
+            if (errorCard.errorCode != null && !errorCard.errorCode.isEmpty()) {
+                jsonBuilder.append("  \"error_code\": \"").append(errorCard.errorCode).append("\",\n");
+            } else {
+                jsonBuilder.append("  \"error_code\": \"Unknown\",\n");
+            }
+            
+            // 서버 에러 메시지
+            if (errorCard.serverErrorMessage != null && !errorCard.serverErrorMessage.isEmpty()) {
+                jsonBuilder.append("  \"server_message\": \"").append(errorCard.serverErrorMessage.replace("\"", "\\\"")).append("\",\n");
+            } else {
+                jsonBuilder.append("  \"server_message\": \"No message\",\n");
+            }
+            
+            // 기본 에러 메시지
+            if (errorCard.errorMessage != null && !errorCard.errorMessage.isEmpty()) {
+                jsonBuilder.append("  \"original_error\": \"").append(errorCard.errorMessage.replace("\"", "\\\"").replace("\n", "\\n")).append("\",\n");
+            } else {
+                jsonBuilder.append("  \"original_error\": \"No error message\",\n");
+            }
+            
+            // 타임스탬프
+            jsonBuilder.append("  \"timestamp\": \"").append(System.currentTimeMillis()).append("\",\n");
+            jsonBuilder.append("  \"error_type\": \"API_CALL_FAILURE\",\n");
+            jsonBuilder.append("  \"api_provider\": \"Bithumb\",\n");
+            jsonBuilder.append("  \"request_method\": \"GET\"\n");
+            jsonBuilder.append("}");
+            
+            return jsonBuilder.toString();
+        } catch (Exception e) {
+            return "{\"error\":\"Failed to create forced JSON\",\"message\":\"Error in JSON creation\"}";
+        }
     }
 
     /**
@@ -157,8 +210,23 @@ public class ErrorDetailDialog extends Dialog {
         if (text == null || text.isEmpty()) return false;
         
         String trimmed = text.trim();
-        return (trimmed.startsWith("{") && trimmed.endsWith("}")) || 
-               (trimmed.startsWith("[") && trimmed.endsWith("]"));
+        android.util.Log.d("ErrorDetailDialog", "Checking JSON format for: " + trimmed);
+        
+        // 기본 JSON 형태 체크
+        boolean isJson = (trimmed.startsWith("{") && trimmed.endsWith("}")) || 
+                        (trimmed.startsWith("[") && trimmed.endsWith("]"));
+        
+        // 추가로 JSON 키워드가 포함되어 있는지 체크
+        if (!isJson) {
+            isJson = trimmed.contains("\"status\"") || 
+                    trimmed.contains("\"message\"") || 
+                    trimmed.contains("\"error\"") ||
+                    trimmed.contains("\"name\"") ||
+                    trimmed.contains("\"code\"");
+        }
+        
+        android.util.Log.d("ErrorDetailDialog", "Is JSON format: " + isJson);
+        return isJson;
     }
     
     /**
@@ -168,6 +236,8 @@ public class ErrorDetailDialog extends Dialog {
         if (jsonString == null || jsonString.isEmpty()) return "";
         
         try {
+            android.util.Log.d("ErrorDetailDialog", "Formatting JSON: " + jsonString);
+            
             // 간단한 JSON 포맷팅 (들여쓰기 추가)
             String formatted = jsonString
                 .replace("{", "{\n  ")
@@ -175,8 +245,18 @@ public class ErrorDetailDialog extends Dialog {
                 .replace(",", ",\n  ")
                 .replace("\n  \n", "\n");
             
+            // 추가 포맷팅 개선
+            formatted = formatted
+                .replace("\"status\"", "\n  \"status\"")
+                .replace("\"message\"", "\n  \"message\"")
+                .replace("\"error\"", "\n  \"error\"")
+                .replace("\"name\"", "\n  \"name\"")
+                .replace("\"code\"", "\n  \"code\"");
+            
+            android.util.Log.d("ErrorDetailDialog", "Formatted JSON: " + formatted);
             return formatted;
         } catch (Exception e) {
+            android.util.Log.e("ErrorDetailDialog", "Error formatting JSON", e);
             return jsonString; // 포맷팅 실패 시 원본 반환
         }
     }
