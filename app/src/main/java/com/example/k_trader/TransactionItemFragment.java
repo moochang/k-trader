@@ -17,6 +17,9 @@ import android.widget.TextView;
 
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.database.DatabaseMonitor;
+import com.example.k_trader.data.TransactionDataManager;
+import com.example.k_trader.dialog.TransactionDetailDialog;
+import com.example.k_trader.dialog.ErrorDetailDialog;
 
 import java.util.List;
 
@@ -29,11 +32,13 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
 
     public static final String BROADCAST_CARD_DATA = "TRADE_CARD_DATA";
     public static final String BROADCAST_ERROR_CARD = "TRADE_ERROR_CARD";
+    public static final String BROADCAST_TRANSACTION_DATA = "com.example.k_trader.TRANSACTION_DATA_UPDATED";
 
     private RecyclerView recyclerViewCards;
     private CardAdapter cardAdapter;
     private LogReceiver logReceiver;
     private DatabaseMonitor databaseMonitor;
+    private TransactionDataManager transactionDataManager;
     private String subscriberId;
 
     @Override
@@ -49,6 +54,10 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         // Database Monitor 초기화
         databaseMonitor = DatabaseMonitor.getInstance(getContext());
         subscriberId = "TransactionItemFragment_" + System.currentTimeMillis();
+        
+        // TransactionDataManager 초기화 및 데이터 로드
+        transactionDataManager = TransactionDataManager.getInstance(getContext());
+        transactionDataManager.loadTransactionData();
         
         // BroadcastReceiver 등록
         if (getContext() != null) {
@@ -72,6 +81,11 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         // BroadcastReceiver 해제
         if (logReceiver != null && getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(logReceiver);
+        }
+        
+        // TransactionDataManager 정리
+        if (transactionDataManager != null) {
+            transactionDataManager.cleanup();
         }
     }
 
@@ -106,6 +120,7 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         IntentFilter filter = new IntentFilter();
         filter.addAction(BROADCAST_CARD_DATA);
         filter.addAction(BROADCAST_ERROR_CARD);
+        filter.addAction(BROADCAST_TRANSACTION_DATA);
         
         logReceiver = new LogReceiver();
         if (getContext() != null) {
@@ -149,6 +164,30 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 
                 if (cardAdapter != null) {
                     cardAdapter.addErrorCard(errorCard);
+                }
+            } else if (intent.getAction() != null && intent.getAction().equals(BROADCAST_TRANSACTION_DATA)) {
+                // TransactionDataManager에서 전송된 데이터 처리
+                String transactionTime = intent.getStringExtra("transactionTime");
+                String btcCurrentPrice = intent.getStringExtra("btcCurrentPrice");
+                String hourlyChange = intent.getStringExtra("hourlyChange");
+                String estimatedBalance = intent.getStringExtra("estimatedBalance");
+                String lastBuyPrice = intent.getStringExtra("lastBuyPrice");
+                String lastSellPrice = intent.getStringExtra("lastSellPrice");
+                String nextBuyPrice = intent.getStringExtra("nextBuyPrice");
+                boolean isFromServer = intent.getBooleanExtra("isFromServer", false);
+                
+                CardAdapter.TransactionCard card = new CardAdapter.TransactionCard(
+                    transactionTime, btcCurrentPrice, hourlyChange, estimatedBalance,
+                    lastBuyPrice, lastSellPrice, nextBuyPrice
+                );
+                
+                if (cardAdapter != null) {
+                    // 서버에서 온 데이터인 경우 기존 캐시 데이터를 대체
+                    if (isFromServer) {
+                        cardAdapter.updateLatestCard(card);
+                    } else {
+                        cardAdapter.addCard(card);
+                    }
                 }
             }
         }
@@ -214,9 +253,11 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
             TextView textLastBuyPrice;
             TextView textLastSellPrice;
             TextView textNextBuyPrice;
+            CardAdapter adapter;
 
-            public CardViewHolder(View itemView) {
+            public CardViewHolder(View itemView, CardAdapter adapter) {
                 super(itemView);
+                this.adapter = adapter;
                 textTransactionTime = itemView.findViewById(R.id.textTransactionTime);
                 textBtcCurrentPrice = itemView.findViewById(R.id.textBtcCurrentPrice);
                 textHourlyChange = itemView.findViewById(R.id.textHourlyChange);
@@ -224,6 +265,18 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 textLastBuyPrice = itemView.findViewById(R.id.textLastBuyPrice);
                 textLastSellPrice = itemView.findViewById(R.id.textLastSellPrice);
                 textNextBuyPrice = itemView.findViewById(R.id.textNextBuyPrice);
+                
+                // 클릭 리스너 설정
+                itemView.setOnClickListener(v -> {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION && adapter != null) {
+                        Object item = adapter.cardList.get(position);
+                        if (item instanceof TransactionCard) {
+                            TransactionCard card = (TransactionCard) item;
+                            TransactionDetailDialog.show(itemView.getContext(), card);
+                        }
+                    }
+                });
             }
         }
 
@@ -231,12 +284,26 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
             TextView textErrorTime;
             TextView textErrorType;
             TextView textErrorMessage;
+            CardAdapter adapter;
 
-            public ErrorViewHolder(View itemView) {
+            public ErrorViewHolder(View itemView, CardAdapter adapter) {
                 super(itemView);
+                this.adapter = adapter;
                 textErrorTime = itemView.findViewById(R.id.textErrorTime);
                 textErrorType = itemView.findViewById(R.id.textErrorType);
                 textErrorMessage = itemView.findViewById(R.id.textErrorMessage);
+                
+                // 클릭 리스너 설정
+                itemView.setOnClickListener(v -> {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION && adapter != null) {
+                        Object item = adapter.cardList.get(position);
+                        if (item instanceof ErrorCard) {
+                            ErrorCard card = (ErrorCard) item;
+                            ErrorDetailDialog.show(itemView.getContext(), card);
+                        }
+                    }
+                });
             }
         }
 
@@ -264,10 +331,10 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             if (viewType == TYPE_TRANSACTION) {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view, parent, false);
-                return new CardViewHolder(view);
+                return new CardViewHolder(view, this);
             } else if (viewType == TYPE_ERROR) {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.error_card_view, parent, false);
-                return new ErrorViewHolder(view);
+                return new ErrorViewHolder(view, this);
             } else {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.order_card_view, parent, false);
                 return new OrderViewHolder(view);
@@ -334,6 +401,22 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         public void addErrorCard(ErrorCard card) {
             cardList.add(0, card); // 최신 에러 카드를 맨 위에 추가
             notifyItemInserted(0);
+        }
+
+        /**
+         * 최신 TransactionCard를 업데이트 (서버 데이터로 대체)
+         */
+        public void updateLatestCard(TransactionCard card) {
+            // 기존 TransactionCard가 있는지 확인하고 첫 번째 것을 교체
+            for (int i = 0; i < cardList.size(); i++) {
+                if (cardList.get(i) instanceof TransactionCard) {
+                    cardList.set(i, card);
+                    notifyItemChanged(i);
+                    return;
+                }
+            }
+            // TransactionCard가 없으면 새로 추가
+            addCard(card);
         }
 
 
