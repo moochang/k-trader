@@ -126,20 +126,6 @@ public class ErrorDetailDialog extends Dialog {
                 hasAnyInfo = true;
             }
         }
-        
-        // 기본 에러 메시지가 JSON 형태인 경우 별도로 표시
-        if (errorCard.errorMessage != null && !errorCard.errorMessage.isEmpty()) {
-            android.util.Log.d("ErrorDetailDialog", "Checking errorMessage for JSON: " + errorCard.errorMessage);
-            if (isJsonFormat(errorCard.errorMessage)) {
-                android.util.Log.d("ErrorDetailDialog", "errorMessage is JSON format");
-                details.append("Error Details (JSON Format):\n").append(formatJsonString(errorCard.errorMessage)).append("\n\n");
-            } else {
-                android.util.Log.d("ErrorDetailDialog", "errorMessage is not JSON format");
-                details.append("Error Message:\n").append(errorCard.errorMessage).append("\n\n");
-            }
-            hasAnyInfo = true;
-        }
-        
 
         // 정보가 없는 경우 - 기본 정보라도 표시
         if (!hasAnyInfo) {
