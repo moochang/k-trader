@@ -120,6 +120,15 @@ public class OrderRepository {
     }
 
     /**
+     * 활성 거래 수 조회
+     */
+    public io.reactivex.Single<Integer> getActiveOrdersCount() {
+        return Single.fromCallable(() -> orderDao.getActiveOrdersCount())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
      * OrderEntity 리스트를 TradeData 리스트로 변환
      */
     private List<TradeData> convertToTradeDataList(List<OrderEntity> entities) {

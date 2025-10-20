@@ -21,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.OrderManager;
@@ -49,6 +50,12 @@ public class MainPage extends Fragment {
     private Button btnStartTrading;
     private Button btnStopTrading;
     private Button btnScrollToBottom;
+    
+    // 코인 정보 표시용 TextView들
+    private TextView textCoinType;
+    private TextView textCurrentPrice;
+    private TextView textPriceChange;
+    private TextView textActiveOrders;
     // private Button btnPreference; // App bar 메뉴로 이동
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -73,6 +80,13 @@ public class MainPage extends Fragment {
         btnStartTrading = layout.findViewById(R.id.button);
         btnStopTrading = layout.findViewById(R.id.button2);
         btnScrollToBottom = layout.findViewById(R.id.button3);
+        
+        // 코인 정보 TextView들 초기화
+        textCoinType = layout.findViewById(R.id.textCoinType);
+        textCurrentPrice = layout.findViewById(R.id.textCurrentPrice);
+        textPriceChange = layout.findViewById(R.id.textPriceChange);
+        textActiveOrders = layout.findViewById(R.id.textActiveOrders);
+        
         // btnPreference = layout.findViewById(R.id.imageButtonPreference); // App bar 메뉴로 이동
         tabLayout = layout.findViewById(R.id.tabLayout);
         viewPager = layout.findViewById(R.id.viewPager);
@@ -99,6 +113,9 @@ public class MainPage extends Fragment {
 
         // 즉시 초기 데이터 로드 시작 (Fragment 생성 후 약간의 지연)
         viewPager.postDelayed(this::loadInitialDataImmediately, 1000); // 1초 지연
+        
+        // 코인 정보 초기화
+        updateCoinInfo();
 
         return layout;
     }
@@ -397,6 +414,68 @@ public class MainPage extends Fragment {
         // DatabaseOrderManager 정리
         if (databaseOrderManager != null) {
             databaseOrderManager.dispose();
+        }
+    }
+    
+    /**
+     * 코인 정보 업데이트
+     */
+    private void updateCoinInfo() {
+        if (textCoinType == null) return;
+        
+        // 현재 설정된 코인 타입 표시
+        String coinType = GlobalSettings.getInstance().getCoinType();
+        textCoinType.setText(coinType);
+        
+        // 현재 가격과 등락률은 API에서 가져와야 하므로 기본값으로 설정
+        textCurrentPrice.setText("₩0");
+        textPriceChange.setText("+0.00%");
+        
+        // 활성 거래 수는 DB에서 가져오기
+        updateActiveOrdersCount();
+    }
+    
+    /**
+     * 활성 거래 수 업데이트
+     */
+    private void updateActiveOrdersCount() {
+        if (textActiveOrders == null || databaseOrderManager == null) return;
+        
+        databaseOrderManager.getActiveOrdersCount()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                count -> {
+                    if (textActiveOrders != null) {
+                        textActiveOrders.setText(String.valueOf(count));
+                    }
+                },
+                throwable -> {
+                    Log.e("MainPage", "Error getting active orders count", throwable);
+                    if (textActiveOrders != null) {
+                        textActiveOrders.setText("0");
+                    }
+                }
+            );
+    }
+    
+    /**
+     * 현재 가격과 등락률 업데이트 (API 호출 결과로부터)
+     */
+    public void updatePriceInfo(String currentPrice, String priceChange) {
+        if (textCurrentPrice != null) {
+            textCurrentPrice.setText(currentPrice);
+        }
+        if (textPriceChange != null) {
+            textPriceChange.setText(priceChange);
+            // 등락률에 따라 색상 변경
+            if (priceChange.startsWith("+")) {
+                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            } else if (priceChange.startsWith("-")) {
+                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            } else {
+                textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
+            }
         }
     }
 }

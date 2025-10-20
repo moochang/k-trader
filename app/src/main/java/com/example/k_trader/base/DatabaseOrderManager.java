@@ -283,6 +283,15 @@ public class DatabaseOrderManager {
 
 
     /**
+     * 활성 거래 수 조회
+     */
+    public io.reactivex.Single<Integer> getActiveOrdersCount() {
+        return orderRepository.getActiveOrdersCount()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
      * 리소스 정리
      */
     public void dispose() {

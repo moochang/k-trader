@@ -45,4 +45,10 @@ public interface OrderDao {
      */
     @Query("DELETE FROM orders")
     int deleteAllOrders();
+    
+    /**
+     * 활성 거래 수 조회 (미체결 주문)
+     */
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'placed'")
+    int getActiveOrdersCount();
 }
