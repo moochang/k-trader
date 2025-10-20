@@ -3,6 +3,7 @@ package com.example.k_trader;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -518,7 +519,7 @@ public class MainPage extends Fragment {
     private void fetchCurrentPriceFromApi() {
         try {
             // OrderManager를 통해 현재 가격 가져오기
-            com.example.k_trader.base.OrderManager orderManager = com.example.k_trader.base.OrderManager.getInstance();
+            com.example.k_trader.base.OrderManager orderManager = new com.example.k_trader.base.OrderManager();
             
             // 백그라운드에서 API 호출
             new Thread(() -> {
