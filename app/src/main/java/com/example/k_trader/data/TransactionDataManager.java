@@ -80,6 +80,28 @@ public class TransactionDataManager {
      * 서버에서 최신 데이터를 가져와서 동기화
      */
     private void syncWithServer() {
+        // executorService가 종료된 경우 새로 생성
+        if (executorService.isShutdown()) {
+            // 새로운 executorService를 생성할 수 없으므로 현재 스레드에서 실행
+            try {
+                TransactionApiResult result = apiService.fetchTransactionDataWithErrorInfo().get();
+                
+                // API 호출 결과를 DB에 저장 (성공/실패 관계없이)
+                saveApiCallResultsToDatabase(result);
+                
+                if (result.getTransactionData() != null && result.getTransactionData().isValid()) {
+                    // 서버 데이터를 캐시에 저장
+                    cacheService.saveToCache(result.getTransactionData());
+                    
+                    // 서버 데이터로 UI 업데이트
+                    broadcastTransactionData(result.getTransactionData(), true);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+        
         executorService.execute(() -> {
             try {
                 TransactionApiResult result = apiService.fetchTransactionDataWithErrorInfo().get();
