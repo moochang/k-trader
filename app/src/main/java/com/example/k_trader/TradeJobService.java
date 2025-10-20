@@ -326,7 +326,7 @@ public class TradeJobService extends JobService {
                     
                     if (totalKrw != null && availableBtc != null) {
                         krwBalance = Double.parseDouble(totalKrw);
-                        availableBtcBalance = Double.parseDouble(availableBtc);
+                        availableCoinBalance = Double.parseDouble(availableBtc);
                     } else {
                         log_info("잔고 정보를 가져올 수 없습니다.");
                         sendErrorCard("Balance Error", ERR_API_003.getDescription());
@@ -402,13 +402,13 @@ public class TradeJobService extends JobService {
 
         // 현재 매도 걸려 있는 order들이 전부 매도 완료되었을 때 예상 잔고
         log_info("예상잔고 : " + String.format(Locale.getDefault(), "%,d"
-                , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableBtcBalance * currentPrice))
+                , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableCoinBalance * currentPrice))
                 + " , 주문가능원화 (" + String.format(Locale.getDefault(), "%,d", (long)(krwBalance)) +")" );
         //log_info("예상잔고 : " + String.format(Locale.getDefault(), "%,d"
-        //        , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableBtcBalance * currentPrice))
+        //        , (long)(krwBalance + placedOrderManager.getEstimation()) + (int)(availableCoinBalance * currentPrice))
         //        );
         log_info("매도완료시: " + String.format(Locale.getDefault(), "%,d", (long)(placedOrderManager.getEstimation()))
-                + " , 주문잔고: " + String.format(Locale.getDefault(), "%,d", (int)(availableBtcBalance * currentPrice))
+                + " , 주문잔고: " + String.format(Locale.getDefault(), "%,d", (int)(availableCoinBalance * currentPrice))
                 );
 
         // 매수/매도 완료 이력을 가져온다.
@@ -503,7 +503,7 @@ public class TradeJobService extends JobService {
 
                     // 0.00005~9 만큼 남는다면 반올림한다.
                     if ((pData.getUnits() - unit) > 0.00005) {
-                        if ((availableBtcBalance - unit) > 0.0001) {
+                        if ((availableCoinBalance - unit) > 0.0001) {
                             unit = (float)(Math.round(pData.getUnits() * 10000d) / 10000d);
                             log_info(String.format(Locale.getDefault(), "매도 보정1 : %f -> %f", pData.getUnits(), unit));
                         }
@@ -511,10 +511,10 @@ public class TradeJobService extends JobService {
 
                     // 이전 매수된 BTC 가 소수점 5자리에서 반올림 되는 경우 대비
                     // 남은 잔고보다 계산 값이 큰 경우에는 서버 에러가 발생하므로 잔고만큼만 매도한다. (ex : 0.0047 vs 0.00469..)
-                    // 런타임에 availableBtcBalance 값이 변경되므로 조건문은 정상적으로 동작함
-                    if (unit > availableBtcBalance) {
-                        log_info(String.format(Locale.getDefault(), "매도 보정2 : %f, %f", unit, availableBtcBalance));
-                        unit = (float)((int)(availableBtcBalance * 10000) / 10000.0);
+                    // 런타임에 availableCoinBalance 값이 변경되므로 조건문은 정상적으로 동작함
+                    if (unit > availableCoinBalance) {
+                        log_info(String.format(Locale.getDefault(), "매도 보정2 : %f, %f", unit, availableCoinBalance));
+                        unit = (float)((int)(availableCoinBalance * 10000) / 10000.0);
                     }
 
                     // 매수된 내용이 있다면 가능한 상위 slot에 매도하도록 한다.
@@ -536,7 +536,7 @@ public class TradeJobService extends JobService {
                                 return;
                             }
                             isSold = true;
-                            availableBtcBalance -= unit;
+                            availableCoinBalance -= unit;
 
                             // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
                             placedOrderManager.add(placedOrderManager.build()
@@ -587,7 +587,7 @@ public class TradeJobService extends JobService {
                     if (orderManager.addOrder("이전 실행 매수 발생 대응 매도", SELL, unit, targetPrice) == null) {
                         return;
                     }
-                    availableBtcBalance -= unit;
+                    availableCoinBalance -= unit;
 
                     // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
                     placedOrderManager.add(placedOrderManager.build()
