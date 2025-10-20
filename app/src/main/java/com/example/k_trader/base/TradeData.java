@@ -87,10 +87,14 @@ public class TradeData {
     public TradeData setFeeRaw(String fee) {
         //Log.d("KTrader", fee);
         this.feeRaw = fee;
-        if (this.getType() == SELL)
-            this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
-        else if (this.getType() == BUY)
-            this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
+        if (fee != null) {
+            if (this.getType() == SELL)
+                this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
+            else if (this.getType() == BUY)
+                this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
+        } else {
+            this.feeEvaluated = 0.0;
+        }
         return this;
     }
 
