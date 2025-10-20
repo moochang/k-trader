@@ -364,6 +364,26 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 this.lastSellPrice = lastSellPrice;
                 this.nextBuyPrice = nextBuyPrice;
             }
+            
+            /**
+             * Transaction Time을 파싱하여 비교 가능한 시간값 반환
+             * 형식: "MM/dd HH:mm" (예: "12/25 14:30")
+             */
+            public long getTimeInMillis() {
+                try {
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.getDefault());
+                    // 현재 연도를 기준으로 파싱
+                    java.util.Calendar cal = java.util.Calendar.getInstance();
+                    int currentYear = cal.get(java.util.Calendar.YEAR);
+                    
+                    String fullDateTime = currentYear + "/" + transactionTime;
+                    java.text.SimpleDateFormat fullSdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm", java.util.Locale.getDefault());
+                    return fullSdf.parse(fullDateTime).getTime();
+                } catch (Exception e) {
+                    // 파싱 실패 시 현재 시간 반환
+                    return System.currentTimeMillis();
+                }
+            }
         }
 
         public static class ErrorCard {
@@ -550,8 +570,28 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         }
 
         public void addCard(TransactionCard card) {
-            cardList.add(0, card); // 최신 카드를 맨 위에 추가
-            notifyItemInserted(0);
+            // 시간 순서대로 정렬된 위치에 삽입 (최신이 위에)
+            int insertPosition = 0;
+            long cardTime = card.getTimeInMillis();
+            
+            // TransactionCard들만 찾아서 시간 비교
+            for (int i = 0; i < cardList.size(); i++) {
+                Object item = cardList.get(i);
+                if (item instanceof TransactionCard) {
+                    TransactionCard existingCard = (TransactionCard) item;
+                    if (cardTime >= existingCard.getTimeInMillis()) {
+                        insertPosition = i;
+                        break;
+                    }
+                    insertPosition = i + 1;
+                } else if (item instanceof ErrorCard) {
+                    // ErrorCard는 TransactionCard보다 위에 위치
+                    insertPosition = i + 1;
+                }
+            }
+            
+            cardList.add(insertPosition, card);
+            notifyItemInserted(insertPosition);
         }
 
         public void addErrorCard(ErrorCard card) {
@@ -573,17 +613,18 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
 
         /**
          * 최신 TransactionCard를 업데이트 (서버 데이터로 대체)
+         * 시간 순서를 유지하면서 업데이트
          */
         public void updateLatestCard(TransactionCard card) {
-            // 기존 TransactionCard가 있는지 확인하고 첫 번째 것을 교체
-            for (int i = 0; i < cardList.size(); i++) {
+            // 기존 TransactionCard들을 모두 제거하고 새로 정렬된 순서로 추가
+            for (int i = cardList.size() - 1; i >= 0; i--) {
                 if (cardList.get(i) instanceof TransactionCard) {
-                    cardList.set(i, card);
-                    notifyItemChanged(i);
-                    return;
+                    cardList.remove(i);
+                    notifyItemRemoved(i);
                 }
             }
-            // TransactionCard가 없으면 새로 추가
+            
+            // 새 카드를 정렬된 위치에 추가
             addCard(card);
         }
 
