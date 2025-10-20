@@ -8,6 +8,11 @@ public class GlobalSettings {
     public static String FILE_LOG_ENABLED_KEY_NAME = "FILE_LOG_ENABLED";
     public static String EARNING_RATE_KEY_NAME = "EARNING_RATE";
     public static String SLOT_INTERVAL_RATE_KEY_NAME = "SLOT_INTERVAL_RATE";
+    public static String COIN_TYPE_KEY_NAME = "COIN_TYPE";
+    
+    public static String COIN_TYPE_BTC = "BTC";
+    public static String COIN_TYPE_ETH = "ETH";
+    public static String COIN_TYPE_DEFAULT_VALUE = COIN_TYPE_BTC;
 
     public static int TRADE_INTERVAL_MIN_VALUE = 10;
     public static int TRADE_INTERVAL_DEFAULT_VALUE = 60;
@@ -23,6 +28,7 @@ public class GlobalSettings {
     private boolean isFileLogEnabled = false;
     private float earningRate = EARNING_RATE_DEFAULT_VALUE;
     private float slotIntervalRate = SLOT_INTERVAL_RATE_DEFAULT_VALUE;
+    private String coinType = COIN_TYPE_DEFAULT_VALUE;
 
     private static GlobalSettings gSettings = new GlobalSettings();
     private GlobalSettings() {}
@@ -46,6 +52,7 @@ public class GlobalSettings {
     public boolean isFileLogEnabled() { return isFileLogEnabled; }
     public float getEarningRate() {return earningRate;}
     public float getSlotIntervalRate() {return slotIntervalRate;}
+    public String getCoinType() {return coinType;}
 
     public GlobalSettings setApiKey(String apiKey) {
         this.apiKey = apiKey;
@@ -73,6 +80,10 @@ public class GlobalSettings {
     }
     public GlobalSettings setSlotIntervalRate(float buyIntervalRate) {
         this.slotIntervalRate = buyIntervalRate;
+        return this;
+    }
+    public GlobalSettings setCoinType(String coinType) {
+        this.coinType = coinType;
         return this;
     }
 }

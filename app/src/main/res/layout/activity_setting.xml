@@ -249,7 +249,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:layout_marginBottom="12dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -271,6 +272,48 @@
                             android:hint="거래 간격을 입력하세요 (%)"
                             android:inputType="numberDecimal"
                             android:maxLines="1" />
+
+                    </LinearLayout>
+
+                    <!-- 코인 타입 선택 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="코인 타입"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_primary_modern"
+                            android:layout_marginBottom="8dp" />
+
+                        <RadioGroup
+                            android:id="@+id/radioGroupCoinType"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/radioButtonBTC"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="BTC"
+                                android:textSize="16sp"
+                                android:textColor="@color/text_primary_modern"
+                                android:layout_marginEnd="24dp"
+                                android:checked="true" />
+
+                            <RadioButton
+                                android:id="@+id/radioButtonETH"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ETH"
+                                android:textSize="16sp"
+                                android:textColor="@color/text_primary_modern" />
+
+                        </RadioGroup>
 
                     </LinearLayout>
 
