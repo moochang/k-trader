@@ -437,13 +437,22 @@ public class MainPage extends Fragment {
         cardDataReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction() != null && intent.getAction().equals(TransactionItemFragment.BROADCAST_CARD_DATA)) {
+                Log.d("MainPage", "BroadcastReceiver received: " + intent.getAction());
+                
+                // BROADCAST_CARD_DATA와 BROADCAST_TRANSACTION_DATA 모두 처리
+                if (intent.getAction() != null && 
+                    (intent.getAction().equals(TransactionItemFragment.BROADCAST_CARD_DATA) ||
+                     intent.getAction().equals(TransactionItemFragment.BROADCAST_TRANSACTION_DATA))) {
+                    
                     // 카드 데이터에서 가격 정보 추출하여 UI 업데이트
                     String btcCurrentPrice = intent.getStringExtra("btcCurrentPrice");
                     String hourlyChange = intent.getStringExtra("hourlyChange");
                     
+                    Log.d("MainPage", "Received data - Price: " + btcCurrentPrice + ", Change: " + hourlyChange);
+                    
                     if (btcCurrentPrice != null && textCurrentPrice != null) {
                         textCurrentPrice.setText(btcCurrentPrice);
+                        Log.d("MainPage", "Updated current price: " + btcCurrentPrice);
                     }
                     
                     if (hourlyChange != null && textPriceChange != null) {
@@ -456,6 +465,7 @@ public class MainPage extends Fragment {
                         } else {
                             textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
                         }
+                        Log.d("MainPage", "Updated price change: " + hourlyChange);
                     }
                     
                     // 활성 거래 수도 업데이트
@@ -464,11 +474,13 @@ public class MainPage extends Fragment {
             }
         };
         
-        // BroadcastReceiver 등록
+        // BroadcastReceiver 등록 - 두 액션 모두 등록
         if (getContext() != null) {
             android.content.IntentFilter filter = new android.content.IntentFilter();
             filter.addAction(TransactionItemFragment.BROADCAST_CARD_DATA);
+            filter.addAction(TransactionItemFragment.BROADCAST_TRANSACTION_DATA);
             android.support.v4.content.LocalBroadcastManager.getInstance(getContext()).registerReceiver(cardDataReceiver, filter);
+            Log.d("MainPage", "BroadcastReceiver registered for both actions");
         }
     }
     
@@ -518,13 +530,17 @@ public class MainPage extends Fragment {
      */
     private void fetchCurrentPriceFromApi() {
         try {
+            Log.d("MainPage", "Starting direct API call for current price...");
+            
             // OrderManager를 통해 현재 가격 가져오기
             com.example.k_trader.base.OrderManager orderManager = new com.example.k_trader.base.OrderManager();
             
             // 백그라운드에서 API 호출
             new Thread(() -> {
                 try {
+                    Log.d("MainPage", "Calling getCurrentPrice API...");
                     JSONObject priceData = orderManager.getCurrentPrice("refresh");
+                    
                     if (priceData != null && priceData.containsKey("bids")) {
                         JSONArray bids = (JSONArray) priceData.get("bids");
                         if (bids != null && !bids.isEmpty()) {
@@ -532,6 +548,7 @@ public class MainPage extends Fragment {
                             String priceStr = (String) firstBid.get("price");
                             if (priceStr != null) {
                                 int currentPrice = (int) Double.parseDouble(priceStr);
+                                Log.d("MainPage", "Got current price from API: " + currentPrice);
                                 
                                 // UI 스레드에서 업데이트
                                 if (getActivity() != null) {
@@ -539,14 +556,20 @@ public class MainPage extends Fragment {
                                         updatePriceDisplay(currentPrice);
                                     });
                                 }
+                            } else {
+                                Log.w("MainPage", "Price string is null");
                             }
+                        } else {
+                            Log.w("MainPage", "Bids array is null or empty");
                         }
+                    } else {
+                        Log.w("MainPage", "Price data is null or doesn't contain bids");
                     }
                 } catch (Exception e) {
                     Log.e("MainPage", "Error fetching current price", e);
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            Toast.makeText(getContext(), "가격 정보를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "가격 정보를 가져올 수 없습니다: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
                     }
                 }
@@ -561,15 +584,23 @@ public class MainPage extends Fragment {
      * 가격 정보를 UI에 표시
      */
     private void updatePriceDisplay(int currentPrice) {
+        Log.d("MainPage", "Updating price display with: " + currentPrice);
+        
         if (textCurrentPrice != null) {
             String formattedPrice = String.format(java.util.Locale.getDefault(), "₩%,d", currentPrice);
             textCurrentPrice.setText(formattedPrice);
+            Log.d("MainPage", "Updated current price display: " + formattedPrice);
+        } else {
+            Log.w("MainPage", "textCurrentPrice is null");
         }
         
         // 등락률은 임시로 0%로 설정 (실제로는 이전 가격과 비교 필요)
         if (textPriceChange != null) {
             textPriceChange.setText("+0.00%");
             textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            Log.d("MainPage", "Updated price change display: +0.00%");
+        } else {
+            Log.w("MainPage", "textPriceChange is null");
         }
     }
     
@@ -595,7 +626,12 @@ public class MainPage extends Fragment {
      * 활성 거래 수 업데이트
      */
     private void updateActiveOrdersCount() {
-        if (textActiveOrders == null || databaseOrderManager == null) return;
+        if (textActiveOrders == null || databaseOrderManager == null) {
+            Log.w("MainPage", "Cannot update active orders count - textActiveOrders or databaseOrderManager is null");
+            return;
+        }
+        
+        Log.d("MainPage", "Updating active orders count...");
         
         databaseOrderManager.getActiveOrdersCount()
             .subscribeOn(Schedulers.io())
@@ -604,6 +640,7 @@ public class MainPage extends Fragment {
                 count -> {
                     if (textActiveOrders != null) {
                         textActiveOrders.setText(String.valueOf(count));
+                        Log.d("MainPage", "Updated active orders count: " + count);
                     }
                 },
                 throwable -> {
