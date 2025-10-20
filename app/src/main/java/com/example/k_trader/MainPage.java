@@ -2,7 +2,7 @@ package com.example.k_trader;
 
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
-import android.content.ComponentName;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -68,6 +68,9 @@ public class MainPage extends Fragment {
     private CompositeDisposable disposables;
     private TransactionItemFragment transactionItemFragment;
     private TransactionLogFragment transactionLogFragment;
+    
+    // BroadcastReceiver for card data updates
+    private BroadcastReceiver cardDataReceiver;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {super.onCreate(savedInstanceState);}
@@ -117,6 +120,9 @@ public class MainPage extends Fragment {
         
         // 코인 정보 초기화
         updateCoinInfo();
+        
+        // BroadcastReceiver 초기화 및 등록
+        setupCardDataReceiver();
 
         return layout;
     }
@@ -416,6 +422,53 @@ public class MainPage extends Fragment {
         if (databaseOrderManager != null) {
             databaseOrderManager.dispose();
         }
+        
+        // BroadcastReceiver 해제
+        if (cardDataReceiver != null && getContext() != null) {
+            android.support.v4.content.LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(cardDataReceiver);
+        }
+    }
+    
+    /**
+     * BroadcastReceiver 설정
+     */
+    private void setupCardDataReceiver() {
+        cardDataReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction() != null && intent.getAction().equals(TransactionItemFragment.BROADCAST_CARD_DATA)) {
+                    // 카드 데이터에서 가격 정보 추출하여 UI 업데이트
+                    String btcCurrentPrice = intent.getStringExtra("btcCurrentPrice");
+                    String hourlyChange = intent.getStringExtra("hourlyChange");
+                    
+                    if (btcCurrentPrice != null && textCurrentPrice != null) {
+                        textCurrentPrice.setText(btcCurrentPrice);
+                    }
+                    
+                    if (hourlyChange != null && textPriceChange != null) {
+                        textPriceChange.setText(hourlyChange);
+                        // 등락률에 따라 색상 변경
+                        if (hourlyChange.startsWith("+")) {
+                            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                        } else if (hourlyChange.startsWith("-")) {
+                            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                        } else {
+                            textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
+                        }
+                    }
+                    
+                    // 활성 거래 수도 업데이트
+                    updateActiveOrdersCount();
+                }
+            }
+        };
+        
+        // BroadcastReceiver 등록
+        if (getContext() != null) {
+            android.content.IntentFilter filter = new android.content.IntentFilter();
+            filter.addAction(TransactionItemFragment.BROADCAST_CARD_DATA);
+            android.support.v4.content.LocalBroadcastManager.getInstance(getContext()).registerReceiver(cardDataReceiver, filter);
+        }
     }
     
     /**
@@ -442,6 +495,9 @@ public class MainPage extends Fragment {
         // 현재 설정된 코인 타입에 따라 API 호출
         String coinType = GlobalSettings.getInstance().getCoinType();
         
+        // 직접 API 호출하여 가격 정보 가져오기
+        fetchCurrentPriceFromApi();
+        
         databaseOrderManager.periodicSyncData("refresh")
             .subscribe(
                 () -> {
@@ -454,6 +510,66 @@ public class MainPage extends Fragment {
                     Toast.makeText(getContext(), "데이터 새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
                 }
             );
+    }
+    
+    /**
+     * API에서 현재 가격 정보 직접 가져오기
+     */
+    private void fetchCurrentPriceFromApi() {
+        try {
+            // OrderManager를 통해 현재 가격 가져오기
+            com.example.k_trader.base.OrderManager orderManager = com.example.k_trader.base.OrderManager.getInstance();
+            
+            // 백그라운드에서 API 호출
+            new Thread(() -> {
+                try {
+                    JSONObject priceData = orderManager.getCurrentPrice("refresh");
+                    if (priceData != null && priceData.containsKey("bids")) {
+                        JSONArray bids = (JSONArray) priceData.get("bids");
+                        if (bids != null && !bids.isEmpty()) {
+                            JSONObject firstBid = (JSONObject) bids.get(0);
+                            String priceStr = (String) firstBid.get("price");
+                            if (priceStr != null) {
+                                int currentPrice = (int) Double.parseDouble(priceStr);
+                                
+                                // UI 스레드에서 업데이트
+                                if (getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> {
+                                        updatePriceDisplay(currentPrice);
+                                    });
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e("MainPage", "Error fetching current price", e);
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "가격 정보를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+            }).start();
+            
+        } catch (Exception e) {
+            Log.e("MainPage", "Error in fetchCurrentPriceFromApi", e);
+        }
+    }
+    
+    /**
+     * 가격 정보를 UI에 표시
+     */
+    private void updatePriceDisplay(int currentPrice) {
+        if (textCurrentPrice != null) {
+            String formattedPrice = String.format(java.util.Locale.getDefault(), "₩%,d", currentPrice);
+            textCurrentPrice.setText(formattedPrice);
+        }
+        
+        // 등락률은 임시로 0%로 설정 (실제로는 이전 가격과 비교 필요)
+        if (textPriceChange != null) {
+            textPriceChange.setText("+0.00%");
+            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        }
     }
     
     /**
