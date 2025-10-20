@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.OrderManager;
@@ -415,6 +416,44 @@ public class MainPage extends Fragment {
         if (databaseOrderManager != null) {
             databaseOrderManager.dispose();
         }
+    }
+    
+    /**
+     * 코인 데이터 새로고침 (외부에서 호출 가능)
+     */
+    public void refreshCoinData() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                // 코인 정보 업데이트
+                updateCoinInfo();
+                
+                // API에서 최신 데이터 가져오기
+                fetchLatestCoinData();
+            });
+        }
+    }
+    
+    /**
+     * API에서 최신 코인 데이터 가져오기
+     */
+    private void fetchLatestCoinData() {
+        if (databaseOrderManager == null) return;
+        
+        // 현재 설정된 코인 타입에 따라 API 호출
+        String coinType = GlobalSettings.getInstance().getCoinType();
+        
+        databaseOrderManager.periodicSyncData("refresh")
+            .subscribe(
+                () -> {
+                    Log.d("MainPage", "Coin data refreshed successfully");
+                    // 활성 거래 수 다시 업데이트
+                    updateActiveOrdersCount();
+                },
+                throwable -> {
+                    Log.e("MainPage", "Error refreshing coin data", throwable);
+                    Toast.makeText(getContext(), "데이터 새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            );
     }
     
     /**

@@ -126,6 +126,9 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_bithumb) {
             launchBithumbApp();
             return true;
+        } else if (id == R.id.action_refresh) {
+            refreshCoinInfo();
+            return true;
         } else if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingActivity.class));
             return true;
@@ -135,6 +138,39 @@ public class MainActivity extends AppCompatActivity {
         }
         
         return super.onOptionsItemSelected(item);
+    }
+    
+    /**
+     * 코인 정보 새로고침
+     */
+    private void refreshCoinInfo() {
+        try {
+            // MainPage Fragment 찾기
+            android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
+            android.support.v4.app.Fragment fragment = fragmentManager.findFragmentById(android.R.id.content);
+            
+            if (fragment instanceof MainPage) {
+                MainPage mainPage = (MainPage) fragment;
+                mainPage.refreshCoinData();
+                Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
+            } else {
+                // ViewPager에서 MainPage 찾기
+                ViewPager viewPager = findViewById(R.id.viewpager);
+                if (viewPager != null) {
+                    android.support.v4.app.FragmentPagerAdapter adapter = (android.support.v4.app.FragmentPagerAdapter) viewPager.getAdapter();
+                    if (adapter != null) {
+                        MainPage mainPage = (MainPage) adapter.getItem(0);
+                        if (mainPage != null) {
+                            mainPage.refreshCoinData();
+                            Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+        }
     }
     
     /**
