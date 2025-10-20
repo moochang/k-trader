@@ -6,7 +6,7 @@
         android:id="@+id/action_bithumb"
         android:title="빗썸 앱 실행"
         android:icon="@drawable/ic_bithumb"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_clear"
