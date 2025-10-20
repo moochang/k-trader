@@ -123,7 +123,10 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_bithumb) {
+            launchBithumbApp();
+            return true;
+        } else if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingActivity.class));
             return true;
         } else if (id == R.id.action_clear) {
@@ -132,6 +135,41 @@ public class MainActivity extends AppCompatActivity {
         }
         
         return super.onOptionsItemSelected(item);
+    }
+    
+    /**
+     * 빗썸 앱을 실행하는 메서드
+     */
+    private void launchBithumbApp() {
+        try {
+            // 빗썸 앱 DEEPLINK로 실행 시도
+            Intent bithumbIntent = new Intent(Intent.ACTION_VIEW);
+            bithumbIntent.setData(android.net.Uri.parse("bithumb://"));
+            
+            // 빗썸 앱이 설치되어 있는지 확인
+            if (bithumbIntent.resolveActivity(getPackageManager()) != null) {
+                startActivity(bithumbIntent);
+                Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
+            } else {
+                // 빗썸 앱이 설치되어 있지 않은 경우 Play Store로 이동
+                Intent playStoreIntent = new Intent(Intent.ACTION_VIEW);
+                playStoreIntent.setData(android.net.Uri.parse("market://details?id=com.bithumb.android"));
+                
+                if (playStoreIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(playStoreIntent);
+                    Toast.makeText(this, "빗썸 앱을 설치해주세요.", Toast.LENGTH_LONG).show();
+                } else {
+                    // Play Store 앱이 없는 경우 웹 브라우저로 이동
+                    Intent webIntent = new Intent(Intent.ACTION_VIEW);
+                    webIntent.setData(android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.bithumb.android"));
+                    startActivity(webIntent);
+                    Toast.makeText(this, "빗썸 앱을 설치해주세요.", Toast.LENGTH_LONG).show();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "빗썸 앱 실행 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+        }
     }
     
     /**

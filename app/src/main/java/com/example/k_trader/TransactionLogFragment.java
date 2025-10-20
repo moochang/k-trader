@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ScrollView;
 
+import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.TradeData;
 import com.example.k_trader.database.DatabaseMonitor;
 

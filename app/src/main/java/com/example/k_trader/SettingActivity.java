@@ -1,12 +1,10 @@
 package com.example.k_trader;
 
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -16,6 +14,8 @@ import android.widget.Toast;
 
 import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.NumberTextWatcherForThousand;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SettingActivity extends AppCompatActivity {
     Button btnSave;
@@ -76,8 +76,8 @@ public class SettingActivity extends AppCompatActivity {
         }
         
         // Load auto scroll setting
-        boolean autoScrollEnabled = sharedPreferences.getBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, GlobalSettings.AUTO_SCROLL_DEFAULT_VALUE);
-        checkBoxAutoScroll.setChecked(autoScrollEnabled);
+        AtomicBoolean autoScrollEnabled = new AtomicBoolean(sharedPreferences.getBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, GlobalSettings.AUTO_SCROLL_DEFAULT_VALUE));
+        checkBoxAutoScroll.setChecked(autoScrollEnabled.get());
 
         btnSave.setOnClickListener(v -> {
             int tradeInterval = Integer.parseInt(txtTradeInterval.getText().toString().replaceAll(",", ""));
@@ -98,7 +98,7 @@ public class SettingActivity extends AppCompatActivity {
             }
             
             // Get auto scroll setting
-            boolean autoScrollEnabled = checkBoxAutoScroll.isChecked();
+            autoScrollEnabled.set(checkBoxAutoScroll.isChecked());
 
             SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
             prefsEditr.putString(GlobalSettings.API_KEY_KEY_NAME, txtApiKey.getText().toString());
@@ -108,7 +108,7 @@ public class SettingActivity extends AppCompatActivity {
             prefsEditr.putFloat(GlobalSettings.EARNING_RATE_KEY_NAME, Float.parseFloat(txtEarningRate.getText().toString()));
             prefsEditr.putFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, Float.parseFloat(txtSlotIntervalRate.getText().toString()));
             prefsEditr.putString(GlobalSettings.COIN_TYPE_KEY_NAME, selectedCoinType);
-            prefsEditr.putBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, autoScrollEnabled);
+            prefsEditr.putBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, autoScrollEnabled.get());
             prefsEditr.apply();
 
             GlobalSettings.getInstance().setApiKey(txtApiKey.getText().toString())
@@ -118,7 +118,7 @@ public class SettingActivity extends AppCompatActivity {
                                         .setEarningRate(Float.parseFloat(txtEarningRate.getText().toString()))
                                         .setSlotIntervalRate(Float.parseFloat(txtSlotIntervalRate.getText().toString()))
                                         .setCoinType(selectedCoinType)
-                                        .setAutoScroll(autoScrollEnabled);
+                                        .setAutoScroll(autoScrollEnabled.get());
 
             Toast.makeText(SettingActivity.this, "설정이 저장되었습니다.", Toast.LENGTH_SHORT).show();
             finish();
