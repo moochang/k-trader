@@ -60,9 +60,9 @@ public class TradeJobService extends JobService {
     private static final int FOREGROUND_SERVICE_ID = 1001;
     private static final String CHANNEL_ID = "k_trader_foreground_channel";
 
-    public static int currentPrice;                  // 비트코인 현재 시장가
+    public static int currentPrice;                  // 현재 코인 시장가
     public static long lastNotiTimeInMillis;        // 마지막 Notification 완료 시점
-    public static double availableBtcBalance;       // 현재 판매 가능한 비트코인 총량 = 현재 보유중인 비트코인 총량 - 매도 중인 비트코인 총량
+    public static double availableCoinBalance;      // 현재 판매 가능한 코인 총량 = 현재 보유중인 코인 총량 - 매도 중인 코인 총량
 
     private final TradeDataManager placedOrderManager = new TradeDataManager();
     private static final TradeDataManager processedOrderManager = new TradeDataManager();
@@ -334,7 +334,7 @@ public class TradeJobService extends JobService {
                     }
                 }
 
-        // 비트코인 현재가를 가져온다.
+        // 현재 코인 현재가를 가져온다.
         {
             JSONObject dataObj = orderManager.getCurrentPrice("");
             JSONArray dataArray = (JSONArray) dataObj.get("bids"); // 매수가
@@ -354,14 +354,15 @@ public class TradeJobService extends JobService {
                 return;
             }
 
-            log_info("BTC 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
+            log_info(getCurrentCoinType() + " 현재가 : " + String.format(Locale.getDefault(), "%,d", currentPrice));
             
             // 카드 데이터 전송
             sendCardData(currentPrice, krwBalance);
 
-            // 빗썸은 0.0001 BTC가 최소 거래 단위이므로 체크
+            // 빗썸은 0.0001 코인이 최소 거래 단위이므로 체크
+            String coinType = getCurrentCoinType();
             if (currentPrice / 10000 > GlobalSettings.getInstance().getUnitPrice()) {
-                log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", GlobalSettings.getInstance().getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001BTC" + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
+                log_info("확인 필요 : 현재 설정 된 1회 거래 금액 설정값(" + String.format(Locale.getDefault(), "%,d원", GlobalSettings.getInstance().getUnitPrice()) +")이 거래소 최소 거래 가능 금액 0.0001" + coinType + String.format(Locale.getDefault(), "(%,d원)", currentPrice / 10000) + " 보다 작습니다.");
                 return;
             }
 
@@ -566,13 +567,13 @@ public class TradeJobService extends JobService {
             }
         }
 
-        // 매수건에 대한 매도를 다 처리 했음에도 BTC 잔고가 남아 있는 경우에 대한 예외처리, 가능한 slot을 찾아 매도 오더를 발행한다.
+        // 매수건에 대한 매도를 다 처리 했음에도 코인 잔고가 남아 있는 경우에 대한 예외처리, 가능한 slot을 찾아 매도 오더를 발행한다.
         // 예) 매수 발생 후 앱이 종료되었다가 앱이 재실행 된 경우
-        if (availableBtcBalance > TRADING_VALUE_MIN) {
-            log_info("매도 필요 잔고 : " + String.format(Locale.getDefault(), "%.4f", availableBtcBalance));
+        if (availableCoinBalance > TRADING_VALUE_MIN) {
+            log_info("매도 필요 잔고 : " + String.format(Locale.getDefault(), "%.4f", availableCoinBalance));
             // 현재가보다 상위에 비어 있는 slot 중 하나를 찾아보고 있다면 매도하도록 한다.
             int floorPrice = getFloorPrice(currentPrice);
-            double unit = Math.min(getUnitAmount4Price(floorPrice), (availableBtcBalance * 10000) / 10000.0);
+            double unit = Math.min(getUnitAmount4Price(floorPrice), (availableCoinBalance * 10000) / 10000.0);
             int sellIntervalPrice = MainPage.getSlotIntervalPrice(floorPrice) ;
             for (int i = 0; i< SELL_SLOT_LOOK_ASIDE_MAX; i++) {
                 int targetPrice = floorPrice + MainPage.getProfitPrice(floorPrice) + (sellIntervalPrice * (SELL_SLOT_LOOK_ASIDE_MAX - 1 - i));
@@ -638,9 +639,21 @@ public class TradeJobService extends JobService {
         return price - (price % MainPage.getSlotIntervalPrice(price));
     }
 
-    // 주어진 가격 slot에 매수 가능한 BTC 개수를 구한다. 소수점 아래 4자리로 절사
+    // 주어진 가격 slot에 매수 가능한 코인 개수를 구한다. 소수점 아래 4자리로 절사
     private double getUnitAmount4Price(int price) {
         return (((double)GlobalSettings.getInstance().getUnitPrice() / price) * 10000) / 10000.0;
+    }
+    
+    /**
+     * 현재 설정된 코인 타입을 반환
+     */
+    private String getCurrentCoinType() {
+        String coinType = GlobalSettings.getInstance().getCoinType();
+        if (GlobalSettings.COIN_TYPE_ETH.equals(coinType)) {
+            return "ETH";
+        } else {
+            return "BTC"; // 기본값
+        }
     }
 
     public void setContext(Context ctx) {
@@ -658,7 +671,7 @@ public class TradeJobService extends JobService {
                 currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE),
                 currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), currentTime.get(Calendar.SECOND));
             
-            String btcCurrentPrice = String.format(Locale.getDefault(), "₩%,d", currentPrice);
+            String coinCurrentPrice = String.format(Locale.getDefault(), "₩%,d", currentPrice);
             
             // 시간당 변화율 계산 (간단한 예시)
             String hourlyChange = "+2.5%"; // 실제로는 이전 가격과 비교해서 계산
@@ -697,7 +710,7 @@ public class TradeJobService extends JobService {
             
             Intent intent = new Intent("TRADE_CARD_DATA");
             intent.putExtra("transactionTime", transactionTime);
-            intent.putExtra("btcCurrentPrice", btcCurrentPrice);
+            intent.putExtra("coinCurrentPrice", coinCurrentPrice);
             intent.putExtra("hourlyChange", hourlyChange);
             intent.putExtra("estimatedBalance", estimatedBalance);
             intent.putExtra("lastBuyPrice", lastBuyPrice);

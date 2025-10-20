@@ -61,7 +61,7 @@ public class OrderManager {
         else
             rgParams.put("type", "ask");
 
-        rgParams.put("order_currency", "BTC");
+        rgParams.put("order_currency", getCurrentCoinType());
         rgParams.put("order_id", data.getId());
         rgParams.put("payment_currency", "KRW");
 
@@ -164,7 +164,7 @@ public class OrderManager {
         }
 
         HashMap<String, String> rgParams = new HashMap<>();
-        rgParams.put("order_currency", "BTC");
+        rgParams.put("order_currency", getCurrentCoinType());
         rgParams.put("Payment_currency", "KRW");
         rgParams.put("units", String.format("%.4f", units));
         rgParams.put("price", String.valueOf(price));
@@ -245,7 +245,7 @@ public class OrderManager {
         }
 
         HashMap<String, String> rgParams = new HashMap<>();
-        rgParams.put("order_currency", "BTC");
+        rgParams.put("order_currency", getCurrentCoinType());
         rgParams.put("units", String.format("%.4f", units));
         rgParams.put("payment_currency", "KRW");
 
@@ -324,26 +324,26 @@ public class OrderManager {
         JSONObject result = null;
 
         try {
-            result = api.callApi("GET", "/public/orderbook/BTC", null);
+            result = api.callApi("GET", "/public/orderbook/" + getCurrentCoinType(), null);
 
             if (result == null) {
-                log_info(tag + " : " + "/public/orderbook/BTC : null");
+                log_info(tag + " : " + "/public/orderbook/" + getCurrentCoinType() + " : null");
                 throw new Exception("returns null");
             }
 
             if (result.get("status") instanceof Long) {
-                log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
+                log_info(tag + " : " + "/public/orderbook/" + getCurrentCoinType() + " : " + result.toString());
                 throw new Exception("returns null");
             }
 
             if (!((String) result.get("status")).equals("0000")) {
                 // ex ) {"message":"Database Fail","status":"5400"}
-                log_info(tag + " : " + "/public/orderbook/BTC : " + result.toString());
+                log_info(tag + " : " + "/public/orderbook/" + getCurrentCoinType() + " : " + result.toString());
                 throw new Exception("returns null");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            log_info(tag + " : " + "/public/orderbook/BTC : " + e.getMessage());
+            log_info(tag + " : " + "/public/orderbook/" + getCurrentCoinType() + " : " + e.getMessage());
             throw new Exception("returns null");
         }
 
@@ -357,7 +357,7 @@ public class OrderManager {
         try {
             HashMap param = new HashMap();
             param.put("count", "300");
-            param.put("order_currency", "BTC");
+            param.put("order_currency", getCurrentCoinType());
 
             result = api.callApi("POST", "/info/orders", param);
 
@@ -401,7 +401,7 @@ public class OrderManager {
             rgParams.put("offset", String.valueOf(offset));
             rgParams.put("count", count); // 1~50, default = 20
             rgParams.put("searchGb", "0"); // 0 = all, 1 = buy
-            rgParams.put("order_currency", "BTC");
+            rgParams.put("order_currency", getCurrentCoinType());
             rgParams.put("payment_currency", "KRW");
 
             result = api.callApi("POST", "/info/user_transactions", rgParams);
@@ -435,6 +435,18 @@ public class OrderManager {
             case "ask" : return SELL;
         }
         return NONE;
+    }
+    
+    /**
+     * 현재 설정된 코인 타입을 반환
+     */
+    private String getCurrentCoinType() {
+        String coinType = GlobalSettings.getInstance().getCoinType();
+        if (GlobalSettings.COIN_TYPE_ETH.equals(coinType)) {
+            return "ETH";
+        } else {
+            return "BTC"; // 기본값
+        }
     }
     
     private void sendErrorCard(String errorType, String errorMessage) {

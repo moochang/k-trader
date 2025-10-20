@@ -281,14 +281,14 @@ public class MainPage extends Fragment {
         outState.putBoolean(KEY_TRADING_STATE, isTradingStarted);
     }
 
-    // 주어진 bitcoin 가격에 대한 이익금(EARNINGS_RATIO)을 리턴한다.
+    // 주어진 코인 가격에 대한 이익금(EARNINGS_RATIO)을 리턴한다.
     // 매도 리스트를 discrete하게 만들기 위해 주어진 가격에서 가장 앞자리만 남기고 절사한 금액의 이익금을 계산한다.
     // 예를 들어 주어진 가격이 4,325만원이라면 4,000으로 절사하고 그 EARNINGS_RATIO 금액(ex: earnings_ratio가 1%인 경우 40만원)을 리턴
     public static int getProfitPrice(int basePrice) {
         return (int)(getFloorPrice(basePrice) * (GlobalSettings.getInstance().getEarningRate() / 100.0));
     }
 
-    // 주어진 bitcoin 가격에 대한 매수구간(BUY_INTERVAL)을 리턴한다.
+    // 주어진 코인 가격에 대한 매수구간(BUY_INTERVAL)을 리턴한다.
     // 매도 리스트를 discrete하게 만들기 위해 주어진 base price 가격에서 가장 앞자리만 남기고 절사한 금액을 사용한다.
     // 예를 들어 주어진 가격이 4,325만원이라면 4,000으로 절사하고 그 buy interval 금액(ex: 0.5%인 경우 20만원)을 리턴
     public static int getSlotIntervalPrice(int basePrice) {

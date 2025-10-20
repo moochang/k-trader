@@ -2,6 +2,7 @@ package com.example.k_trader.api;
 
 import com.example.k_trader.bitthumb.lib.Api_Client;
 import com.example.k_trader.data.TransactionData;
+import com.example.k_trader.base.GlobalSettings;
 import org.json.simple.JSONObject;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -41,10 +42,10 @@ public class TransactionApiService {
         
         executorService.execute(() -> {
             try {
-                // BTC Ticker 정보 가져오기
-                JSONObject tickerResponse = getBtcTicker();
+                // Ticker 정보 가져오기
+                JSONObject tickerResponse = getTicker();
                 if (tickerResponse == null) {
-                    future.completeExceptionally(new RuntimeException("BTC Ticker API 호출 실패"));
+                    future.completeExceptionally(new RuntimeException(getCurrentCoinType() + " Ticker API 호출 실패"));
                     return;
                 }
                 
@@ -84,8 +85,8 @@ public class TransactionApiService {
             TransactionApiResult result = new TransactionApiResult();
             
             try {
-                // BTC Ticker 정보 가져오기
-                JSONObject tickerResponse = getBtcTickerWithErrorInfo(result, "/info/ticker");
+                // Ticker 정보 가져오기
+                JSONObject tickerResponse = getTickerWithErrorInfo(result, "/info/ticker");
                 
                 // Balance 정보 가져오기
                 JSONObject balanceResponse = getBalanceWithErrorInfo(result, "/info/balance");
@@ -111,9 +112,9 @@ public class TransactionApiService {
     }
     
     /**
-     * BTC Ticker 정보 가져오기 (에러 정보 포함)
+     * Ticker 정보 가져오기 (에러 정보 포함)
      */
-    private JSONObject getBtcTickerWithErrorInfo(TransactionApiResult result, String endpoint) {
+    private JSONObject getTickerWithErrorInfo(TransactionApiResult result, String endpoint) {
         try {
             JSONObject response = apiClient.callApi("GET", endpoint, null);
             if (response != null && isSuccessResponse(response)) {
@@ -174,9 +175,9 @@ public class TransactionApiService {
     }
     
     /**
-     * BTC Ticker 정보 가져오기
+     * Ticker 정보 가져오기
      */
-    private JSONObject getBtcTicker() {
+    private JSONObject getTicker() {
         try {
             return apiClient.callApi("GET", "/info/ticker", null);
         } catch (Exception e) {
@@ -266,14 +267,17 @@ public class TransactionApiService {
                                                JSONObject balanceResponse, 
                                                JSONObject orderResponse) {
         try {
-            // BTC 현재 가격 추출
-            String btcCurrentPrice = "0";
+            String coinType = getCurrentCoinType();
+            String coinPair = coinType + "_KRW";
+            
+            // 현재 가격 추출
+            String currentPrice = "0";
             if (tickerResponse.containsKey("data")) {
                 JSONObject data = (JSONObject) tickerResponse.get("data");
-                if (data.containsKey("BTC_KRW")) {
-                    JSONObject btcKrw = (JSONObject) data.get("BTC_KRW");
-                    if (btcKrw.containsKey("closing_price")) {
-                        btcCurrentPrice = btcKrw.get("closing_price").toString();
+                if (data.containsKey(coinPair)) {
+                    JSONObject coinKrw = (JSONObject) data.get(coinPair);
+                    if (coinKrw.containsKey("closing_price")) {
+                        currentPrice = coinKrw.get("closing_price").toString();
                     }
                 }
             }
@@ -282,10 +286,10 @@ public class TransactionApiService {
             String hourlyChange = "0";
             if (tickerResponse.containsKey("data")) {
                 JSONObject data = (JSONObject) tickerResponse.get("data");
-                if (data.containsKey("BTC_KRW")) {
-                    JSONObject btcKrw = (JSONObject) data.get("BTC_KRW");
-                    if (btcKrw.containsKey("fluctate_rate_24H")) {
-                        hourlyChange = btcKrw.get("fluctate_rate_24H").toString();
+                if (data.containsKey(coinPair)) {
+                    JSONObject coinKrw = (JSONObject) data.get(coinPair);
+                    if (coinKrw.containsKey("fluctate_rate_24H")) {
+                        hourlyChange = coinKrw.get("fluctate_rate_24H").toString();
                     }
                 }
             }
@@ -324,15 +328,15 @@ public class TransactionApiService {
             
             // 다음 매수 가격 계산 (현재 가격의 95%)
             try {
-                double currentPrice = Double.parseDouble(btcCurrentPrice);
-                nextBuyPrice = String.valueOf((long)(currentPrice * 0.95));
+                double currentPriceValue = Double.parseDouble(currentPrice);
+                nextBuyPrice = String.valueOf((long)(currentPriceValue * 0.95));
             } catch (NumberFormatException e) {
                 nextBuyPrice = "0";
             }
             
             return new TransactionData(
                 String.valueOf(System.currentTimeMillis()),
-                btcCurrentPrice,
+                currentPrice,
                 hourlyChange,
                 estimatedBalance,
                 lastBuyPrice,
@@ -343,6 +347,18 @@ public class TransactionApiService {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    /**
+     * 현재 설정된 코인 타입을 반환
+     */
+    private String getCurrentCoinType() {
+        String coinType = GlobalSettings.getInstance().getCoinType();
+        if (GlobalSettings.COIN_TYPE_ETH.equals(coinType)) {
+            return "ETH";
+        } else {
+            return "BTC"; // 기본값
         }
     }
     
