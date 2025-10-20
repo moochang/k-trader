@@ -108,6 +108,16 @@ public class OrderRepository {
                 .observeOn(AndroidSchedulers.mainThread())
                 .ignoreElement();
     }
+    
+    /**
+     * 모든 주문 삭제
+     */
+    public Completable deleteAllOrders() {
+        return Single.fromCallable(orderDao::deleteAllOrders)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .ignoreElement();
+    }
 
     /**
      * OrderEntity 리스트를 TradeData 리스트로 변환

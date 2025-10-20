@@ -44,57 +44,22 @@
                 style="@style/ButtonModernError" />
 
             <Button
-                android:id="@+id/imageButtonPreference"
+                android:id="@+id/button3"
                 android:layout_width="0dp"
                 android:layout_height="53dp"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:layout_marginEnd="8dp"
-                android:drawableStart="@drawable/ic_settings"
-                android:drawablePadding="8dp"
-                android:text="@string/settings"
-                android:textAllCaps="false"
-                style="@style/ButtonModernSecondary" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="70dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <CheckBox
-                android:id="@+id/checkBox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="16dp"
-                android:checked="true"
-                android:text="@string/auto_scroll"
-                style="@style/CheckBoxModern" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
-
-            <Button
-                android:id="@+id/button3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:drawableStart="@drawable/ic_scroll_down"
-                android:drawablePadding="4dp"
+                android:drawablePadding="8dp"
                 android:text="@string/scroll_to_bottom"
                 android:textAllCaps="false"
-                android:gravity="center_horizontal|center_vertical"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
                 style="@style/ButtonModernSecondary" />
 
+            <!-- Settings 버튼은 App bar 메뉴로 이동 -->
         </LinearLayout>
+
+        <!-- Auto scroll 기능은 Settings로 이동했으므로 이 섹션 제거 -->
 
         <!-- TabLayout과 ViewPager -->
         <android.support.design.widget.TabLayout

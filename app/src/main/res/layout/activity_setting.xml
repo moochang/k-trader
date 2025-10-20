@@ -279,7 +279,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:layout_marginBottom="12dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -314,6 +315,24 @@
                                 android:textColor="@color/text_primary_modern" />
 
                         </RadioGroup>
+
+                    </LinearLayout>
+
+                    <!-- 자동 스크롤 설정 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <CheckBox
+                            android:id="@+id/checkBoxAutoScroll"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="자동 스크롤"
+                            android:textSize="16sp"
+                            android:textColor="@color/text_primary_modern"
+                            android:checked="true"
+                            style="@style/CheckBoxModern" />
 
                     </LinearLayout>
 

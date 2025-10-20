@@ -49,7 +49,7 @@ public class MainPage extends Fragment {
     private Button btnStartTrading;
     private Button btnStopTrading;
     private Button btnScrollToBottom;
-    private Button btnPreference;
+    // private Button btnPreference; // App bar 메뉴로 이동
     private TabLayout tabLayout;
     private ViewPager viewPager;
 
@@ -73,7 +73,7 @@ public class MainPage extends Fragment {
         btnStartTrading = layout.findViewById(R.id.button);
         btnStopTrading = layout.findViewById(R.id.button2);
         btnScrollToBottom = layout.findViewById(R.id.button3);
-        btnPreference = layout.findViewById(R.id.imageButtonPreference);
+        // btnPreference = layout.findViewById(R.id.imageButtonPreference); // App bar 메뉴로 이동
         tabLayout = layout.findViewById(R.id.tabLayout);
         viewPager = layout.findViewById(R.id.viewPager);
 
@@ -267,12 +267,7 @@ public class MainPage extends Fragment {
             }
         });
 
-        btnPreference.setOnClickListener(v -> {
-            // 버튼 눌린 효과 애니메이션
-            animateButtonPress(v);
-            
-            startActivity(new Intent(mainActivity, SettingActivity.class));
-        });
+        // Settings 버튼은 App bar 메뉴로 이동했으므로 제거
     }
 
     @Override

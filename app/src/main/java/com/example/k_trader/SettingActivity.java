@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -27,6 +28,7 @@ public class SettingActivity extends AppCompatActivity {
     RadioGroup radioGroupCoinType;
     RadioButton radioButtonBTC;
     RadioButton radioButtonETH;
+    CheckBox checkBoxAutoScroll;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +55,7 @@ public class SettingActivity extends AppCompatActivity {
         radioGroupCoinType = findViewById(R.id.radioGroupCoinType);
         radioButtonBTC = findViewById(R.id.radioButtonBTC);
         radioButtonETH = findViewById(R.id.radioButtonETH);
+        checkBoxAutoScroll = findViewById(R.id.checkBoxAutoScroll);
 
         // Load app settings (data/data/(package_name)/shared_prefs/SharedPreference)
         SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
@@ -71,6 +74,10 @@ public class SettingActivity extends AppCompatActivity {
         } else if (GlobalSettings.COIN_TYPE_ETH.equals(savedCoinType)) {
             radioButtonETH.setChecked(true);
         }
+        
+        // Load auto scroll setting
+        boolean autoScrollEnabled = sharedPreferences.getBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, GlobalSettings.AUTO_SCROLL_DEFAULT_VALUE);
+        checkBoxAutoScroll.setChecked(autoScrollEnabled);
 
         btnSave.setOnClickListener(v -> {
             int tradeInterval = Integer.parseInt(txtTradeInterval.getText().toString().replaceAll(",", ""));
@@ -89,6 +96,9 @@ public class SettingActivity extends AppCompatActivity {
             if (radioButtonETH.isChecked()) {
                 selectedCoinType = GlobalSettings.COIN_TYPE_ETH;
             }
+            
+            // Get auto scroll setting
+            boolean autoScrollEnabled = checkBoxAutoScroll.isChecked();
 
             SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
             prefsEditr.putString(GlobalSettings.API_KEY_KEY_NAME, txtApiKey.getText().toString());
@@ -98,6 +108,7 @@ public class SettingActivity extends AppCompatActivity {
             prefsEditr.putFloat(GlobalSettings.EARNING_RATE_KEY_NAME, Float.parseFloat(txtEarningRate.getText().toString()));
             prefsEditr.putFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, Float.parseFloat(txtSlotIntervalRate.getText().toString()));
             prefsEditr.putString(GlobalSettings.COIN_TYPE_KEY_NAME, selectedCoinType);
+            prefsEditr.putBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, autoScrollEnabled);
             prefsEditr.apply();
 
             GlobalSettings.getInstance().setApiKey(txtApiKey.getText().toString())
@@ -106,7 +117,8 @@ public class SettingActivity extends AppCompatActivity {
                                         .setTradeInterval(tradeInterval)
                                         .setEarningRate(Float.parseFloat(txtEarningRate.getText().toString()))
                                         .setSlotIntervalRate(Float.parseFloat(txtSlotIntervalRate.getText().toString()))
-                                        .setCoinType(selectedCoinType);
+                                        .setCoinType(selectedCoinType)
+                                        .setAutoScroll(autoScrollEnabled);
 
             Toast.makeText(SettingActivity.this, "설정이 저장되었습니다.", Toast.LENGTH_SHORT).show();
             finish();

@@ -39,4 +39,10 @@ public interface OrderDao {
      */
     @Query("UPDATE orders SET marked = 0, updatedAt = :currentTime WHERE marked = 1")
     int unmarkAllOrders(long currentTime);
+    
+    /**
+     * 모든 주문 삭제
+     */
+    @Query("DELETE FROM orders")
+    int deleteAllOrders();
 }

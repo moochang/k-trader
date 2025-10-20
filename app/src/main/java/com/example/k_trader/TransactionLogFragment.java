@@ -125,8 +125,10 @@ public class TransactionLogFragment extends Fragment implements DatabaseMonitor.
                     if (charSequence.length() > MAX_BUFFER)
                         editText.getEditableText().delete(0, charSequence.length() - MAX_BUFFER);
 
-                    // 항상 scroll to bottom
-                    scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+                    // Auto scroll 설정에 따라 스크롤
+                    if (GlobalSettings.getInstance().isAutoScroll()) {
+                        scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+                    }
                 });
             }
         };

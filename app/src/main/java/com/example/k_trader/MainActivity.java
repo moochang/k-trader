@@ -20,10 +20,14 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.k_trader.base.GlobalSettings;
+import com.example.k_trader.database.OrderRepository;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -51,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        // Toolbar 설정
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         
         // 테마에 따라 Status Bar 색상 동적 설정
         setStatusBarColorByTheme();
@@ -95,13 +103,50 @@ public class MainActivity extends AppCompatActivity {
                                     .setFileLogEnabled(sharedPreferences.getBoolean(GlobalSettings.FILE_LOG_ENABLED_KEY_NAME, false))
                                     .setEarningRate(sharedPreferences.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE))
                                     .setSlotIntervalRate(sharedPreferences.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE))
-                                    .setCoinType(sharedPreferences.getString(GlobalSettings.COIN_TYPE_KEY_NAME, GlobalSettings.COIN_TYPE_DEFAULT_VALUE));
+                                    .setCoinType(sharedPreferences.getString(GlobalSettings.COIN_TYPE_KEY_NAME, GlobalSettings.COIN_TYPE_DEFAULT_VALUE))
+                                    .setAutoScroll(sharedPreferences.getBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, GlobalSettings.AUTO_SCROLL_DEFAULT_VALUE));
 
         if (GlobalSettings.getInstance().getApiKey().isEmpty() || GlobalSettings.getInstance().getApiSecret().isEmpty()) {
             Toast.makeText(this, "거래를 위해서는 Key와 Secret값 설정이 필요합니다.", Toast.LENGTH_SHORT).show();
             // Launch setting activity
             startActivity(new Intent(this, SettingActivity.class));
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        
+        if (id == R.id.action_settings) {
+            startActivity(new Intent(this, SettingActivity.class));
+            return true;
+        } else if (id == R.id.action_clear) {
+            clearAllDatabaseRecords();
+            return true;
+        }
+        
+        return super.onOptionsItemSelected(item);
+    }
+    
+    /**
+     * 모든 DB 기록을 삭제하는 메서드
+     */
+    private void clearAllDatabaseRecords() {
+        OrderRepository orderRepository = OrderRepository.getInstance(this);
+        
+        orderRepository.deleteAllOrders()
+                .subscribeOn(io.reactivex.schedulers.Schedulers.io())
+                .observeOn(io.reactivex.android.schedulers.AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> Toast.makeText(this, "모든 DB 기록이 삭제되었습니다.", Toast.LENGTH_SHORT).show(),
+                        throwable -> Toast.makeText(this, "DB 삭제 중 오류가 발생했습니다: " + throwable.getMessage(), Toast.LENGTH_LONG).show()
+                );
     }
 
     @Override
