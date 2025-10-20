@@ -26,24 +26,19 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <android.support.v4.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:fillViewport="true">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
+        android:orientation="vertical"
+        android:padding="8dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <!-- API 설정 섹션 -->
             <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardCornerRadius="12dp"
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="8dp"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="@color/surface_modern"
                 app:cardUseCompatPadding="false"
@@ -54,23 +49,23 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="8dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="API 설정"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary_modern"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="8dp" />
 
                     <!-- API Key -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="8dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -83,11 +78,11 @@
                         <EditText
                             android:id="@+id/editTextApiKey"
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/edit_text_modern_background"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="14sp"
                             android:textColor="@color/text_primary_modern"
                             android:hint="API Key를 입력하세요"
                             android:inputType="text"
@@ -112,11 +107,11 @@
                         <EditText
                             android:id="@+id/editTextApiSecret"
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/edit_text_modern_background"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="14sp"
                             android:textColor="@color/text_primary_modern"
                             android:hint="API Secret를 입력하세요"
                             android:inputType="text"
@@ -132,8 +127,8 @@
             <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardCornerRadius="12dp"
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="8dp"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="@color/surface_modern"
                 app:cardUseCompatPadding="false"
@@ -144,23 +139,23 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="8dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="거래 설정"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary_modern"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="8dp" />
 
                     <!-- 1회 거래 금액 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="6dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -173,11 +168,11 @@
                         <EditText
                             android:id="@+id/editTextUnitPrice"
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/edit_text_modern_background"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="14sp"
                             android:textColor="@color/text_primary_modern"
                             android:hint="거래 금액을 입력하세요 (원)"
                             android:inputType="number"
@@ -190,7 +185,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="6dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -203,11 +198,11 @@
                         <EditText
                             android:id="@+id/editTextTradingInterval"
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/edit_text_modern_background"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="14sp"
                             android:textColor="@color/text_primary_modern"
                             android:hint="거래 주기를 입력하세요 (초)"
                             android:inputType="number"
@@ -220,7 +215,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="6dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -233,11 +228,11 @@
                         <EditText
                             android:id="@+id/editTextEarningRate"
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/edit_text_modern_background"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="14sp"
                             android:textColor="@color/text_primary_modern"
                             android:hint="수익 목표를 입력하세요 (%)"
                             android:inputType="numberDecimal"
@@ -250,7 +245,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="6dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -263,11 +258,11 @@
                         <EditText
                             android:id="@+id/editTextSlotIntervalRate"
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/edit_text_modern_background"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="14sp"
                             android:textColor="@color/text_primary_modern"
                             android:hint="거래 간격을 입력하세요 (%)"
                             android:inputType="numberDecimal"
@@ -280,7 +275,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="6dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -301,7 +296,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="BTC"
-                                android:textSize="16sp"
+                                android:textSize="14sp"
                                 android:textColor="@color/text_primary_modern"
                                 android:layout_marginEnd="24dp"
                                 android:checked="true" />
@@ -311,7 +306,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="ETH"
-                                android:textSize="16sp"
+                                android:textSize="14sp"
                                 android:textColor="@color/text_primary_modern" />
 
                         </RadioGroup>
@@ -329,7 +324,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="자동 스크롤"
-                            android:textSize="16sp"
+                            android:textSize="14sp"
                             android:textColor="@color/text_primary_modern"
                             android:checked="true"
                             style="@style/CheckBoxModern" />
@@ -344,15 +339,13 @@
             <Button
                 android:id="@+id/buttonSave"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp"
                 android:text="설정 저장"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 style="@style/ButtonModernPrimary" />
 
-        </LinearLayout>
-
-    </android.support.v4.widget.NestedScrollView>
+    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>
