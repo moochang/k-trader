@@ -40,7 +40,7 @@
 
         </LinearLayout>
 
-        <!-- BTC Current Price -->
+        <!-- ETH Current Price -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,7 +51,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/btc_current_price"
+                android:text="@string/eth_current_price"
                 android:textColor="@color/text_secondary_modern"
                 android:textSize="12sp" />
 

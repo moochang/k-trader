@@ -16,7 +16,7 @@
     
     <!-- Card View 항목들 -->
     <string name="transaction_time">Transaction Time</string>
-    <string name="btc_current_price">BTC Current Price</string>
+    <string name="eth_current_price">ETH Current Price</string>
     <string name="hourly_change">Hourly Change</string>
     <string name="estimated_balance">Estimated Balance</string>
     <string name="last_buy_price">Last Buy Price</string>
