@@ -49,9 +49,7 @@ public class MainPage extends Fragment {
 
     private static final String KEY_TRADING_STATE = "KEY_TRADING_STATE";
 
-    private Button btnStartTrading;
-    private Button btnStopTrading;
-    private Button btnScrollToBottom;
+    private android.support.design.widget.FloatingActionButton fabTradingToggle;
     
     // 코인 정보 표시용 TextView들
     private TextView textCoinType;
@@ -86,9 +84,7 @@ public class MainPage extends Fragment {
         mainActivity = (MainActivity) getActivity();
         
         // UI 컴포넌트 초기화
-        btnStartTrading = layout.findViewById(R.id.button);
-        btnStopTrading = layout.findViewById(R.id.button2);
-        btnScrollToBottom = layout.findViewById(R.id.button3);
+        fabTradingToggle = layout.findViewById(R.id.fabTradingToggle);
         
         // 코인 정보 TextView들 초기화
         textCoinType = layout.findViewById(R.id.textCoinType);
@@ -108,8 +104,8 @@ public class MainPage extends Fragment {
             isTradingStarted = savedInstanceState.getBoolean(KEY_TRADING_STATE);
         }
 
-        btnStartTrading.setEnabled(!isTradingStarted);
-        btnStopTrading.setEnabled(isTradingStarted);
+        // Floating Action Button 상태 초기화
+        updateTradingToggleButton(isTradingStarted);
 
         // JobScheduler 초기화
         initializeJobScheduler();
@@ -228,80 +224,107 @@ public class MainPage extends Fragment {
      */
     @SuppressWarnings("ConstantConditions")
     private void setupButtonListeners() {
-        btnStartTrading.setOnClickListener(v -> {
-            String packageName = mainActivity.getPackageName();
-            PowerManager pm = (PowerManager) mainActivity.getSystemService(Context.POWER_SERVICE);
-
-            // 배터리 최적화 무시 요청 (트레이딩 앱의 경우 백그라운드 실행이 필요)
-            // Play Store 정책에 따라 적절한 사용 사례임을 명시
-            // 트레이딩 앱은 실시간 주문 처리를 위해 백그라운드 실행이 필수적임
-            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                Intent i = new Intent();
-                i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                i.setData(Uri.parse("package:" + packageName));
-                startActivity(i);
-            }
-
-            // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
-            new Thread(() -> {
-                OrderManager orderManager = new OrderManager();
-                orderManager.cancelAllBuyOrders();
-            }).start();
-
-            // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
-            JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
-                    .setMinimumLatency(1000) // 1000 ms
-                    .build();
-
-            JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
-                    .setMinimumLatency((long) GlobalSettings.getInstance().getTradeInterval() * 1000)
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                    .build();
-
-            mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-            mainActivity.jobScheduler.schedule(firstTradeJob);
-            mainActivity.jobScheduler.schedule(tradeJob);
-
-            isTradingStarted = true;
-            // 런타임에 상태가 변경되므로 조건문은 정상적으로 동작함
-            // 코드 분석 도구가 정적 분석으로는 정확히 파악하지 못함
-            boolean startEnabled = !isTradingStarted;
-            boolean stopEnabled = isTradingStarted;
-            btnStartTrading.setEnabled(startEnabled);
-            btnStopTrading.setEnabled(stopEnabled);
-        });
-
-        btnStopTrading.setOnClickListener(v -> {
-            if (mainActivity.jobScheduler != null) {
-                mainActivity.jobScheduler.cancelAll();
-            }
-
-            isTradingStarted = false;
-            // 런타임에 상태가 변경되므로 조건문은 정상적으로 동작함
-            // 코드 분석 도구가 정적 분석으로는 정확히 파악하지 못함
-            boolean startEnabled = !isTradingStarted;
-            boolean stopEnabled = isTradingStarted;
-            btnStartTrading.setEnabled(startEnabled);
-            btnStopTrading.setEnabled(stopEnabled);
-        });
-
-        btnScrollToBottom.setOnClickListener(v -> {
-            // 버튼 눌린 효과 애니메이션
-            animateButtonPress(v);
-            
-            // 현재 선택된 Fragment에 따라 스크롤 기능 실행
-            int currentItem = viewPager.getCurrentItem();
-            
-            if (currentItem == 0 && transactionItemFragment != null) {
-                // Transaction Item 탭
-                transactionItemFragment.scrollToBottom();
-            } else if (currentItem == 1 && transactionLogFragment != null) {
-                // Transaction Log 탭
-                transactionLogFragment.scrollToBottom();
+        fabTradingToggle.setOnClickListener(v -> {
+            if (isTradingStarted) {
+                stopTrading();
+            } else {
+                startTrading();
             }
         });
+    }
+    
+    /**
+     * 트레이딩 시작
+     */
+    private void startTrading() {
+        Log.d("[K-TR]", "[MainPage] Start Trading button clicked");
+        Log.d("[K-TR]", "[MainPage] mainActivity: " + (mainActivity != null ? "not null" : "null"));
+        Log.d("[K-TR]", "[MainPage] component: " + (component != null ? "not null" : "null"));
+        
+        String packageName = mainActivity.getPackageName();
+        PowerManager pm = (PowerManager) mainActivity.getSystemService(Context.POWER_SERVICE);
 
-        // Settings 버튼은 App bar 메뉴로 이동했으므로 제거
+        // 배터리 최적화 무시 요청 (트레이딩 앱의 경우 백그라운드 실행이 필요)
+        // Play Store 정책에 따라 적절한 사용 사례임을 명시
+        // 트레이딩 앱은 실시간 주문 처리를 위해 백그라운드 실행이 필수적임
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            Log.d("[K-TR]", "[MainPage] Requesting battery optimization exemption");
+            Intent i = new Intent();
+            i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            i.setData(Uri.parse("package:" + packageName));
+            startActivity(i);
+        } else {
+            Log.d("[K-TR]", "[MainPage] Battery optimization already exempted");
+        }
+
+        // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
+        Log.d("[K-TR]", "[MainPage] Canceling existing buy orders");
+        new Thread(() -> {
+            OrderManager orderManager = new OrderManager();
+            orderManager.cancelAllBuyOrders();
+            Log.d("[K-TR]", "[MainPage] Existing buy orders canceled");
+        }).start();
+
+        // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
+        Log.d("[K-TR]", "[MainPage] Creating job schedules");
+        JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
+                .setMinimumLatency(1000) // 1000 ms
+                .build();
+
+        JobInfo tradeJob = new JobInfo.Builder(JOB_ID_REGULAR, component)
+                .setMinimumLatency((long) GlobalSettings.getInstance().getTradeInterval() * 1000)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .build();
+
+        Log.d("[K-TR]", "[MainPage] Trade interval: " + GlobalSettings.getInstance().getTradeInterval() + " seconds");
+
+        mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (mainActivity.jobScheduler != null) {
+            int firstJobResult = mainActivity.jobScheduler.schedule(firstTradeJob);
+            int regularJobResult = mainActivity.jobScheduler.schedule(tradeJob);
+            Log.d("[K-TR]", "[MainPage] Job scheduling results - First: " + firstJobResult + ", Regular: " + regularJobResult);
+        } else {
+            Log.e("[K-TR]", "[MainPage] JobScheduler is null");
+        }
+
+        isTradingStarted = true;
+        updateTradingToggleButton(isTradingStarted);
+        Log.d("[K-TR]", "[MainPage] Trading started successfully");
+    }
+    
+    /**
+     * 트레이딩 중지
+     */
+    private void stopTrading() {
+        Log.d("[K-TR]", "[MainPage] Stop Trading button clicked");
+        
+        if (mainActivity.jobScheduler != null) {
+            mainActivity.jobScheduler.cancelAll();
+            Log.d("[K-TR]", "[MainPage] All jobs canceled");
+        }
+
+        isTradingStarted = false;
+        updateTradingToggleButton(isTradingStarted);
+        Log.d("[K-TR]", "[MainPage] Trading stopped successfully");
+    }
+    
+    /**
+     * 트레이딩 토글 버튼 상태 업데이트
+     */
+    private void updateTradingToggleButton(boolean isTradingStarted) {
+        if (fabTradingToggle != null) {
+            if (isTradingStarted) {
+                // 트레이딩 중 - Stop 아이콘과 빨간색
+                fabTradingToggle.setImageResource(android.R.drawable.ic_media_pause);
+                fabTradingToggle.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    getResources().getColor(android.R.color.holo_red_dark)));
+            } else {
+                // 트레이딩 중지 - Play 아이콘과 초록색
+                fabTradingToggle.setImageResource(android.R.drawable.ic_media_play);
+                fabTradingToggle.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    android.graphics.Color.parseColor("#4CAF50")));
+            }
+        }
     }
 
     @Override

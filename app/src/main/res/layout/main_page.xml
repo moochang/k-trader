@@ -10,57 +10,6 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <Button
-                android:id="@+id/button"
-                android:layout_width="0dp"
-                android:layout_height="45dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="4dp"
-                android:checked="true"
-                android:drawableStart="@drawable/ic_play"
-                android:drawablePadding="6dp"
-                android:text="@string/start_trading"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                style="@style/ButtonModernSuccess" />
-
-            <Button
-                android:id="@+id/button2"
-                android:layout_width="0dp"
-                android:layout_height="45dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:drawableStart="@drawable/ic_stop"
-                android:drawablePadding="6dp"
-                android:text="@string/stop_trading"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                style="@style/ButtonModernError" />
-
-            <Button
-                android:id="@+id/button3"
-                android:layout_width="0dp"
-                android:layout_height="45dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:drawableStart="@drawable/ic_scroll_down"
-                android:drawablePadding="6dp"
-                android:text="@string/scroll_to_bottom"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                style="@style/ButtonModernSecondary" />
-
-            <!-- Settings 버튼은 App bar 메뉴로 이동 -->
-        </LinearLayout>
 
         <!-- 코인 정보 섹션 -->
         <android.support.v7.widget.CardView
@@ -207,5 +156,20 @@
             android:layout_weight="1" />
 
     </LinearLayout>
+
+    <!-- Trading 토글 Floating Action Button -->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fabTradingToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_play"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:backgroundTint="@color/success_modern"
+        app:tint="@android:color/white"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp" />
 
 </android.support.constraint.ConstraintLayout>

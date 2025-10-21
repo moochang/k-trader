@@ -154,6 +154,9 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.action_clear) {
             clearAllDatabaseRecords();
             return true;
+        } else if (id == R.id.action_scroll_to_bottom) {
+            scrollToBottom();
+            return true;
         }
         
         return super.onOptionsItemSelected(item);
@@ -610,5 +613,56 @@ public class MainActivity extends AppCompatActivity {
         }
         
         android.util.Log.d("[K-TR]", "[MainActivity] Set Appbar text colors - Theme: " + (isLightTheme ? "Light" : "Dark") + ", Color: " + (isLightTheme ? "Black" : "White"));
+    }
+    
+    /**
+     * 현재 선택된 Fragment에 따라 스크롤 기능 실행
+     */
+    private void scrollToBottom() {
+        android.util.Log.d("[K-TR]", "[MainActivity] scrollToBottom() called");
+        
+        try {
+            if (viewPager != null) {
+                int currentItem = viewPager.getCurrentItem();
+                android.util.Log.d("[K-TR]", "[MainActivity] Current tab: " + currentItem);
+                
+                // FragmentManager를 통해 현재 Fragment 가져오기
+                android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
+                android.support.v4.app.Fragment currentFragment = fragmentManager.findFragmentByTag("android:switcher:" + R.id.viewpager + ":" + currentItem);
+                
+                if (currentFragment != null) {
+                    android.util.Log.d("[K-TR]", "[MainActivity] Current fragment: " + currentFragment.getClass().getSimpleName());
+                    
+                    if (currentItem == 0) {
+                        // Transaction Item 탭
+                        if (currentFragment instanceof TransactionItemFragment) {
+                            TransactionItemFragment transactionItemFragment = (TransactionItemFragment) currentFragment;
+                            transactionItemFragment.scrollToBottom();
+                            android.util.Log.d("[K-TR]", "[MainActivity] Scrolled TransactionItemFragment to bottom");
+                        } else {
+                            android.util.Log.w("[K-TR]", "[MainActivity] Fragment is not TransactionItemFragment");
+                        }
+                    } else if (currentItem == 1) {
+                        // Transaction Log 탭
+                        if (currentFragment instanceof TransactionLogFragment) {
+                            TransactionLogFragment transactionLogFragment = (TransactionLogFragment) currentFragment;
+                            transactionLogFragment.scrollToBottom();
+                            android.util.Log.d("[K-TR]", "[MainActivity] Scrolled TransactionLogFragment to bottom");
+                        } else {
+                            android.util.Log.w("[K-TR]", "[MainActivity] Fragment is not TransactionLogFragment");
+                        }
+                    } else {
+                        android.util.Log.w("[K-TR]", "[MainActivity] Unknown tab: " + currentItem);
+                    }
+                } else {
+                    android.util.Log.w("[K-TR]", "[MainActivity] Current fragment is null");
+                }
+            } else {
+                android.util.Log.w("[K-TR]", "[MainActivity] ViewPager is null");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("[K-TR]", "[MainActivity] Error in scrollToBottom()", e);
+            Toast.makeText(this, "스크롤 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+        }
     }
 }
