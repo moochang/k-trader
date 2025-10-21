@@ -11,7 +11,8 @@ import java.util.Date;
 public class TransactionData {
     private String transactionTime;
     private String btcCurrentPrice;
-    private String hourlyChange;
+    private String hourlyChange;        // 1시간 전 대비 등락률 (TransactionCard용)
+    private String dailyChange;          // 전일 대비 등락률 (CoinInfo용)
     private String estimatedBalance;
     private String lastBuyPrice;
     private String lastSellPrice;
@@ -24,12 +25,13 @@ public class TransactionData {
         this.isFromServer = false;
     }
 
-    public TransactionData(String transactionTime, String btcCurrentPrice, String hourlyChange,
+    public TransactionData(String transactionTime, String btcCurrentPrice, String hourlyChange, String dailyChange,
                              String estimatedBalance, String lastBuyPrice, String lastSellPrice, String nextBuyPrice) {
         this();
         this.transactionTime = transactionTime;
         this.btcCurrentPrice = btcCurrentPrice;
         this.hourlyChange = hourlyChange;
+        this.dailyChange = dailyChange;
         this.estimatedBalance = estimatedBalance;
         this.lastBuyPrice = lastBuyPrice;
         this.lastSellPrice = lastSellPrice;
@@ -59,6 +61,14 @@ public class TransactionData {
 
     public void setHourlyChange(String hourlyChange) {
         this.hourlyChange = hourlyChange;
+    }
+
+    public String getDailyChange() {
+        return dailyChange;
+    }
+
+    public void setDailyChange(String dailyChange) {
+        this.dailyChange = dailyChange;
     }
 
     public String getEstimatedBalance() {

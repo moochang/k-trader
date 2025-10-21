@@ -282,16 +282,66 @@ public class TransactionApiService {
                 }
             }
             
-            // 시간당 변화율 추출
-            String hourlyChange = "0";
+            // 전일 대비 등락률 추출 (CoinInfo용)
+            String dailyChange = "+0.00%";
+            // 1시간 전 대비 등락률 추출 (TransactionCard용)
+            String hourlyChange = "+0.00%";
+            
             if (tickerResponse.containsKey("data")) {
                 JSONObject data = (JSONObject) tickerResponse.get("data");
                 if (data.containsKey(coinPair)) {
                     JSONObject coinKrw = (JSONObject) data.get(coinPair);
+                    
+                    // API 응답의 모든 필드 로그 출력
+                    android.util.Log.d("[K-TR]", "[TransactionApiService] Available fields in coinKrw: " + coinKrw.keySet());
+                    
+                    // 전일 대비 등락률 (24시간)
                     if (coinKrw.containsKey("fluctate_rate_24H")) {
-                        hourlyChange = coinKrw.get("fluctate_rate_24H").toString();
+                        String rawDailyChange = coinKrw.get("fluctate_rate_24H").toString();
+                        android.util.Log.d("[K-TR]", "[TransactionApiService] Raw daily change (24H): " + rawDailyChange);
+                        try {
+                            double changeValue = Double.parseDouble(rawDailyChange);
+                            if (changeValue >= 0) {
+                                dailyChange = String.format("+%.2f%%", changeValue);
+                            } else {
+                                dailyChange = String.format("%.2f%%", changeValue);
+                            }
+                            android.util.Log.d("[K-TR]", "[TransactionApiService] Formatted daily change: " + dailyChange);
+                        } catch (NumberFormatException e) {
+                            android.util.Log.e("[K-TR]", "[TransactionApiService] Error parsing daily change: " + rawDailyChange, e);
+                            dailyChange = "+0.00%";
+                        }
+                    } else {
+                        android.util.Log.w("[K-TR]", "[TransactionApiService] fluctate_rate_24H not found in coinKrw");
                     }
+                    
+                    // 1시간 대비 등락률 (1시간)
+                    if (coinKrw.containsKey("fluctate_rate_1H")) {
+                        String rawHourlyChange = coinKrw.get("fluctate_rate_1H").toString();
+                        android.util.Log.d("[K-TR]", "[TransactionApiService] Raw hourly change (1H): " + rawHourlyChange);
+                        try {
+                            double changeValue = Double.parseDouble(rawHourlyChange);
+                            if (changeValue >= 0) {
+                                hourlyChange = String.format("+%.2f%%", changeValue);
+                            } else {
+                                hourlyChange = String.format("%.2f%%", changeValue);
+                            }
+                            android.util.Log.d("[K-TR]", "[TransactionApiService] Formatted hourly change: " + hourlyChange);
+                        } catch (NumberFormatException e) {
+                            android.util.Log.e("[K-TR]", "[TransactionApiService] Error parsing hourly change: " + rawHourlyChange, e);
+                            hourlyChange = "+0.00%";
+                        }
+                    } else {
+                        android.util.Log.w("[K-TR]", "[TransactionApiService] fluctate_rate_1H not found, using daily change for hourly");
+                        // 1시간 대비 등락률이 없으면 전일 대비 등락률을 사용
+                        hourlyChange = dailyChange;
+                    }
+                    
+                } else {
+                    android.util.Log.w("[K-TR]", "[TransactionApiService] coinPair " + coinPair + " not found in data");
                 }
+            } else {
+                android.util.Log.w("[K-TR]", "[TransactionApiService] data not found in tickerResponse");
             }
             
             // 예상 잔고 추출
@@ -338,6 +388,7 @@ public class TransactionApiService {
                 String.valueOf(System.currentTimeMillis()),
                 currentPrice,
                 hourlyChange,
+                dailyChange,
                 estimatedBalance,
                 lastBuyPrice,
                 lastSellPrice,

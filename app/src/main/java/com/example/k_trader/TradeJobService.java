@@ -616,6 +616,15 @@ public class TradeJobService extends JobService {
 
                 log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d", targetPrice));
 
+                // 매수 주문 전 잔고 확인
+                double requiredAmount = getUnitAmount4Price(targetPrice) * targetPrice;
+                if (krwBalance < requiredAmount) {
+                    log_info("잔고 부족으로 매수 주문을 건너뜁니다. 필요: " + 
+                        String.format(Locale.getDefault(), "%,.0f", requiredAmount) + 
+                        "원, 보유: " + String.format(Locale.getDefault(), "%,.0f", krwBalance) + "원");
+                    continue; // 다음 슬롯으로 이동
+                }
+
                 // 체결 되기 어려운 낮은 가격 order는 모두 취소한다.
                 for (TradeData tmp : placedOrderManager.getList()) {
                     if (tmp.getType() == BUY) {  // 1000만원 단위 경계에서 buy price가 미세하게 차이나서 data가 null이 되어 들어올 수 있으므로 전체 buy를 취소한다.
@@ -655,6 +664,60 @@ public class TradeJobService extends JobService {
             return "BTC"; // 기본값
         }
     }
+    
+    /**
+     * API에서 현재 등락률 정보를 가져옴 (TransactionCard용 - 1시간 전 대비)
+     */
+    private String getCurrentPriceChangeFromApi() {
+        try {
+            // TransactionDataManager를 통해 최신 등락률 정보 가져오기
+            com.example.k_trader.data.TransactionDataManager dataManager = 
+                com.example.k_trader.data.TransactionDataManager.getInstance(KTraderApplication.getAppContext());
+            
+            // 캐시된 데이터에서 1시간 전 대비 등락률 정보 가져오기
+            com.example.k_trader.data.TransactionData cachedData = dataManager.getCachedData();
+            if (cachedData != null && cachedData.getHourlyChange() != null) {
+                String change = cachedData.getHourlyChange();
+                Log.d("[K-TR]", "[TradeJobService] Using cached hourly change (1H): " + change);
+                return change;
+            }
+            
+            // 캐시된 데이터가 없으면 기본값 반환
+            Log.w("[K-TR]", "[TradeJobService] No cached hourly change data available");
+            return "+0.00%";
+            
+        } catch (Exception e) {
+            Log.e("[K-TR]", "[TradeJobService] Error getting hourly change from API", e);
+            return "+0.00%";
+        }
+    }
+    
+    /**
+     * API에서 전일 대비 등락률 정보를 가져옴 (CoinInfo용)
+     */
+    private String getDailyChangeFromApi() {
+        try {
+            // TransactionDataManager를 통해 최신 등락률 정보 가져오기
+            com.example.k_trader.data.TransactionDataManager dataManager = 
+                com.example.k_trader.data.TransactionDataManager.getInstance(KTraderApplication.getAppContext());
+            
+            // 캐시된 데이터에서 전일 대비 등락률 정보 가져오기
+            com.example.k_trader.data.TransactionData cachedData = dataManager.getCachedData();
+            if (cachedData != null && cachedData.getDailyChange() != null) {
+                String change = cachedData.getDailyChange();
+                Log.d("[K-TR]", "[TradeJobService] Using cached daily change (24H): " + change);
+                return change;
+            }
+            
+            // 캐시된 데이터가 없으면 기본값 반환
+            Log.w("[K-TR]", "[TradeJobService] No cached daily change data available");
+            return "+0.00%";
+            
+        } catch (Exception e) {
+            Log.e("[K-TR]", "[TradeJobService] Error getting daily change from API", e);
+            return "+0.00%";
+        }
+    }
 
     public void setContext(Context ctx) {
         this.ctx = ctx;
@@ -673,8 +736,8 @@ public class TradeJobService extends JobService {
             
             String coinCurrentPrice = String.format(Locale.getDefault(), "₩%,d", currentPrice);
             
-            // 시간당 변화율 계산 (간단한 예시)
-            String hourlyChange = "+2.5%"; // 실제로는 이전 가격과 비교해서 계산
+            // 시간당 변화율은 API에서 가져온 실제 데이터 사용
+            String hourlyChange = getCurrentPriceChangeFromApi();
             
             String estimatedBalance = String.format(Locale.getDefault(), "₩%,.0f", krwBalance);
             
@@ -708,15 +771,20 @@ public class TradeJobService extends JobService {
                 currentTime.get(Calendar.MONTH) + 1, currentTime.get(Calendar.DATE),
                 currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE) + 5);
             
+            // 가격 정보를 데이터베이스에 저장 (실시간 관찰을 위해) - CoinInfo용 전일 대비 등락률 사용
+            String dailyChangeForCoinInfo = getDailyChangeFromApi();
+            savePriceInfoToDatabase(coinCurrentPrice, dailyChangeForCoinInfo);
+            
             Intent intent = new Intent("TRADE_CARD_DATA");
             intent.putExtra("transactionTime", transactionTime);
-            intent.putExtra("coinCurrentPrice", coinCurrentPrice);
+            intent.putExtra("btcCurrentPrice", coinCurrentPrice);  // MainPage에서 사용하는 키로 변경
             intent.putExtra("hourlyChange", hourlyChange);
             intent.putExtra("estimatedBalance", estimatedBalance);
             intent.putExtra("lastBuyPrice", lastBuyPrice);
             intent.putExtra("lastSellPrice", lastSellPrice);
             intent.putExtra("nextBuyPrice", nextBuyPrice);
             
+            Log.d("[K-TR]", "[TradeJobService] Sending card data - Price: " + coinCurrentPrice + ", Change: " + hourlyChange);
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
         } catch (Exception e) {
             Log.e("TradeJobService", "카드 데이터 전송 중 오류 발생", e);
@@ -765,5 +833,28 @@ public class TradeJobService extends JobService {
         // 현재 앱이 Light 테마를 사용하고 있는지 확인
         // AppTheme의 parent가 Theme.AppCompat.Light.DarkActionBar이므로 Light 테마
         return true; // 현재 앱은 Light 테마 사용
+    }
+    
+    /**
+     * 가격 정보를 데이터베이스에 저장
+     */
+    private void savePriceInfoToDatabase(String currentPrice, String priceChange) {
+        try {
+            // 현재 코인 타입 가져오기
+            String coinType = com.example.k_trader.base.GlobalSettings.getInstance().getCoinType();
+            
+            // CoinPriceInfoRepository를 사용하여 데이터베이스에 저장
+            com.example.k_trader.database.CoinPriceInfoRepository repository = 
+                new com.example.k_trader.database.CoinPriceInfoRepository(KTraderApplication.getAppContext());
+            
+            repository.savePriceInfo(coinType, currentPrice, priceChange)
+                .subscribe(
+                    () -> Log.d("[K-TR]", "[TradeJobService] Price info saved to database successfully"),
+                    throwable -> Log.e("[K-TR]", "[TradeJobService] Error saving price info to database", throwable)
+                );
+                
+        } catch (Exception e) {
+            Log.e("[K-TR]", "[TradeJobService] Error in savePriceInfoToDatabase", e);
+        }
     }
 }

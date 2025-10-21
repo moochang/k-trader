@@ -7,6 +7,8 @@ import com.example.k_trader.KTraderApplication;
 import com.example.k_trader.TransactionItemFragment;
 import com.example.k_trader.database.ErrorRepository;
 import com.example.k_trader.database.ApiCallResultRepository;
+import com.example.k_trader.database.TransactionInfoRepository;
+import com.example.k_trader.database.TransactionInfoEntity;
 import com.example.k_trader.api.TransactionApiService;
 import com.example.k_trader.api.TransactionApiResult;
 import java.util.concurrent.CompletableFuture;
@@ -26,7 +28,17 @@ public class TransactionDataManager {
     private final TransactionApiService apiService;
     private final ErrorRepository errorRepository;
     private final ApiCallResultRepository apiCallResultRepository;
+    private final TransactionInfoRepository transactionInfoRepository;
     private final ExecutorService executorService;
+    private TransactionDataUpdateCallback updateCallback;
+    
+    /**
+     * UI 업데이트를 위한 콜백 인터페이스
+     */
+    public interface TransactionDataUpdateCallback {
+        void onTransactionDataUpdated(TransactionData data);
+        void onActiveOrdersUpdated(int sellCount, int buyCount);
+    }
     private static volatile TransactionDataManager INSTANCE;
 
     private TransactionDataManager(Context context) {
@@ -35,6 +47,7 @@ public class TransactionDataManager {
         this.errorRepository = ErrorRepository.getInstance(context);
         this.apiCallResultRepository = ApiCallResultRepository.getInstance(
             com.example.k_trader.database.OrderDatabase.getInstance(context).apiCallResultDao());
+        this.transactionInfoRepository = new TransactionInfoRepository(context);
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -75,6 +88,20 @@ public class TransactionDataManager {
             broadcastTransactionData(cachedData, false);
         }
     }
+    
+    /**
+     * 캐시된 데이터를 외부에서 조회할 수 있도록 제공
+     */
+    public TransactionData getCachedData() {
+        return cacheService.getCachedData();
+    }
+    
+    /**
+     * UI 업데이트 콜백 설정
+     */
+    public void setUpdateCallback(TransactionDataUpdateCallback callback) {
+        this.updateCallback = callback;
+    }
 
     /**
      * 서버에서 최신 데이터를 가져와서 동기화
@@ -93,8 +120,8 @@ public class TransactionDataManager {
                     // 서버 데이터를 캐시에 저장
                     cacheService.saveToCache(result.getTransactionData());
                     
-                    // 서버 데이터로 UI 업데이트
-                    broadcastTransactionData(result.getTransactionData(), true);
+                    // 서버 데이터를 DB에 저장
+                    saveTransactionDataToDatabase(result.getTransactionData(), true);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -113,8 +140,8 @@ public class TransactionDataManager {
                     // 서버 데이터를 캐시에 저장
                     cacheService.saveToCache(result.getTransactionData());
                     
-                    // 서버 데이터로 UI 업데이트
-                    broadcastTransactionData(result.getTransactionData(), true);
+                    // 서버 데이터를 DB에 저장
+                    saveTransactionDataToDatabase(result.getTransactionData(), true);
                 }
                 
             } catch (Exception e) {
@@ -123,6 +150,34 @@ public class TransactionDataManager {
                 handleSyncError(e);
             }
         });
+    }
+    
+    /**
+     * Transaction 데이터를 DB에 저장
+     */
+    private void saveTransactionDataToDatabase(TransactionData data, boolean isFromServer) {
+        try {
+            TransactionInfoEntity entity = new TransactionInfoEntity(
+                data.getTransactionTime(),
+                data.getBtcCurrentPrice(),
+                data.getHourlyChange(),
+                data.getDailyChange(),
+                data.getEstimatedBalance(),
+                data.getLastBuyPrice(),
+                data.getLastSellPrice(),
+                data.getNextBuyPrice(),
+                isFromServer
+            );
+            
+            transactionInfoRepository.saveTransactionInfo(entity)
+                .subscribe(
+                    () -> android.util.Log.d("[K-TR]", "[TransactionDataManager] Transaction data saved to DB successfully"),
+                    throwable -> android.util.Log.e("[K-TR]", "[TransactionDataManager] Error saving transaction data to DB", throwable)
+                );
+                
+        } catch (Exception e) {
+            android.util.Log.e("[K-TR]", "[TransactionDataManager] Error creating TransactionInfoEntity", e);
+        }
     }
 
     /**
@@ -182,10 +237,13 @@ public class TransactionDataManager {
      * Transaction 데이터를 브로드캐스트로 전송
      */
     private void broadcastTransactionData(TransactionData data, boolean isFromServer) {
+        android.util.Log.d("[K-TR]", "[TransactionDataManager] Broadcasting transaction data - hourlyChange: " + data.getHourlyChange() + ", dailyChange: " + data.getDailyChange());
+        
         Intent intent = new Intent(BROADCAST_TRANSACTION_DATA);
         intent.putExtra("transactionTime", data.getTransactionTime());
         intent.putExtra("btcCurrentPrice", data.getBtcCurrentPrice());
         intent.putExtra("hourlyChange", data.getHourlyChange());
+        intent.putExtra("dailyChange", data.getDailyChange());
         intent.putExtra("estimatedBalance", data.getEstimatedBalance());
         intent.putExtra("lastBuyPrice", data.getLastBuyPrice());
         intent.putExtra("lastSellPrice", data.getLastSellPrice());
@@ -195,6 +253,7 @@ public class TransactionDataManager {
         if (KTraderApplication.getAppContext() != null) {
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext())
                     .sendBroadcast(intent);
+            android.util.Log.d("[K-TR]", "[TransactionDataManager] Broadcast sent successfully");
         }
     }
 
@@ -250,19 +309,17 @@ public class TransactionDataManager {
      */
     private String formatDetailedErrorMessage(String apiEndpoint, String errorCode, String serverMessage, String originalMessage) {
         try {
-            StringBuilder jsonBuilder = new StringBuilder();
-            jsonBuilder.append("{\n");
-            jsonBuilder.append("  \"server_url\": \"https://api.bithumb.com").append(apiEndpoint).append("\",\n");
-            jsonBuilder.append("  \"api_endpoint\": \"").append(apiEndpoint).append("\",\n");
-            jsonBuilder.append("  \"error_code\": \"").append(errorCode != null ? errorCode : "Unknown").append("\",\n");
-            jsonBuilder.append("  \"server_message\": \"").append(serverMessage != null ? serverMessage.replace("\"", "\\\"") : "No message").append("\",\n");
-            jsonBuilder.append("  \"original_error\": \"").append(originalMessage != null ? originalMessage.replace("\"", "\\\"").replace("\n", "\\n") : "No error message").append("\",\n");
-            jsonBuilder.append("  \"timestamp\": \"").append(System.currentTimeMillis()).append("\",\n");
-            jsonBuilder.append("  \"error_type\": \"API_CALL_FAILURE\",\n");
-            jsonBuilder.append("  \"api_provider\": \"Bithumb\",\n");
-            jsonBuilder.append("  \"request_method\": \"GET\"\n");
-            jsonBuilder.append("}");
-            return jsonBuilder.toString();
+            return "{\n" +
+                    "  \"server_url\": \"https://api.bithumb.com" + apiEndpoint + "\",\n" +
+                    "  \"api_endpoint\": \"" + apiEndpoint + "\",\n" +
+                    "  \"error_code\": \"" + (errorCode != null ? errorCode : "Unknown") + "\",\n" +
+                    "  \"server_message\": \"" + (serverMessage != null ? serverMessage.replace("\"", "\\\"") : "No message") + "\",\n" +
+                    "  \"original_error\": \"" + (originalMessage != null ? originalMessage.replace("\"", "\\\"").replace("\n", "\\n") : "No error message") + "\",\n" +
+                    "  \"timestamp\": \"" + System.currentTimeMillis() + "\",\n" +
+                    "  \"error_type\": \"API_CALL_FAILURE\",\n" +
+                    "  \"api_provider\": \"Bithumb\",\n" +
+                    "  \"request_method\": \"GET\"\n" +
+                    "}";
         } catch (Exception e) {
             return "{\"error\":\"Failed to format error message\",\"original\":\"" + 
                 (originalMessage != null ? originalMessage.replace("\"", "\\\"") : "No message") + "\"}";

@@ -72,6 +72,10 @@ public class MainPage extends Fragment {
     
     // BroadcastReceiver for card data updates
     private BroadcastReceiver cardDataReceiver;
+    
+    // 실시간 관찰을 위한 필드들
+    private com.example.k_trader.database.CoinPriceInfoRepository coinPriceInfoRepository;
+    private com.example.k_trader.database.TransactionInfoRepository transactionInfoRepository;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {super.onCreate(savedInstanceState);}
@@ -124,6 +128,9 @@ public class MainPage extends Fragment {
         
         // BroadcastReceiver 초기화 및 등록
         setupCardDataReceiver();
+        
+        // 실시간 관찰 시작
+        startReactiveObservations();
 
         return layout;
     }
@@ -135,6 +142,8 @@ public class MainPage extends Fragment {
         // DatabaseOrderManager 초기화
         if (getContext() != null) {
             databaseOrderManager = new DatabaseOrderManager(getContext());
+            coinPriceInfoRepository = new com.example.k_trader.database.CoinPriceInfoRepository(getContext());
+            transactionInfoRepository = new com.example.k_trader.database.TransactionInfoRepository(getContext());
             disposables = new CompositeDisposable();
         }
     }
@@ -144,17 +153,17 @@ public class MainPage extends Fragment {
      */
     private void loadInitialDataImmediately() {
         if (databaseOrderManager == null) {
-            Log.w("MainPage", "DatabaseOrderManager가 초기화되지 않음");
+            Log.w("[K-TR]", "[MainPage] DatabaseOrderManager가 초기화되지 않음");
             return;
         }
         
-        Log.d("MainPage", "즉시 초기 데이터 로드 시작");
+        Log.d("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 시작");
         
         Completable immediateLoad = databaseOrderManager.initializeAndSyncData("MainPage 즉시 초기화")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnComplete(() -> Log.d("MainPage", "즉시 초기 데이터 로드 완료"))
-                .doOnError(error -> Log.e("MainPage", "즉시 초기 데이터 로드 실패", error));
+                .doOnComplete(() -> Log.d("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 완료"))
+                .doOnError(error -> Log.e("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 실패", error));
         
         disposables.add(immediateLoad.subscribe());
     }
@@ -207,8 +216,8 @@ public class MainPage extends Fragment {
                     .observeOn(AndroidSchedulers.mainThread())
                     .repeat()
                     .delay(5, java.util.concurrent.TimeUnit.MINUTES)
-                    .doOnComplete(() -> Log.d("MainPage", "주기적 데이터 동기화 완료"))
-                    .doOnError(error -> Log.e("MainPage", "주기적 데이터 동기화 실패", error));
+                    .doOnComplete(() -> Log.d("[K-TR]", "[MainPage] 주기적 데이터 동기화 완료"))
+                    .doOnError(error -> Log.e("[K-TR]", "[MainPage] 주기적 데이터 동기화 실패", error));
             
             disposables.add(periodicSync.subscribe());
         }
@@ -293,6 +302,14 @@ public class MainPage extends Fragment {
         });
 
         // Settings 버튼은 App bar 메뉴로 이동했으므로 제거
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // SettingsActivity에서 돌아올 때 코인 정보 업데이트
+        Log.d("[K-TR]", "[MainPage] onResume - updating coin info");
+        updateCoinInfo();
     }
 
     @Override
@@ -415,9 +432,7 @@ public class MainPage extends Fragment {
         }
         
         // RxJava 리소스 정리
-        if (disposables != null) {
-            disposables.clear();
-        }
+        stopReactiveObservations();
         
         // DatabaseOrderManager 정리
         if (databaseOrderManager != null) {
@@ -428,6 +443,7 @@ public class MainPage extends Fragment {
         if (cardDataReceiver != null && getContext() != null) {
             android.support.v4.content.LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(cardDataReceiver);
         }
+
     }
     
     /**
@@ -437,9 +453,9 @@ public class MainPage extends Fragment {
         cardDataReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d("MainPage", "BroadcastReceiver received: " + intent.getAction());
+                Log.d("[K-TR]", "[MainPage] BroadcastReceiver received: " + intent.getAction());
                 
-                // BROADCAST_CARD_DATA와 BROADCAST_TRANSACTION_DATA 모두 처리
+                // BROADCAST_CARD_DATA, BROADCAST_TRANSACTION_DATA만 처리
                 if (intent.getAction() != null && 
                     (intent.getAction().equals(TransactionItemFragment.BROADCAST_CARD_DATA) ||
                      intent.getAction().equals(TransactionItemFragment.BROADCAST_TRANSACTION_DATA))) {
@@ -447,29 +463,32 @@ public class MainPage extends Fragment {
                     // 카드 데이터에서 가격 정보 추출하여 UI 업데이트
                     String btcCurrentPrice = intent.getStringExtra("btcCurrentPrice");
                     String hourlyChange = intent.getStringExtra("hourlyChange");
+                    String dailyChange = intent.getStringExtra("dailyChange");
                     
-                    Log.d("MainPage", "Received data - Price: " + btcCurrentPrice + ", Change: " + hourlyChange);
+                    Log.d("[K-TR]", "[MainPage] Received data - Price: " + btcCurrentPrice + ", HourlyChange: " + hourlyChange + ", DailyChange: " + dailyChange);
                     
-                    if (btcCurrentPrice != null && textCurrentPrice != null) {
+                    // 가격 정보가 null이거나 0인 경우 API를 직접 호출
+                    if (btcCurrentPrice == null || btcCurrentPrice.equals("0") || btcCurrentPrice.equals("null")) {
+                        Log.w("[K-TR]", "[MainPage] Price data is null or 0, calling API directly");
+                        fetchCurrentPriceFromApi();
+                    } else if (textCurrentPrice != null) {
                         textCurrentPrice.setText(btcCurrentPrice);
-                        Log.d("MainPage", "Updated current price: " + btcCurrentPrice);
+                        Log.d("[K-TR]", "[MainPage] Updated current price: " + btcCurrentPrice);
                     }
                     
-                    if (hourlyChange != null && textPriceChange != null) {
-                        textPriceChange.setText(hourlyChange);
-                        // 등락률에 따라 색상 변경
-                        if (hourlyChange.startsWith("+")) {
-                            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-                        } else if (hourlyChange.startsWith("-")) {
+                    // CoinInfo에는 전일 대비 등락률 표시
+                    if (dailyChange != null && textPriceChange != null) {
+                        textPriceChange.setText(dailyChange);
+                        // 등락률에 따라 색상 변경 (+이면 빨간색, -이면 파란색)
+                        if (dailyChange.startsWith("+")) {
                             textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                        } else if (dailyChange.startsWith("-")) {
+                            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
                         } else {
                             textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
                         }
-                        Log.d("MainPage", "Updated price change: " + hourlyChange);
+                        Log.d("[K-TR]", "[MainPage] Updated daily price change (CoinInfo): " + dailyChange);
                     }
-                    
-                    // 활성 거래 수도 업데이트
-                    updateActiveOrdersCount();
                 }
             }
         };
@@ -480,7 +499,7 @@ public class MainPage extends Fragment {
             filter.addAction(TransactionItemFragment.BROADCAST_CARD_DATA);
             filter.addAction(TransactionItemFragment.BROADCAST_TRANSACTION_DATA);
             android.support.v4.content.LocalBroadcastManager.getInstance(getContext()).registerReceiver(cardDataReceiver, filter);
-            Log.d("MainPage", "BroadcastReceiver registered for both actions");
+            Log.d("[K-TR]", "[MainPage] BroadcastReceiver registered for both actions");
         }
     }
     
@@ -488,14 +507,25 @@ public class MainPage extends Fragment {
      * 코인 데이터 새로고침 (외부에서 호출 가능)
      */
     public void refreshCoinData() {
+        Log.d("[K-TR]", "[MainPage] refreshCoinData() called - Thread: " + Thread.currentThread().getName());
+        Log.d("[K-TR]", "[MainPage] refreshCoinData() - getActivity(): " + (getActivity() != null ? "not null" : "null"));
+        Log.d("[K-TR]", "[MainPage] refreshCoinData() - getContext(): " + (getContext() != null ? "not null" : "null"));
+        
         if (getActivity() != null) {
+            Log.d("[K-TR]", "[MainPage] refreshCoinData() - scheduling UI thread task");
             getActivity().runOnUiThread(() -> {
+                Log.d("[K-TR]", "[MainPage] refreshCoinData() - UI thread task started");
+                Log.d("[K-TR]", "[MainPage] refreshCoinData() - calling updateCoinInfo()");
                 // 코인 정보 업데이트
                 updateCoinInfo();
                 
+                Log.d("[K-TR]", "[MainPage] refreshCoinData() - calling fetchLatestCoinData()");
                 // API에서 최신 데이터 가져오기
                 fetchLatestCoinData();
+                Log.d("[K-TR]", "[MainPage] refreshCoinData() - UI thread task completed");
             });
+        } else {
+            Log.w("[K-TR]", "[MainPage] refreshCoinData() - getActivity() is null, cannot proceed");
         }
     }
     
@@ -514,12 +544,12 @@ public class MainPage extends Fragment {
         databaseOrderManager.periodicSyncData("refresh")
             .subscribe(
                 () -> {
-                    Log.d("MainPage", "Coin data refreshed successfully");
+                    Log.d("[K-TR]", "[MainPage] Coin data refreshed successfully");
                     // 활성 거래 수 다시 업데이트
                     updateActiveOrdersCount();
                 },
                 throwable -> {
-                    Log.e("MainPage", "Error refreshing coin data", throwable);
+                    Log.e("[K-TR]", "[MainPage] Error refreshing coin data", throwable);
                     Toast.makeText(getContext(), "데이터 새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
                 }
             );
@@ -530,7 +560,7 @@ public class MainPage extends Fragment {
      */
     private void fetchCurrentPriceFromApi() {
         try {
-            Log.d("MainPage", "Starting direct API call for current price...");
+            Log.d("[K-TR]", "[MainPage] Starting direct API call for current price...");
             
             // OrderManager를 통해 현재 가격 가져오기
             com.example.k_trader.base.OrderManager orderManager = new com.example.k_trader.base.OrderManager();
@@ -538,7 +568,7 @@ public class MainPage extends Fragment {
             // 백그라운드에서 API 호출
             new Thread(() -> {
                 try {
-                    Log.d("MainPage", "Calling getCurrentPrice API...");
+                    Log.d("[K-TR]", "[MainPage] Calling getCurrentPrice API...");
                     JSONObject priceData = orderManager.getCurrentPrice("refresh");
                     
                     if (priceData != null && priceData.containsKey("bids")) {
@@ -548,7 +578,7 @@ public class MainPage extends Fragment {
                             String priceStr = (String) firstBid.get("price");
                             if (priceStr != null) {
                                 int currentPrice = (int) Double.parseDouble(priceStr);
-                                Log.d("MainPage", "Got current price from API: " + currentPrice);
+                                Log.d("[K-TR]", "[MainPage] Got current price from API: " + currentPrice);
                                 
                                 // UI 스레드에서 업데이트
                                 if (getActivity() != null) {
@@ -557,16 +587,16 @@ public class MainPage extends Fragment {
                                     });
                                 }
                             } else {
-                                Log.w("MainPage", "Price string is null");
+                                Log.w("[K-TR]", "[MainPage] Price string is null");
                             }
                         } else {
-                            Log.w("MainPage", "Bids array is null or empty");
+                            Log.w("[K-TR]", "[MainPage] Bids array is null or empty");
                         }
                     } else {
-                        Log.w("MainPage", "Price data is null or doesn't contain bids");
+                        Log.w("[K-TR]", "[MainPage] Price data is null or doesn't contain bids");
                     }
                 } catch (Exception e) {
-                    Log.e("MainPage", "Error fetching current price", e);
+                    Log.e("[K-TR]", "[MainPage] Error fetching current price", e);
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "가격 정보를 가져올 수 없습니다: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -576,7 +606,7 @@ public class MainPage extends Fragment {
             }).start();
             
         } catch (Exception e) {
-            Log.e("MainPage", "Error in fetchCurrentPriceFromApi", e);
+            Log.e("[K-TR]", "Error in fetchCurrentPriceFromApi", e);
         }
     }
     
@@ -584,23 +614,23 @@ public class MainPage extends Fragment {
      * 가격 정보를 UI에 표시
      */
     private void updatePriceDisplay(int currentPrice) {
-        Log.d("MainPage", "Updating price display with: " + currentPrice);
+        Log.d("[K-TR]", "Updating price display with: " + currentPrice);
         
         if (textCurrentPrice != null) {
             String formattedPrice = String.format(java.util.Locale.getDefault(), "₩%,d", currentPrice);
             textCurrentPrice.setText(formattedPrice);
-            Log.d("MainPage", "Updated current price display: " + formattedPrice);
+            Log.d("[K-TR]", "Updated current price display: " + formattedPrice);
         } else {
-            Log.w("MainPage", "textCurrentPrice is null");
+            Log.w("[K-TR]", "textCurrentPrice is null");
         }
         
         // 등락률은 임시로 0%로 설정 (실제로는 이전 가격과 비교 필요)
         if (textPriceChange != null) {
             textPriceChange.setText("+0.00%");
-            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            Log.d("MainPage", "Updated price change display: +0.00%");
+            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark)); // +이면 빨간색
+            Log.d("[K-TR]", "Updated price change display: +0.00%");
         } else {
-            Log.w("MainPage", "textPriceChange is null");
+            Log.w("[K-TR]", "textPriceChange is null");
         }
     }
     
@@ -608,48 +638,96 @@ public class MainPage extends Fragment {
      * 코인 정보 업데이트
      */
     private void updateCoinInfo() {
-        if (textCoinType == null) return;
+        Log.d("[K-TR]", "[MainPage] updateCoinInfo() called");
+        if (textCoinType == null) {
+            Log.w("[K-TR]", "[MainPage] updateCoinInfo() - textCoinType is null, returning");
+            return;
+        }
         
-        // 현재 설정된 코인 타입 표시
-        String coinType = GlobalSettings.getInstance().getCoinType();
+        // SharedPreferences에서 직접 코인 타입 읽어오기
+        android.content.SharedPreferences sharedPreferences = getContext().getSharedPreferences("settings", android.content.Context.MODE_PRIVATE);
+        String coinType = sharedPreferences.getString(com.example.k_trader.base.GlobalSettings.COIN_TYPE_KEY_NAME, com.example.k_trader.base.GlobalSettings.COIN_TYPE_DEFAULT_VALUE);
+        
+        Log.d("[K-TR]", "[MainPage] Reading coin type from preferences: " + coinType);
+        
+        // GlobalSettings도 업데이트
+        com.example.k_trader.base.GlobalSettings.getInstance().setCoinType(coinType);
+        
+        // 코인 타입 표시
         textCoinType.setText(coinType);
         
         // 현재 가격과 등락률은 API에서 가져와야 하므로 기본값으로 설정
         textCurrentPrice.setText("₩0");
         textPriceChange.setText("+0.00%");
+        textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark)); // +이면 빨간색
+        
+        // 활성 거래 수 초기값 설정
+        if (textActiveOrders != null) {
+            textActiveOrders.setText("S0 : B0");
+        }
         
         // 활성 거래 수는 DB에서 가져오기
+        Log.d("[K-TR]", "[MainPage] About to call updateActiveOrdersCount()");
         updateActiveOrdersCount();
     }
     
     /**
-     * 활성 거래 수 업데이트
+     * 활성 거래 수 업데이트 (API 직접 호출)
      */
     private void updateActiveOrdersCount() {
-        if (textActiveOrders == null || databaseOrderManager == null) {
-            Log.w("MainPage", "Cannot update active orders count - textActiveOrders or databaseOrderManager is null");
+        Log.d("[K-TR]", "[MainPage] updateActiveOrdersCount() called");
+        Log.d("[K-TR]", "[MainPage] textActiveOrders: " + (textActiveOrders != null ? "not null" : "null"));
+        
+        if (textActiveOrders == null) {
+            Log.w("[K-TR]", "[MainPage] Cannot update active orders count - textActiveOrders is null");
             return;
         }
         
-        Log.d("MainPage", "Updating active orders count...");
+        Log.d("[K-TR]", "[MainPage] Updating active orders count from API...");
         
-        databaseOrderManager.getActiveOrdersCount()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                count -> {
-                    if (textActiveOrders != null) {
-                        textActiveOrders.setText(String.valueOf(count));
-                        Log.d("MainPage", "Updated active orders count: " + count);
-                    }
-                },
-                throwable -> {
-                    Log.e("MainPage", "Error getting active orders count", throwable);
-                    if (textActiveOrders != null) {
-                        textActiveOrders.setText("0");
+        // API에서 직접 활성 주문 조회
+        new Thread(() -> {
+            try {
+                OrderManager orderManager = new OrderManager();
+                JSONArray dataArray = orderManager.getPlacedOrderList("MainPage 활성 주문 조회");
+                
+                int sellCount = 0;
+                int buyCount = 0;
+                
+                if (dataArray != null) {
+                    for (int i = 0; i < dataArray.size(); i++) {
+                        JSONObject item = (JSONObject) dataArray.get(i);
+                        String type = (String) item.get("type");
+                        
+                        if ("ask".equals(type)) {
+                            sellCount++;
+                        } else if ("bid".equals(type)) {
+                            buyCount++;
+                        }
                     }
                 }
-            );
+                
+                final String formattedText = "S" + sellCount + " : B" + buyCount;
+                
+                // UI 스레드에서 업데이트
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        textActiveOrders.setText(formattedText);
+                        Log.d("[K-TR]", "[MainPage] Updated active orders count from API: " + formattedText);
+                    });
+                }
+                
+            } catch (Exception e) {
+                Log.e("[K-TR]", "[MainPage] Error getting active orders from API", e);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (textActiveOrders != null) {
+                            textActiveOrders.setText("S0 : B0");
+                        }
+                    });
+                }
+            }
+        }).start();
     }
     
     /**
@@ -669,6 +747,155 @@ public class MainPage extends Fragment {
             } else {
                 textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
             }
+        }
+    }
+    
+    /**
+     * 실시간 관찰 시작
+     */
+    private void startReactiveObservations() {
+        Log.d("[K-TR]", "[MainPage] startReactiveObservations() called");
+        Log.d("[K-TR]", "[MainPage] disposables: " + (disposables != null ? "not null" : "null"));
+        Log.d("[K-TR]", "[MainPage] coinPriceInfoRepository: " + (coinPriceInfoRepository != null ? "not null" : "null"));
+        Log.d("[K-TR]", "[MainPage] databaseOrderManager: " + (databaseOrderManager != null ? "not null" : "null"));
+        
+        if (disposables == null || coinPriceInfoRepository == null || databaseOrderManager == null || transactionInfoRepository == null) {
+            Log.w("[K-TR]", "[MainPage] Cannot start reactive observations - required components are null");
+            return;
+        }
+        
+        Log.d("[K-TR]", "[MainPage] Starting reactive observations");
+        
+        // 1. 코인 가격 정보 실시간 관찰
+        disposables.add(
+            coinPriceInfoRepository.observeCurrentPriceInfo()
+                .subscribe(
+                    priceInfo -> {
+                        Log.d("[K-TR]", "[MainPage] Price info updated: " + priceInfo.toString());
+                        if (textCurrentPrice != null && textPriceChange != null) {
+                            textCurrentPrice.setText(priceInfo.getCurrentPrice());
+                            textPriceChange.setText(priceInfo.getPriceChange());
+                            
+                            // 등락률에 따라 색상 변경
+                            if (priceInfo.getPriceChange().startsWith("+")) {
+                                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                            } else if (priceInfo.getPriceChange().startsWith("-")) {
+                                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+                            } else {
+                                textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
+                            }
+                        }
+                    },
+                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing price info", throwable)
+                )
+        );
+        
+        // 2. 활성 주문 수 실시간 관찰
+        disposables.add(
+            databaseOrderManager.observeActiveSellOrdersCount()
+                .subscribe(
+                    sellCount -> {
+                        Log.d("[K-TR]", "[MainPage] SELL orders count updated: " + sellCount);
+                        // BUY 주문 수도 함께 조회하여 업데이트
+                        updateActiveOrdersDisplay(sellCount, null);
+                    },
+                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing SELL orders count", throwable)
+                )
+        );
+        
+        disposables.add(
+            databaseOrderManager.observeActiveBuyOrdersCount()
+                .subscribe(
+                    buyCount -> {
+                        Log.d("[K-TR]", "[MainPage] BUY orders count updated: " + buyCount);
+                        // SELL 주문 수도 함께 조회하여 업데이트
+                        updateActiveOrdersDisplay(null, buyCount);
+                    },
+                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing BUY orders count", throwable)
+                )
+        );
+        
+        // 3. Transaction 정보 실시간 관찰
+        disposables.add(
+            transactionInfoRepository.observeLatestTransactionInfo()
+                .subscribe(
+                    transactionInfo -> {
+                        Log.d("[K-TR]", "[MainPage] Transaction info updated: " + transactionInfo.toString());
+                        updateUIWithTransactionInfo(transactionInfo);
+                    },
+                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing transaction info", throwable)
+                )
+        );
+    }
+    
+    /**
+     * 활성 주문 수 표시 업데이트
+     */
+    private void updateActiveOrdersDisplay(Integer sellCount, Integer buyCount) {
+        if (textActiveOrders == null) return;
+        
+        // 현재 표시된 값을 파싱하여 업데이트
+        String currentText = textActiveOrders.getText().toString();
+        int currentSell = 0;
+        int currentBuy = 0;
+        
+        try {
+            // 새로운 형식 파싱: "S0 : B0"
+            if (currentText.contains("S") && currentText.contains("B")) {
+                String[] parts = currentText.split(" : ");
+                if (parts.length == 2) {
+                    currentSell = Integer.parseInt(parts[0].substring(1)); // "S" 제거
+                    currentBuy = Integer.parseInt(parts[1].substring(1));   // "B" 제거
+                }
+            }
+        } catch (Exception e) {
+            Log.w("[K-TR]", "[MainPage] Error parsing current active orders text: " + currentText);
+        }
+        
+        // 새로운 값으로 업데이트
+        int newSell = sellCount != null ? sellCount : currentSell;
+        int newBuy = buyCount != null ? buyCount : currentBuy;
+        
+        String newText = "S" + newSell + " : B" + newBuy;
+        textActiveOrders.setText(newText);
+        Log.d("[K-TR]", "[MainPage] Updated active orders display: " + newText);
+    }
+    
+    /**
+     * Transaction 정보로 UI 업데이트
+     */
+    private void updateUIWithTransactionInfo(com.example.k_trader.database.TransactionInfoEntity transactionInfo) {
+        if (transactionInfo == null) return;
+        
+        // 현재 가격 업데이트
+        if (textCurrentPrice != null && transactionInfo.getBtcCurrentPrice() != null) {
+            textCurrentPrice.setText(transactionInfo.getBtcCurrentPrice());
+            Log.d("[K-TR]", "[MainPage] Updated current price from DB: " + transactionInfo.getBtcCurrentPrice());
+        }
+        
+        // 전일 대비 등락률 업데이트 (CoinInfo용)
+        if (textPriceChange != null && transactionInfo.getDailyChange() != null) {
+            textPriceChange.setText(transactionInfo.getDailyChange());
+            
+            // 등락률에 따라 색상 변경
+            if (transactionInfo.getDailyChange().startsWith("+")) {
+                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            } else if (transactionInfo.getDailyChange().startsWith("-")) {
+                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+            } else {
+                textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
+            }
+            Log.d("[K-TR]", "[MainPage] Updated daily price change from DB: " + transactionInfo.getDailyChange());
+        }
+    }
+    
+    /**
+     * 실시간 관찰 중지
+     */
+    private void stopReactiveObservations() {
+        if (disposables != null && !disposables.isDisposed()) {
+            Log.d("[K-TR]", "[MainPage] Stopping reactive observations");
+            disposables.clear();
         }
     }
 }

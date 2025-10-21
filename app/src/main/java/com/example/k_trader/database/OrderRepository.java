@@ -129,6 +129,78 @@ public class OrderRepository {
     }
     
     /**
+     * 활성 SELL 주문 수 조회
+     */
+    public io.reactivex.Single<Integer> getActiveSellOrdersCount() {
+        return Single.fromCallable(() -> orderDao.getActiveSellOrdersCount())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 BUY 주문 수 조회
+     */
+    public io.reactivex.Single<Integer> getActiveBuyOrdersCount() {
+        return Single.fromCallable(() -> orderDao.getActiveBuyOrdersCount())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 디버깅용: 모든 활성 주문 조회
+     */
+    public io.reactivex.Single<List<OrderEntity>> getAllActiveOrders() {
+        return Single.fromCallable(() -> orderDao.getAllActiveOrders())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 디버깅용: 활성 주문의 타입별 개수 조회
+     */
+    public io.reactivex.Single<List<OrderTypeCount>> getActiveOrdersCountByType() {
+        return Single.fromCallable(() -> orderDao.getActiveOrdersCountByType())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 주문 수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<Integer> observeActiveOrdersCount() {
+        return orderDao.observeActiveOrdersCount()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 SELL 주문 수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<Integer> observeActiveSellOrdersCount() {
+        return orderDao.observeActiveSellOrdersCount()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 BUY 주문 수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<Integer> observeActiveBuyOrdersCount() {
+        return orderDao.observeActiveBuyOrdersCount()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 주문 타입별 개수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<List<OrderTypeCount>> observeActiveOrdersCountByType() {
+        return orderDao.observeActiveOrdersCountByType()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
      * OrderEntity 리스트를 TradeData 리스트로 변환
      */
     private List<TradeData> convertToTradeDataList(List<OrderEntity> entities) {

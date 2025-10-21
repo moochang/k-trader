@@ -144,27 +144,64 @@ public class MainActivity extends AppCompatActivity {
      * 코인 정보 새로고침
      */
     private void refreshCoinInfo() {
+        android.util.Log.d("[K-TR]", "[MainActivity] refreshCoinInfo() called");
         try {
             // MainPage Fragment 찾기
             android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
             android.support.v4.app.Fragment fragment = fragmentManager.findFragmentById(android.R.id.content);
             
+            android.util.Log.d("[K-TR]", "[MainActivity] Fragment found: " + (fragment != null ? fragment.getClass().getSimpleName() : "null"));
+            
             if (fragment instanceof MainPage) {
+                android.util.Log.d("[K-TR]", "[MainActivity] Found MainPage fragment, calling refreshCoinData()");
                 MainPage mainPage = (MainPage) fragment;
                 mainPage.refreshCoinData();
                 Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
             } else {
                 // ViewPager에서 MainPage 찾기
+                android.util.Log.d("[K-TR]", "[MainActivity] Fragment not found directly, searching in ViewPager");
                 ViewPager viewPager = findViewById(R.id.viewpager);
+                android.util.Log.d("[K-TR]", "[MainActivity] ViewPager found: " + (viewPager != null ? "not null" : "null"));
+                
                 if (viewPager != null) {
                     android.support.v4.app.FragmentPagerAdapter adapter = (android.support.v4.app.FragmentPagerAdapter) viewPager.getAdapter();
+                    android.util.Log.d("[K-TR]", "[MainActivity] ViewPager adapter found: " + (adapter != null ? "not null" : "null"));
+                    
                     if (adapter != null) {
-                        MainPage mainPage = (MainPage) adapter.getItem(0);
-                        if (mainPage != null) {
-                            mainPage.refreshCoinData();
-                            Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
+                        // 현재 활성화된 Fragment 가져오기
+                        android.support.v4.app.Fragment currentFragment = getSupportFragmentManager().findFragmentByTag("android:switcher:" + R.id.viewpager + ":" + viewPager.getCurrentItem());
+                        android.util.Log.d("[K-TR]", "[MainActivity] Current fragment from tag: " + (currentFragment != null ? currentFragment.getClass().getSimpleName() : "null"));
+                        
+                        if (currentFragment instanceof MainPage) {
+                            MainPage mainPage = (MainPage) currentFragment;
+                            android.util.Log.d("[K-TR]", "[MainActivity] Found active MainPage fragment, calling refreshCoinData()");
+                            try {
+                                mainPage.refreshCoinData();
+                                android.util.Log.d("[K-TR]", "[MainActivity] refreshCoinData() call completed successfully");
+                                Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
+                            } catch (Exception e) {
+                                android.util.Log.e("[K-TR]", "[MainActivity] Error calling refreshCoinData()", e);
+                                Toast.makeText(this, "새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            android.util.Log.w("[K-TR]", "[MainActivity] Current fragment is not MainPage or is null");
+                            
+                            // 대안: adapter.getItem() 방식도 시도
+                            MainPage mainPage = (MainPage) adapter.getItem(0);
+                            android.util.Log.d("[K-TR]", "[MainActivity] Trying adapter.getItem(0): " + (mainPage != null ? "not null" : "null"));
+                            
+                            if (mainPage != null) {
+                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment class: " + mainPage.getClass().getSimpleName());
+                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment toString: " + mainPage.toString());
+                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment isAdded: " + mainPage.isAdded());
+                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment isDetached: " + mainPage.isDetached());
+                            }
                         }
+                    } else {
+                        android.util.Log.w("[K-TR]", "[MainActivity] ViewPager adapter is null");
                     }
+                } else {
+                    android.util.Log.w("[K-TR]", "[MainActivity] ViewPager is null");
                 }
             }
         } catch (Exception e) {
@@ -178,32 +215,105 @@ public class MainActivity extends AppCompatActivity {
      */
     private void launchBithumbApp() {
         try {
-            // 빗썸 앱 DEEPLINK로 실행 시도
-            Intent bithumbIntent = new Intent(Intent.ACTION_VIEW);
-            bithumbIntent.setData(android.net.Uri.parse("bithumb://"));
+            android.util.Log.d("[K-TR]", "[MainActivity] Attempting to launch Bithumb app");
             
-            // 빗썸 앱이 설치되어 있는지 확인
-            if (bithumbIntent.resolveActivity(getPackageManager()) != null) {
-                startActivity(bithumbIntent);
-                Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
-            } else {
-                // 빗썸 앱이 설치되어 있지 않은 경우 Play Store로 이동
-                Intent playStoreIntent = new Intent(Intent.ACTION_VIEW);
-                playStoreIntent.setData(android.net.Uri.parse("market://details?id=com.bithumb.android"));
+            // 설치된 모든 앱 중에서 빗썸 관련 앱 찾기
+            android.util.Log.d("[K-TR]", "[MainActivity] Searching for installed Bithumb-related apps...");
+            java.util.List<android.content.pm.ApplicationInfo> installedApps = getPackageManager().getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA);
+            
+            for (android.content.pm.ApplicationInfo appInfo : installedApps) {
+                String packageName = appInfo.packageName;
+                android.util.Log.d("[K-TR]", "[MainActivity] Checking package: " + packageName);
                 
-                if (playStoreIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(playStoreIntent);
-                    Toast.makeText(this, "빗썸 앱을 설치해주세요.", Toast.LENGTH_LONG).show();
-                } else {
-                    // Play Store 앱이 없는 경우 웹 브라우저로 이동
-                    Intent webIntent = new Intent(Intent.ACTION_VIEW);
-                    webIntent.setData(android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.bithumb.android"));
-                    startActivity(webIntent);
-                    Toast.makeText(this, "빗썸 앱을 설치해주세요.", Toast.LENGTH_LONG).show();
+                if (packageName.toLowerCase().contains("bithumb") || packageName.toLowerCase().contains("btc")) {
+                    android.util.Log.d("[K-TR]", "[MainActivity] Found potential Bithumb app: " + packageName);
+                    
+                    // 특정 액티비티로 직접 실행 시도
+                    Intent specificIntent = new Intent();
+                    specificIntent.setComponent(new android.content.ComponentName(packageName, "com.btckorea.bithumb.native_.presentation.MainNavigationActivity"));
+                    specificIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    
+                    try {
+                        startActivity(specificIntent);
+                        android.util.Log.d("[K-TR]", "[MainActivity] Launched Bithumb app with specific activity: " + packageName);
+                        Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
+                        return;
+                    } catch (Exception e) {
+                        android.util.Log.w("[K-TR]", "[MainActivity] Failed to launch specific activity for " + packageName + ": " + e.getMessage());
+                    }
+                    
+                    // 일반적인 앱 실행 시도
+                    Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+                    if (launchIntent != null) {
+                        android.util.Log.d("[K-TR]", "[MainActivity] Launching Bithumb app with package: " + packageName);
+                        startActivity(launchIntent);
+                        Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                 }
+            }
+            
+            // 가능한 빗썸 앱 패키지명들
+            String[] possiblePackages = {
+                "com.btckorea.bithumb",
+                "com.bithumb.android",
+                "com.bithumb",
+                "kr.co.bithumb"
+            };
+            
+            // 각 패키지명을 시도해보기
+            for (String packageName : possiblePackages) {
+                android.util.Log.d("[K-TR]", "[MainActivity] Trying package: " + packageName);
+                
+                // 먼저 런치 인텐트가 있는지 확인
+                Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+                if (launchIntent != null) {
+                    android.util.Log.d("[K-TR]", "[MainActivity] Package found with launch intent: " + packageName);
+                    
+                    // 특정 액티비티로 직접 실행 시도
+                    Intent specificIntent = new Intent();
+                    specificIntent.setComponent(new android.content.ComponentName(packageName, "com.btckorea.bithumb.native_.presentation.MainNavigationActivity"));
+                    specificIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    
+                    try {
+                        startActivity(specificIntent);
+                        android.util.Log.d("[K-TR]", "[MainActivity] Launched Bithumb app with specific activity: " + packageName);
+                        Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
+                        return;
+                    } catch (Exception e) {
+                        android.util.Log.w("[K-TR]", "[MainActivity] Failed to launch specific activity for " + packageName + ": " + e.getMessage());
+                        
+                        // 특정 액티비티 실패 시 일반 런치 인텐트 사용
+                        android.util.Log.d("[K-TR]", "[MainActivity] Falling back to launch intent for: " + packageName);
+                        startActivity(launchIntent);
+                        Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                } else {
+                    android.util.Log.d("[K-TR]", "[MainActivity] No launch intent found for package: " + packageName);
+                }
+            }
+            
+            // 모든 방법이 실패한 경우 Play Store로 이동
+            android.util.Log.d("[K-TR]", "[MainActivity] All methods failed, redirecting to Play Store");
+            Intent playStoreIntent = new Intent(Intent.ACTION_VIEW);
+            playStoreIntent.setData(android.net.Uri.parse("market://details?id=com.btckorea.bithumb"));
+            
+            if (playStoreIntent.resolveActivity(getPackageManager()) != null) {
+                android.util.Log.d("[K-TR]", "[MainActivity] Opening Play Store app");
+                startActivity(playStoreIntent);
+                Toast.makeText(this, "빗썸 앱을 설치해주세요.", Toast.LENGTH_LONG).show();
+            } else {
+                // Play Store 앱이 없는 경우 웹 브라우저로 이동
+                android.util.Log.d("[K-TR]", "[MainActivity] Play Store app not found, opening web browser");
+                Intent webIntent = new Intent(Intent.ACTION_VIEW);
+                webIntent.setData(android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.btckorea.bithumb"));
+                startActivity(webIntent);
+                Toast.makeText(this, "빗썸 앱을 설치해주세요.", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();
+            android.util.Log.e("[K-TR]", "[MainActivity] Error launching Bithumb app: " + e.getMessage());
             Toast.makeText(this, "빗썸 앱 실행 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
         }
     }

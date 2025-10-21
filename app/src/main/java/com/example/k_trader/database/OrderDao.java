@@ -49,6 +49,54 @@ public interface OrderDao {
     /**
      * 활성 거래 수 조회 (미체결 주문)
      */
-    @Query("SELECT COUNT(*) FROM orders WHERE status = 'placed'")
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'PLACED'")
     int getActiveOrdersCount();
+    
+    /**
+     * 활성 SELL 주문 수 조회
+     */
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'PLACED' AND type = 'SELL'")
+    int getActiveSellOrdersCount();
+    
+    /**
+     * 활성 BUY 주문 수 조회
+     */
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'PLACED' AND type = 'BUY'")
+    int getActiveBuyOrdersCount();
+    
+    /**
+     * 디버깅용: 모든 활성 주문 조회
+     */
+    @Query("SELECT * FROM orders WHERE status = 'PLACED'")
+    List<OrderEntity> getAllActiveOrders();
+    
+    /**
+     * 디버깅용: 활성 주문의 타입별 개수 조회
+     */
+    @Query("SELECT type, COUNT(*) as count FROM orders WHERE status = 'PLACED' GROUP BY type")
+    List<OrderTypeCount> getActiveOrdersCountByType();
+    
+    /**
+     * 활성 주문 수 실시간 관찰 (Flowable)
+     */
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'PLACED'")
+    Flowable<Integer> observeActiveOrdersCount();
+    
+    /**
+     * 활성 SELL 주문 수 실시간 관찰 (Flowable)
+     */
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'PLACED' AND type = 'SELL'")
+    Flowable<Integer> observeActiveSellOrdersCount();
+    
+    /**
+     * 활성 BUY 주문 수 실시간 관찰 (Flowable)
+     */
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'PLACED' AND type = 'BUY'")
+    Flowable<Integer> observeActiveBuyOrdersCount();
+    
+    /**
+     * 활성 주문 타입별 개수 실시간 관찰 (Flowable)
+     */
+    @Query("SELECT type, COUNT(*) as count FROM orders WHERE status = 'PLACED' GROUP BY type")
+    Flowable<List<OrderTypeCount>> observeActiveOrdersCountByType();
 }

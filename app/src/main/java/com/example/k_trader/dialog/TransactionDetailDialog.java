@@ -61,7 +61,7 @@ public class TransactionDetailDialog extends Dialog {
         textBtcCurrentPrice.setText(transactionCard.btcCurrentPrice != null ? 
             transactionCard.btcCurrentPrice + " KRW" : "정보 없음");
         textHourlyChange.setText(transactionCard.hourlyChange != null ? 
-            transactionCard.hourlyChange + "%" : "정보 없음");
+            transactionCard.hourlyChange : "정보 없음");
         textEstimatedBalance.setText(transactionCard.estimatedBalance != null ? 
             transactionCard.estimatedBalance + " BTC" : "정보 없음");
         textLastBuyPrice.setText(transactionCard.lastBuyPrice != null ? 

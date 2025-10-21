@@ -175,6 +175,30 @@ public class OrderManager {
         else
             rgParams.put("type", "ask");
 
+        // 매수 주문인 경우 잔고 확인
+        if (type == BUY) {
+            try {
+                JSONObject balanceData = getBalance("매수 전 잔고 확인");
+                if (balanceData != null) {
+                    String totalKrw = (String) balanceData.get("total_krw");
+                    if (totalKrw != null) {
+                        double krwBalance = Double.parseDouble(totalKrw);
+                        double requiredAmount = units * price;
+                        
+                        if (krwBalance < requiredAmount) {
+                            log_info(tag + " : 잔고 부족으로 매수 주문을 건너뜁니다. 필요: " + 
+                                String.format(Locale.getDefault(), "%,.0f", requiredAmount) + 
+                                "원, 보유: " + String.format(Locale.getDefault(), "%,.0f", krwBalance) + "원");
+                            return null;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log_info(tag + " : 잔고 확인 중 오류 발생: " + e.getMessage());
+                return null;
+            }
+        }
+
         log_info(tag + " : " + type.toString() + " 발행 : " + String.format("%.4f", units) + " : " + String.format(Locale.getDefault(), "%,d", price));
 
         try {
@@ -248,6 +272,38 @@ public class OrderManager {
         rgParams.put("order_currency", getCurrentCoinType());
         rgParams.put("units", String.format("%.4f", units));
         rgParams.put("payment_currency", "KRW");
+
+        // 매수 주문인 경우 잔고 확인
+        if (type == BUY) {
+            try {
+                JSONObject balanceData = getBalance("시장가 매수 전 잔고 확인");
+                if (balanceData != null) {
+                    String totalKrw = (String) balanceData.get("total_krw");
+                    if (totalKrw != null) {
+                        double krwBalance = Double.parseDouble(totalKrw);
+                        // 시장가 매수이므로 현재가를 가져와서 계산
+                        JSONObject currentPriceData = getCurrentPrice("시장가 매수 현재가 확인");
+                        if (currentPriceData != null) {
+                            String currentPriceStr = (String) currentPriceData.get("closing_price");
+                            if (currentPriceStr != null) {
+                                double currentPrice = Double.parseDouble(currentPriceStr);
+                                double requiredAmount = units * currentPrice;
+                                
+                                if (krwBalance < requiredAmount) {
+                                    log_info(tag + " : 잔고 부족으로 시장가 매수 주문을 건너뜁니다. 필요: " + 
+                                        String.format(Locale.getDefault(), "%,.0f", requiredAmount) + 
+                                        "원, 보유: " + String.format(Locale.getDefault(), "%,.0f", krwBalance) + "원");
+                                    return null;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log_info(tag + " : 시장가 매수 잔고 확인 중 오류 발생: " + e.getMessage());
+                return null;
+            }
+        }
 
         log_info(tag + " : " + type.toString() + " 시장가 발행 : " + String.format("%.4f", units) + " : ");
 

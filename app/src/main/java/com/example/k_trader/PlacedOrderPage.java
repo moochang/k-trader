@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import com.example.k_trader.MainPage;
 import com.example.k_trader.KTraderApplication;
 import com.example.k_trader.TransactionLogFragment;
+import java.util.Locale;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -305,6 +306,29 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
         new Thread() {
             public void run() {
                 OrderManager orderManager = new OrderManager();
+                
+                // 매수 전 잔고 확인
+                try {
+                    JSONObject balanceData = orderManager.getBalance("잔고 확인");
+                    if (balanceData != null) {
+                        String totalKrw = (String) balanceData.get("total_krw");
+                        if (totalKrw != null) {
+                            double krwBalance = Double.parseDouble(totalKrw);
+                            double requiredAmount = GlobalSettings.getInstance().getUnitPrice();
+                            
+                            if (krwBalance < requiredAmount) {
+                                log_info("잔고 부족으로 시장가 매수를 건너뜁니다. 필요: " + 
+                                    String.format(Locale.getDefault(), "%,.0f", requiredAmount) + 
+                                    "원, 보유: " + String.format(Locale.getDefault(), "%,.0f", krwBalance) + "원");
+                                return;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log_info("잔고 확인 중 오류 발생: " + e.getMessage());
+                    return;
+                }
+                
                 // ONE_TIME_PRICE 어치 시장가 매수
                 float units = (float) ((int) ((GlobalSettings.getInstance().getUnitPrice() / (double)TradeJobService.currentPrice) * 10000) / 10000.0);
                 JSONObject result = orderManager.addOrderWithMarketPrice("시장가 수동 매수 +" + profit, BUY, units);

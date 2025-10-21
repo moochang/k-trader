@@ -44,6 +44,7 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
     private DatabaseMonitor databaseMonitor;
     private TransactionDataManager transactionDataManager;
     private ApiCallResultRepository apiCallResultRepository;
+    private com.example.k_trader.database.TransactionInfoRepository transactionInfoRepository;
     private CompositeDisposable disposables;
     private String subscriberId;
 
@@ -69,6 +70,9 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         apiCallResultRepository = ApiCallResultRepository.getInstance(
             com.example.k_trader.database.OrderDatabase.getInstance(getContext()).apiCallResultDao());
         
+        // TransactionInfoRepository 초기화
+        transactionInfoRepository = new com.example.k_trader.database.TransactionInfoRepository(getContext());
+        
         // CompositeDisposable 초기화
         disposables = new CompositeDisposable();
         
@@ -82,6 +86,9 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
         
         // API 호출 결과 모니터링 시작
         startApiCallResultMonitoring();
+        
+        // Transaction 정보 모니터링 시작
+        startTransactionInfoMonitoring();
         
         return view;
     }
@@ -129,6 +136,55 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 );
             
             disposables.add(disposable);
+        }
+    }
+    
+    /**
+     * Transaction 정보 모니터링 시작
+     */
+    private void startTransactionInfoMonitoring() {
+        if (transactionInfoRepository != null) {
+            // 최신 Transaction 정보 모니터링
+            Disposable disposable = transactionInfoRepository.observeLatestTransactionInfo()
+                .subscribe(
+                    transactionInfo -> {
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> updateTransactionCardFromDB(transactionInfo));
+                        }
+                    },
+                    throwable -> {
+                        android.util.Log.e("TransactionItemFragment", "Error monitoring transaction info", throwable);
+                    }
+                );
+            
+            disposables.add(disposable);
+        }
+    }
+    
+    /**
+     * DB에서 받은 Transaction 정보로 TransactionCard 업데이트
+     */
+    private void updateTransactionCardFromDB(com.example.k_trader.database.TransactionInfoEntity transactionInfo) {
+        if (transactionInfo == null || cardAdapter == null) return;
+        
+        android.util.Log.d("[K-TR]", "[TransactionItemFragment] Updating TransactionCard from DB: " + transactionInfo.toString());
+        
+        // TransactionCard 생성
+        CardAdapter.TransactionCard card = new CardAdapter.TransactionCard(
+            transactionInfo.getTransactionTime(),
+            transactionInfo.getBtcCurrentPrice(),
+            transactionInfo.getHourlyChange(),
+            transactionInfo.getEstimatedBalance(),
+            transactionInfo.getLastBuyPrice(),
+            transactionInfo.getLastSellPrice(),
+            transactionInfo.getNextBuyPrice()
+        );
+        
+        // 서버에서 온 데이터인 경우 기존 캐시 데이터를 대체
+        if (transactionInfo.isFromServer()) {
+            cardAdapter.updateLatestCard(card);
+        } else {
+            cardAdapter.addCard(card);
         }
     }
 
@@ -311,11 +367,14 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 String transactionTime = intent.getStringExtra("transactionTime");
                 String btcCurrentPrice = intent.getStringExtra("btcCurrentPrice");
                 String hourlyChange = intent.getStringExtra("hourlyChange");
+                String dailyChange = intent.getStringExtra("dailyChange");
                 String estimatedBalance = intent.getStringExtra("estimatedBalance");
                 String lastBuyPrice = intent.getStringExtra("lastBuyPrice");
                 String lastSellPrice = intent.getStringExtra("lastSellPrice");
                 String nextBuyPrice = intent.getStringExtra("nextBuyPrice");
                 boolean isFromServer = intent.getBooleanExtra("isFromServer", false);
+                
+                android.util.Log.d("[K-TR]", "[TransactionItemFragment] Received transaction data - hourlyChange: " + hourlyChange + ", dailyChange: " + dailyChange);
                 
                 CardAdapter.TransactionCard card = new CardAdapter.TransactionCard(
                     transactionTime, btcCurrentPrice, hourlyChange, estimatedBalance,

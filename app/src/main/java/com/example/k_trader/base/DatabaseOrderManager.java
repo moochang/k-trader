@@ -292,6 +292,78 @@ public class DatabaseOrderManager {
     }
     
     /**
+     * 활성 SELL 주문 수 조회
+     */
+    public io.reactivex.Single<Integer> getActiveSellOrdersCount() {
+        return orderRepository.getActiveSellOrdersCount()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 BUY 주문 수 조회
+     */
+    public io.reactivex.Single<Integer> getActiveBuyOrdersCount() {
+        return orderRepository.getActiveBuyOrdersCount()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 디버깅용: 모든 활성 주문 조회
+     */
+    public io.reactivex.Single<List<com.example.k_trader.database.OrderEntity>> getAllActiveOrders() {
+        return orderRepository.getAllActiveOrders()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 디버깅용: 활성 주문의 타입별 개수 조회
+     */
+    public io.reactivex.Single<List<com.example.k_trader.database.OrderTypeCount>> getActiveOrdersCountByType() {
+        return orderRepository.getActiveOrdersCountByType()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 주문 수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<Integer> observeActiveOrdersCount() {
+        return orderRepository.observeActiveOrdersCount()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 SELL 주문 수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<Integer> observeActiveSellOrdersCount() {
+        return orderRepository.observeActiveSellOrdersCount()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 BUY 주문 수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<Integer> observeActiveBuyOrdersCount() {
+        return orderRepository.observeActiveBuyOrdersCount()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
+     * 활성 주문 타입별 개수 실시간 관찰 (Flowable)
+     */
+    public io.reactivex.Flowable<List<com.example.k_trader.database.OrderTypeCount>> observeActiveOrdersCountByType() {
+        return orderRepository.observeActiveOrdersCountByType()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
+    }
+    
+    /**
      * 리소스 정리
      */
     public void dispose() {
