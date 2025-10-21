@@ -38,6 +38,10 @@ public class MainActivity extends AppCompatActivity {
     int MAX_PAGE = 3;
     Fragment cur_fragment = new Fragment();
     ViewPager viewPager;
+    
+    // Appbar의 TextView들
+    private android.widget.TextView textAppTitle;
+    private android.widget.TextView textLastSyncTime;
 
     public static final int STORAGE_PERMISSION_REQUEST = 0;
 
@@ -59,6 +63,17 @@ public class MainActivity extends AppCompatActivity {
         // Toolbar 설정
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        
+        // Appbar TextView들 초기화
+        textAppTitle = findViewById(R.id.textAppTitle);
+        textLastSyncTime = findViewById(R.id.textLastSyncTime);
+        
+        android.util.Log.d("[K-TR]", "[MainActivity] Appbar TextView initialization:");
+        android.util.Log.d("[K-TR]", "[MainActivity] textAppTitle: " + (textAppTitle != null ? "not null" : "null"));
+        android.util.Log.d("[K-TR]", "[MainActivity] textLastSyncTime: " + (textLastSyncTime != null ? "not null" : "null"));
+        
+        // 테마에 따라 Appbar 텍스트 색상 설정
+        setAppBarTextColorsByTheme();
         
         // 테마에 따라 Status Bar 색상 동적 설정
         setStatusBarColorByTheme();
@@ -552,5 +567,48 @@ public class MainActivity extends AppCompatActivity {
                 bithumbItem.setIcon(bithumbIcon);
             }
         }
+    }
+    
+    /**
+     * Appbar의 마지막 동기화 시간 업데이트
+     */
+    public void updateLastSyncTime() {
+        android.util.Log.d("[K-TR]", "[MainActivity] updateLastSyncTime() called");
+        android.util.Log.d("[K-TR]", "[MainActivity] textLastSyncTime: " + (textLastSyncTime != null ? "not null" : "null"));
+        
+        if (textLastSyncTime != null) {
+            java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+            String currentTime = timeFormat.format(new java.util.Date());
+            android.util.Log.d("[K-TR]", "[MainActivity] Generated time: " + currentTime);
+            
+            textLastSyncTime.setText(currentTime);
+            android.util.Log.d("[K-TR]", "[MainActivity] Updated last sync time in Appbar: " + currentTime);
+        } else {
+            android.util.Log.w("[K-TR]", "[MainActivity] Cannot update last sync time - textLastSyncTime is null");
+        }
+    }
+    
+    /**
+     * 테마에 따라 Appbar 텍스트 색상 설정
+     */
+    private void setAppBarTextColorsByTheme() {
+        boolean isLightTheme = isLightTheme();
+        
+        int textColor;
+        if (isLightTheme) {
+            textColor = ContextCompat.getColor(this, android.R.color.black);
+        } else {
+            textColor = ContextCompat.getColor(this, android.R.color.white);
+        }
+        
+        if (textAppTitle != null) {
+            textAppTitle.setTextColor(textColor);
+        }
+        
+        if (textLastSyncTime != null) {
+            textLastSyncTime.setTextColor(textColor);
+        }
+        
+        android.util.Log.d("[K-TR]", "[MainActivity] Set Appbar text colors - Theme: " + (isLightTheme ? "Light" : "Dark") + ", Color: " + (isLightTheme ? "Black" : "White"));
     }
 }

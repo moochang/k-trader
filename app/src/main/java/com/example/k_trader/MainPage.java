@@ -639,6 +639,10 @@ public class MainPage extends Fragment {
                                 }
                                 Log.d("[K-TR]", "[MainPage] Updated daily price change: " + finalDailyChange);
                             }
+                            
+                            // 마지막 동기화 시간 업데이트
+                            Log.d("[K-TR]", "[MainPage] About to call updateLastSyncTime()");
+                            updateLastSyncTime();
                         });
                     }
                     
@@ -913,6 +917,22 @@ public class MainPage extends Fragment {
         if (disposables != null && !disposables.isDisposed()) {
             Log.d("[K-TR]", "[MainPage] Stopping reactive observations");
             disposables.clear();
+        }
+    }
+    
+    /**
+     * 마지막 동기화 시간 업데이트 (Appbar에 표시)
+     */
+    private void updateLastSyncTime() {
+        Log.d("[K-TR]", "[MainPage] updateLastSyncTime() called");
+        Log.d("[K-TR]", "[MainPage] mainActivity: " + (mainActivity != null ? "not null" : "null"));
+        
+        if (mainActivity != null) {
+            Log.d("[K-TR]", "[MainPage] Calling mainActivity.updateLastSyncTime()");
+            mainActivity.updateLastSyncTime();
+            Log.d("[K-TR]", "[MainPage] Updated last sync time in Appbar");
+        } else {
+            Log.w("[K-TR]", "[MainPage] Cannot update last sync time - mainActivity is null");
         }
     }
 }
