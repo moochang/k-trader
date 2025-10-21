@@ -406,6 +406,43 @@ public class OrderManager {
         return (JSONObject)result.get("data");
     }
 
+    public JSONObject getTicker(String tag) throws Exception {
+        Api_Client api = tradeApiService.getApiService();
+        JSONObject result = null;
+
+        try {
+            log_info(tag + " : Calling /public/ticker API...");
+            result = api.callApi("GET", "/public/ticker/" + getCurrentCoinType(), null);
+            log_info(tag + " : Raw API response: " + (result != null ? result.toString() : "null"));
+
+            if (result == null) {
+                log_info(tag + " : " + "/public/ticker : null");
+                throw new Exception("returns null");
+            }
+
+            if (result.get("status") instanceof Long) {
+                log_info(tag + " : " + "/public/ticker : " + result.toString());
+                throw new Exception("returns null");
+            }
+
+            String status = (String) result.get("status");
+            log_info(tag + " : API status: " + status);
+            
+            if (!status.equals("0000")) {
+                log_info(tag + " : " + "/public/ticker : " + result.toString());
+                throw new Exception("returns null");
+            }
+            
+            log_info(tag + " : Ticker API call successful");
+        } catch (Exception e) {
+            e.printStackTrace();
+            log_info(tag + " : " + "/public/ticker : " + e.getMessage());
+            throw new Exception("returns null");
+        }
+
+        return result;
+    }
+
     public JSONArray getPlacedOrderList(String tag) throws Exception {
         Api_Client api = tradeApiService.getApiService();
         JSONObject result = null;

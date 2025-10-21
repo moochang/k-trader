@@ -114,11 +114,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
+        
+        // 메뉴 아이콘 색상 설정
+        setMenuIconColorsByTheme(menu);
+        
         return true;
     }
-
+    
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -510,6 +514,43 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
             getSupportActionBar().setCustomView(titleView);
             getSupportActionBar().setDisplayShowCustomEnabled(true);
+        }
+    }
+    
+    /**
+     * 현재 테마에 따라 메뉴 아이콘 색상을 설정하는 메서드
+     */
+    private void setMenuIconColorsByTheme(android.view.Menu menu) {
+        // 현재 테마가 Light 테마인지 확인
+        boolean isLightTheme = isLightTheme();
+        
+        int iconColor;
+        if (isLightTheme) {
+            // Light 테마에서는 어두운 색상 사용
+            iconColor = ContextCompat.getColor(this, android.R.color.black);
+        } else {
+            // Dark 테마에서는 밝은 색상 사용
+            iconColor = ContextCompat.getColor(this, android.R.color.white);
+        }
+        
+        // 각 메뉴 아이템의 아이콘 색상 설정
+        MenuItem refreshItem = menu.findItem(R.id.action_refresh);
+        MenuItem bithumbItem = menu.findItem(R.id.action_bithumb);
+        
+        if (refreshItem != null) {
+            android.graphics.drawable.Drawable refreshIcon = refreshItem.getIcon();
+            if (refreshIcon != null) {
+                refreshIcon.setColorFilter(iconColor, android.graphics.PorterDuff.Mode.SRC_IN);
+                refreshItem.setIcon(refreshIcon);
+            }
+        }
+        
+        if (bithumbItem != null) {
+            android.graphics.drawable.Drawable bithumbIcon = bithumbItem.getIcon();
+            if (bithumbIcon != null) {
+                bithumbIcon.setColorFilter(iconColor, android.graphics.PorterDuff.Mode.SRC_IN);
+                bithumbItem.setIcon(bithumbIcon);
+            }
         }
     }
 }

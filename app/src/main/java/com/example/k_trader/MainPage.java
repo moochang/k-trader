@@ -556,47 +556,94 @@ public class MainPage extends Fragment {
     }
     
     /**
-     * API에서 현재 가격 정보 직접 가져오기
+     * API에서 현재 가격 및 등락률 정보 직접 가져오기
      */
     private void fetchCurrentPriceFromApi() {
         try {
-            Log.d("[K-TR]", "[MainPage] Starting direct API call for current price...");
+            Log.d("[K-TR]", "[MainPage] Starting direct API call for price and change data...");
             
-            // OrderManager를 통해 현재 가격 가져오기
+            // OrderManager를 통해 가격과 등락률 정보 가져오기
             com.example.k_trader.base.OrderManager orderManager = new com.example.k_trader.base.OrderManager();
             
             // 백그라운드에서 API 호출
             new Thread(() -> {
                 try {
-                    Log.d("[K-TR]", "[MainPage] Calling getCurrentPrice API...");
-                    JSONObject priceData = orderManager.getCurrentPrice("refresh");
+                    Log.d("[K-TR]", "[MainPage] Calling OrderManager APIs...");
                     
+                    // 현재 가격 가져오기
+                    JSONObject priceData = orderManager.getCurrentPrice("refresh");
+                    int currentPrice = 0;
                     if (priceData != null && priceData.containsKey("bids")) {
                         JSONArray bids = (JSONArray) priceData.get("bids");
                         if (bids != null && !bids.isEmpty()) {
                             JSONObject firstBid = (JSONObject) bids.get(0);
                             String priceStr = (String) firstBid.get("price");
                             if (priceStr != null) {
-                                int currentPrice = (int) Double.parseDouble(priceStr);
-                                Log.d("[K-TR]", "[MainPage] Got current price from API: " + currentPrice);
-                                
-                                // UI 스레드에서 업데이트
-                                if (getActivity() != null) {
-                                    getActivity().runOnUiThread(() -> {
-                                        updatePriceDisplay(currentPrice);
-                                    });
-                                }
-                            } else {
-                                Log.w("[K-TR]", "[MainPage] Price string is null");
+                                currentPrice = (int) Double.parseDouble(priceStr);
+                                Log.d("[K-TR]", "[MainPage] Got current price: " + currentPrice);
                             }
-                        } else {
-                            Log.w("[K-TR]", "[MainPage] Bids array is null or empty");
                         }
-                    } else {
-                        Log.w("[K-TR]", "[MainPage] Price data is null or doesn't contain bids");
                     }
+                    
+                    // Ticker 정보에서 등락률 가져오기
+                    String dailyChange = "+0.00%";
+                    try {
+                        JSONObject tickerData = orderManager.getTicker("refresh");
+                        if (tickerData != null && tickerData.containsKey("data")) {
+                            JSONObject data = (JSONObject) tickerData.get("data");
+                            
+                            if (data.containsKey("fluctate_rate_24H")) {
+                                String rawDailyChange = data.get("fluctate_rate_24H").toString();
+                                Log.d("[K-TR]", "[MainPage] Raw daily change: " + rawDailyChange);
+                                try {
+                                    double changeValue = Double.parseDouble(rawDailyChange);
+                                    if (changeValue >= 0) {
+                                        dailyChange = String.format("+%.2f%%", changeValue);
+                                    } else {
+                                        dailyChange = String.format("%.2f%%", changeValue);
+                                    }
+                                    Log.d("[K-TR]", "[MainPage] Formatted daily change: " + dailyChange);
+                                } catch (NumberFormatException e) {
+                                    Log.e("[K-TR]", "[MainPage] Error parsing daily change: " + rawDailyChange, e);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e("[K-TR]", "[MainPage] Error getting ticker data", e);
+                    }
+                    
+                    final int finalCurrentPrice = currentPrice;
+                    final String finalDailyChange = dailyChange;
+                    
+                    // UI 스레드에서 업데이트
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            // 현재 가격 업데이트
+                            if (textCurrentPrice != null) {
+                                String formattedPrice = String.format(java.util.Locale.getDefault(), "₩%,d", finalCurrentPrice);
+                                textCurrentPrice.setText(formattedPrice);
+                                Log.d("[K-TR]", "[MainPage] Updated current price: " + formattedPrice);
+                            }
+                            
+                            // 전일 대비 등락률 업데이트 (CoinInfo용)
+                            if (textPriceChange != null) {
+                                textPriceChange.setText(finalDailyChange);
+                                
+                                // 등락률에 따라 색상 변경
+                                if (finalDailyChange.startsWith("+")) {
+                                    textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                                } else if (finalDailyChange.startsWith("-")) {
+                                    textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+                                } else {
+                                    textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
+                                }
+                                Log.d("[K-TR]", "[MainPage] Updated daily price change: " + finalDailyChange);
+                            }
+                        });
+                    }
+                    
                 } catch (Exception e) {
-                    Log.e("[K-TR]", "[MainPage] Error fetching current price", e);
+                    Log.e("[K-TR]", "[MainPage] Error fetching price and change data", e);
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "가격 정보를 가져올 수 없습니다: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -624,14 +671,8 @@ public class MainPage extends Fragment {
             Log.w("[K-TR]", "textCurrentPrice is null");
         }
         
-        // 등락률은 임시로 0%로 설정 (실제로는 이전 가격과 비교 필요)
-        if (textPriceChange != null) {
-            textPriceChange.setText("+0.00%");
-            textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark)); // +이면 빨간색
-            Log.d("[K-TR]", "Updated price change display: +0.00%");
-        } else {
-            Log.w("[K-TR]", "textPriceChange is null");
-        }
+        // 등락률은 TransactionInfo에서 전일 대비 등락률로 업데이트됨
+        // 여기서는 하드코딩하지 않음
     }
     
     /**
@@ -656,10 +697,8 @@ public class MainPage extends Fragment {
         // 코인 타입 표시
         textCoinType.setText(coinType);
         
-        // 현재 가격과 등락률은 API에서 가져와야 하므로 기본값으로 설정
+        // 현재 가격은 기본값으로 설정, 등락률은 TransactionInfo에서 전일 대비 등락률로 업데이트됨
         textCurrentPrice.setText("₩0");
-        textPriceChange.setText("+0.00%");
-        textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark)); // +이면 빨간색
         
         // 활성 거래 수 초기값 설정
         if (textActiveOrders != null) {
@@ -766,29 +805,7 @@ public class MainPage extends Fragment {
         
         Log.d("[K-TR]", "[MainPage] Starting reactive observations");
         
-        // 1. 코인 가격 정보 실시간 관찰
-        disposables.add(
-            coinPriceInfoRepository.observeCurrentPriceInfo()
-                .subscribe(
-                    priceInfo -> {
-                        Log.d("[K-TR]", "[MainPage] Price info updated: " + priceInfo.toString());
-                        if (textCurrentPrice != null && textPriceChange != null) {
-                            textCurrentPrice.setText(priceInfo.getCurrentPrice());
-                            textPriceChange.setText(priceInfo.getPriceChange());
-                            
-                            // 등락률에 따라 색상 변경
-                            if (priceInfo.getPriceChange().startsWith("+")) {
-                                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-                            } else if (priceInfo.getPriceChange().startsWith("-")) {
-                                textPriceChange.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
-                            } else {
-                                textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
-                            }
-                        }
-                    },
-                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing price info", throwable)
-                )
-        );
+        // CoinInfo는 TransactionInfoEntity의 dailyChange만 사용하므로 CoinPriceInfoRepository 관찰 제거
         
         // 2. 활성 주문 수 실시간 관찰
         disposables.add(
