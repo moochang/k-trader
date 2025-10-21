@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/market_price_plus_1"
-        android:title="시장가 +1 매수"/>
+        android:title="🛒 시장가 +1 매수"/>
     <item android:id="@+id/market_price_plus_2"
-        android:title="시장가 +2 매수" />
+        android:title="🛒 시장가 +2 매수" />
     <item android:id="@+id/market_price_plus_3"
-        android:title="시장가 +3 매수" />
+        android:title="🛒 시장가 +3 매수" />
 </menu>

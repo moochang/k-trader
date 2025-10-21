@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108">
+    
+    <!-- 배경색: 흰색 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M0,0h108v108h-108z" />
+    
+    <!-- 주황색 T 문자 - 빗썸 스타일 -->
+    <!-- 상단 가로 막대 (두껍고 세련된) -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M20,25L88,25L88,40L20,40Z" />
+    
+    <!-- 세로 막대 (중앙에 위치) -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M49,40L59,40L59,88L49,88Z" />
+    
+    <!-- 볼드 효과를 위한 추가 레이어들 -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M21,26L87,26L87,39L21,39Z" />
+    
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M22,27L86,27L86,38L22,38Z" />
+    
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M23,28L85,28L85,37L23,37Z" />
+    
+    <!-- 세로 막대 볼드 효과 -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M50,41L58,41L58,87L50,87Z" />
+    
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M51,42L57,42L57,86L51,86Z" />
+    
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M52,43L56,43L56,85L52,85Z" />
+    
+    <!-- 세련된 끝부분 처리 -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M19,24L21,24L21,41L19,41Z" />
+    
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M87,24L89,24L89,41L87,41Z" />
+    
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M48,39L50,39L50,89L48,89Z" />
+    
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M58,39L60,39L60,89L58,89Z" />
+    
+    <!-- 하단 끝부분 세련된 처리 -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M47,87L61,87L61,90L47,90Z" />
+    
+</vector>
