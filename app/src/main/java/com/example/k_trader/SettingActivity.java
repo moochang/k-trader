@@ -1,18 +1,21 @@
 package com.example.k_trader;
 
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.base.NumberTextWatcherForThousand;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SettingActivity extends AppCompatActivity {
     Button btnSave;
@@ -22,6 +25,10 @@ public class SettingActivity extends AppCompatActivity {
     EditText txtTradeInterval;
     EditText txtEarningRate;
     EditText txtSlotIntervalRate;
+    RadioGroup radioGroupCoinType;
+    RadioButton radioButtonBTC;
+    RadioButton radioButtonETH;
+    CheckBox checkBoxAutoScroll;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +52,10 @@ public class SettingActivity extends AppCompatActivity {
         txtTradeInterval = findViewById(R.id.editTextTradingInterval);
         txtEarningRate = findViewById(R.id.editTextEarningRate);
         txtSlotIntervalRate = findViewById(R.id.editTextSlotIntervalRate);
+        radioGroupCoinType = findViewById(R.id.radioGroupCoinType);
+        radioButtonBTC = findViewById(R.id.radioButtonBTC);
+        radioButtonETH = findViewById(R.id.radioButtonETH);
+        checkBoxAutoScroll = findViewById(R.id.checkBoxAutoScroll);
 
         // Load app settings (data/data/(package_name)/shared_prefs/SharedPreference)
         SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
@@ -55,6 +66,18 @@ public class SettingActivity extends AppCompatActivity {
         txtTradeInterval.setText(Integer.toString(sharedPreferences.getInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, GlobalSettings.TRADE_INTERVAL_DEFAULT_VALUE)));
         txtEarningRate.setText(Float.toString(sharedPreferences.getFloat(GlobalSettings.EARNING_RATE_KEY_NAME, GlobalSettings.EARNING_RATE_DEFAULT_VALUE)));
         txtSlotIntervalRate.setText(Float.toString(sharedPreferences.getFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, GlobalSettings.SLOT_INTERVAL_RATE_DEFAULT_VALUE)));
+        
+        // Load coin type setting
+        String savedCoinType = sharedPreferences.getString(GlobalSettings.COIN_TYPE_KEY_NAME, GlobalSettings.COIN_TYPE_DEFAULT_VALUE);
+        if (GlobalSettings.COIN_TYPE_BTC.equals(savedCoinType)) {
+            radioButtonBTC.setChecked(true);
+        } else if (GlobalSettings.COIN_TYPE_ETH.equals(savedCoinType)) {
+            radioButtonETH.setChecked(true);
+        }
+        
+        // Load auto scroll setting
+        AtomicBoolean autoScrollEnabled = new AtomicBoolean(sharedPreferences.getBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, GlobalSettings.AUTO_SCROLL_DEFAULT_VALUE));
+        checkBoxAutoScroll.setChecked(autoScrollEnabled.get());
 
         btnSave.setOnClickListener(v -> {
             int tradeInterval = Integer.parseInt(txtTradeInterval.getText().toString().replaceAll(",", ""));
@@ -68,6 +91,15 @@ public class SettingActivity extends AppCompatActivity {
                 return;
             }
 
+            // Get selected coin type
+            String selectedCoinType = GlobalSettings.COIN_TYPE_BTC; // Default
+            if (radioButtonETH.isChecked()) {
+                selectedCoinType = GlobalSettings.COIN_TYPE_ETH;
+            }
+            
+            // Get auto scroll setting
+            autoScrollEnabled.set(checkBoxAutoScroll.isChecked());
+
             SharedPreferences.Editor prefsEditr = sharedPreferences.edit();
             prefsEditr.putString(GlobalSettings.API_KEY_KEY_NAME, txtApiKey.getText().toString());
             prefsEditr.putString(GlobalSettings.API_SECRET_KEY_NAME, txtApiSecret.getText().toString());
@@ -75,6 +107,8 @@ public class SettingActivity extends AppCompatActivity {
             prefsEditr.putInt(GlobalSettings.TRADE_INTERVAL_KEY_NAME, tradeInterval);
             prefsEditr.putFloat(GlobalSettings.EARNING_RATE_KEY_NAME, Float.parseFloat(txtEarningRate.getText().toString()));
             prefsEditr.putFloat(GlobalSettings.SLOT_INTERVAL_RATE_KEY_NAME, Float.parseFloat(txtSlotIntervalRate.getText().toString()));
+            prefsEditr.putString(GlobalSettings.COIN_TYPE_KEY_NAME, selectedCoinType);
+            prefsEditr.putBoolean(GlobalSettings.AUTO_SCROLL_KEY_NAME, autoScrollEnabled.get());
             prefsEditr.apply();
 
             GlobalSettings.getInstance().setApiKey(txtApiKey.getText().toString())
@@ -82,7 +116,9 @@ public class SettingActivity extends AppCompatActivity {
                                         .setUnitPrice(unitPrice)
                                         .setTradeInterval(tradeInterval)
                                         .setEarningRate(Float.parseFloat(txtEarningRate.getText().toString()))
-                                        .setSlotIntervalRate(Float.parseFloat(txtSlotIntervalRate.getText().toString()));
+                                        .setSlotIntervalRate(Float.parseFloat(txtSlotIntervalRate.getText().toString()))
+                                        .setCoinType(selectedCoinType)
+                                        .setAutoScroll(autoScrollEnabled.get());
 
             Toast.makeText(SettingActivity.this, "설정이 저장되었습니다.", Toast.LENGTH_SHORT).show();
             finish();
@@ -102,19 +138,13 @@ public class SettingActivity extends AppCompatActivity {
                 statusBarColor = getResources().getColor(R.color.status_bar_light);
                 // Light 테마에서는 Status bar 아이콘을 어둡게 설정
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    // API 23 이상에서 SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 제거
-                    int flags = getWindow().getDecorView().getSystemUiVisibility();
-                    flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                    getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
                 }
             } else {
                 statusBarColor = getResources().getColor(R.color.status_bar_dark);
                 // Dark 테마에서는 Status bar 아이콘을 밝게 설정
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    // API 23 이상에서 SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 추가
-                    int flags = getWindow().getDecorView().getSystemUiVisibility();
-                    flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                    getWindow().getDecorView().setSystemUiVisibility(0);
                 }
             }
             
@@ -126,9 +156,9 @@ public class SettingActivity extends AppCompatActivity {
      * 현재 테마가 Light 테마인지 확인하는 메서드
      */
     private boolean isLightTheme() {
-        // 현재 앱이 Light 테마를 사용하고 있는지 확인
-        // AppTheme의 parent가 Theme.AppCompat.Light.DarkActionBar이므로 Light 테마
-        return true; // 현재 앱은 Light 테마 사용
+        // Android 시스템의 다크 모드 설정 확인
+        int nightModeFlags = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return nightModeFlags != android.content.res.Configuration.UI_MODE_NIGHT_YES;
     }
     
     /**

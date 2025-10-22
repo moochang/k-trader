@@ -1,9 +1,8 @@
 package com.example.k_trader.base;
 
-import android.util.Log;
-
 import java.util.Calendar;
 import java.util.Locale;
+import android.support.annotation.NonNull;
 
 import static com.example.k_trader.base.TradeDataManager.Type.BUY;
 import static com.example.k_trader.base.TradeDataManager.Type.SELL;
@@ -25,6 +24,7 @@ public class TradeData {
     private boolean marked;
 
     public TradeDataManager.Type getType() {return type;}
+    public TradeDataManager.Status getStatus() {return status;}
     public String getId() {return id;}
     public float getUnits() {return units;}
     public int getPrice() {return price;}
@@ -35,6 +35,7 @@ public class TradeData {
     public boolean getMarked() {return marked;}
 
     @Override
+    @NonNull
     public String toString() {
         Calendar placedCal = Calendar.getInstance();
         Calendar processedCal = Calendar.getInstance();
@@ -55,8 +56,7 @@ public class TradeData {
     }
 
     public TradeData build() {
-        TradeData data = new TradeData();
-        return data;
+        return new TradeData();
     }
 
     public TradeData setType(TradeDataManager.Type type) {
@@ -87,10 +87,14 @@ public class TradeData {
     public TradeData setFeeRaw(String fee) {
         //Log.d("KTrader", fee);
         this.feeRaw = fee;
-        if (this.getType() == SELL)
-            this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
-        else if (this.getType() == BUY)
-            this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
+        if (fee != null) {
+            if (this.getType() == SELL)
+                this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
+            else if (this.getType() == BUY)
+                this.feeEvaluated = Double.parseDouble(fee.replaceAll(",", ""));
+        } else {
+            this.feeEvaluated = 0.0;
+        }
         return this;
     }
 

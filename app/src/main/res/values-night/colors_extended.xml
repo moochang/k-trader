@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark 테마용 모던 트렌디 색상 팔레트 -->
+    <color name="primary_modern">#FF8C42</color>
+    <color name="primary_dark_modern">#FF6B35</color>
+    <color name="primary_light_modern">#FFB366</color>
+    
+    <color name="secondary_modern">#EC4899</color>
+    <color name="secondary_dark_modern">#DB2777</color>
+    
+    <color name="success_modern">#10B981</color>
+    <color name="warning_modern">#F59E0B</color>
+    <color name="error_modern">#EF4444</color>
+    
+    <!-- Dark 테마용 중성 색상 -->
+    <color name="surface_modern">#1E1E1E</color>
+    <color name="surface_dark_modern">#000000</color>
+    <color name="background_modern">#000000</color>
+    
+    <!-- Dark 테마용 텍스트 색상 -->
+    <color name="text_primary_modern">#FFFFFF</color>
+    <color name="text_secondary_modern">#B3B3B3</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    
+    <!-- Dark 테마용 중성 색상 -->
+    <color name="neutral_modern">#666666</color>
+    <color name="neutral_light_modern">#999999</color>
+    <color name="neutral_dark_modern">#333333</color>
+    
+    <!-- Dark 테마용 배경 색상 -->
+    <color name="background_dark">#000000</color>
+    <color name="surface_dark">#1E1E1E</color>
+</resources>

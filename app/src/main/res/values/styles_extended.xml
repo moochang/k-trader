@@ -19,8 +19,8 @@
     </style>
     
     <style name="ButtonModernSecondary" parent="ButtonModern">
-        <item name="android:textColor">@color/text_primary_modern</item>
         <item name="android:background">@drawable/button_secondary_background</item>
+        <item name="android:textColor">@drawable/button_secondary_text_color</item>
     </style>
     
     <style name="ButtonModernSuccess" parent="ButtonModern">

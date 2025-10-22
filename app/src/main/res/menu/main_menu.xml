@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_scroll_to_bottom"
+        android:title="@string/scroll_to_bottom"
+        android:icon="@drawable/ic_scroll_down"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_bithumb"
+        android:title="빗썸 앱 실행"
+        android:icon="@drawable/ic_bithumb"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_refresh"
+        android:title="새로고침"
+        android:icon="@drawable/ic_refresh"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_clear"
+        android:title="Clear"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/settings"
+        app:showAsAction="never" />
+
+</menu>
