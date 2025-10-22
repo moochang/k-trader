@@ -240,7 +240,6 @@ public class MainActivity extends AppCompatActivity {
                 android.util.Log.d("KTrader", "[MainActivity] Found MainPage fragment, calling refreshCoinData()");
                 MainPage mainPage = (MainPage) fragment;
                 mainPage.refreshCoinData();
-                Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
             } else {
                 // ViewPager에서 MainPage 찾기
                 android.util.Log.d("KTrader", "[MainActivity] Fragment not found directly, searching in ViewPager");
@@ -262,7 +261,6 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 mainPage.refreshCoinData();
                                 android.util.Log.d("KTrader", "[MainActivity] refreshCoinData() call completed successfully");
-                                Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
                             } catch (Exception e) {
                                 android.util.Log.e("KTrader", "[MainActivity] Error calling refreshCoinData()", e);
                                 Toast.makeText(this, "새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();

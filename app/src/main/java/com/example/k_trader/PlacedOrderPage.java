@@ -1,21 +1,14 @@
 package com.example.k_trader;
 
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -427,20 +420,6 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
             
             Log.d("KTrader", "[PlacedOrderPage] 시장가 매수 성공 - 결과: " + result.toString());
 
-            // 매수 성공 시 Notification 발생
-            if (((String) result.get("status")).equals("0000")) {
-                // 매수 발생 Notification
-                Calendar time = Calendar.getInstance();
-                String notificationTitle = "매수 발생";
-                String notificationText = "매수 : " + String.format(Locale.getDefault(), "%,d", currentPrice) + 
-                    ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d",
-                    time.get(Calendar.MONTH) + 1, time.get(Calendar.DATE),
-                    time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE));
-                
-                Log.d("KTrader", "[PlacedOrderPage] 매수 Notification 발생: " + notificationText);
-                sendNotification(notificationTitle, notificationText);
-            }
-
             // 매수 결과값을 분석해서 바로 매도 요청을 한다.
             if (((String) result.get("status")).equals("0000")) {
                 Log.d("KTrader", "[PlacedOrderPage] 매수 성공, 매도 준비 시작");
@@ -493,90 +472,6 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
         LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
     }
     
-    /**
-     * Notification 전송 메서드 (TradeJobService의 notificationTrade와 동일한 로직)
-     */
-    private void sendNotification(String title, String text) {
-        Log.d("KTrader", "[PlacedOrderPage] sendNotification() 시작 - title: " + title + ", text: " + text);
-        
-        try {
-            Context context = getContext();
-            if (context == null) {
-                Log.e("KTrader", "[PlacedOrderPage] Context가 null이므로 Notification을 전송할 수 없습니다");
-                return;
-            }
-            
-            Resources res = context.getResources();
-
-            Intent notificationIntent = new Intent(context, MainActivity.class);
-            notificationIntent.setAction(Intent.ACTION_MAIN);
-            notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-            notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-            PendingIntent contentIntent = PendingIntent.getActivity(
-                context, 0, notificationIntent, 
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-            Log.d("KTrader", "[PlacedOrderPage] PendingIntent 생성 완료");
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "my_channel_id_03");
-
-            builder.setContentTitle(title)
-                    .setContentText(text)
-                    .setTicker(text)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setLargeIcon(BitmapFactory.decodeResource(res, R.mipmap.ic_launcher))
-                    .setContentIntent(contentIntent)
-                    .setAutoCancel(true)
-                    .setWhen(System.currentTimeMillis())
-                    .setDefaults(Notification.DEFAULT_ALL);
-
-            builder.setCategory(Notification.CATEGORY_MESSAGE)
-                    .setVisibility(Notification.VISIBILITY_PUBLIC);
-
-            Log.d("KTrader", "[PlacedOrderPage] NotificationCompat.Builder 생성 완료");
-
-            NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-            if (nm != null) {
-                Log.d("KTrader", "[PlacedOrderPage] NotificationManager 획득 성공");
-                
-                // 안드로이드 8.0 이상 노티피케이션을 사용하기 위해서는 하나 이상의 알림 채널을 만들어야한다.
-                NotificationChannel notificationChannel = new NotificationChannel("my_channel_id_03", "K-Trader Trade Notifications", NotificationManager.IMPORTANCE_DEFAULT);
-
-                // Configure the notification channel.
-                notificationChannel.setDescription("K-Trader 거래 알림 채널");
-                notificationChannel.enableLights(true);
-                notificationChannel.setLightColor(Color.parseColor("#FF8C42")); // 앱 테마와 일치하는 주황색
-                // 거래 체결시 진동 소리만으로도 다른 Android noti와 구분할 수 있도록 전용 진동 패턴을 사용한다.
-                notificationChannel.setVibrationPattern(new long[]{0, 100, 100, 100, 100, 100});
-                notificationChannel.enableVibration(true);
-                notificationChannel.setShowBadge(true);
-                
-                Log.d("KTrader", "[PlacedOrderPage] NotificationChannel 생성 완료 - ID: my_channel_id_03");
-                
-                nm.createNotificationChannel(notificationChannel);
-                Log.d("KTrader", "[PlacedOrderPage] NotificationChannel 등록 완료");
-                
-                // 채널 생성 확인
-                NotificationChannel createdChannel = nm.getNotificationChannel("my_channel_id_03");
-                if (createdChannel != null) {
-                    Log.d("KTrader", "[PlacedOrderPage] 채널 생성 확인 성공 - 중요도: " + createdChannel.getImportance());
-                } else {
-                    Log.e("KTrader", "[PlacedOrderPage] 채널 생성 확인 실패");
-                }
-                
-                int notificationId = (int)System.currentTimeMillis();
-                nm.notify(notificationId, builder.build());
-                Log.d("KTrader", "[PlacedOrderPage] Notification 등록 완료 - ID: " + notificationId);
-            } else {
-                Log.e("KTrader", "[PlacedOrderPage] NotificationManager 획득 실패");
-            }
-        } catch (Exception e) {
-            Log.e("KTrader", "[PlacedOrderPage] sendNotification() 오류", e);
-        }
-    }
-
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {

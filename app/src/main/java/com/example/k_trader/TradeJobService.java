@@ -390,9 +390,37 @@ public class TradeJobService extends JobService {
             log_info("App has been terminated by Android");
         }
 
-        // static 변수 초기화
-        if (lastNotiTimeInMillis == 0)
-            lastNotiTimeInMillis = Calendar.getInstance().getTimeInMillis();
+        // static 변수 초기화 - 매번 현재 시간으로 설정하여 중복 노티 방지
+        long currentTimeMillis = Calendar.getInstance().getTimeInMillis();
+        
+        // 마지막으로 처리된 거래의 시간을 찾아서 설정 (매수/매도 구분 없이)
+        TradeData lastBuyTrade = processedOrderManager.findLatestProcessedTime(BUY);
+        TradeData lastSellTrade = processedOrderManager.findLatestProcessedTime(SELL);
+        
+        long lastBuyTimeMillis = lastBuyTrade != null ? lastBuyTrade.getProcessedTime() : 0;
+        long lastSellTimeMillis = lastSellTrade != null ? lastSellTrade.getProcessedTime() : 0;
+        
+        // 매수와 매도 중 더 최근 시간을 선택하되, 현재 시간보다는 작게 설정
+        long latestTradeTime = Math.max(lastBuyTimeMillis, lastSellTimeMillis);
+        
+        if (latestTradeTime > 0 && latestTradeTime < currentTimeMillis) {
+            lastNotiTimeInMillis = latestTradeTime;
+            Calendar lastTradeCal = Calendar.getInstance();
+            lastTradeCal.setTimeInMillis(lastNotiTimeInMillis);
+            Log.d("KTrader", "[TradeJobService] lastNotiTimeInMillis 초기화 - 마지막 처리된 거래 시간: " + 
+                String.format(Locale.getDefault(), "%02d/%02d %02d:%02d:%02d", 
+                    lastTradeCal.get(Calendar.MONTH) + 1, lastTradeCal.get(Calendar.DATE),
+                    lastTradeCal.get(Calendar.HOUR_OF_DAY), lastTradeCal.get(Calendar.MINUTE), lastTradeCal.get(Calendar.SECOND)));
+        } else {
+            // 처리된 거래가 없거나 시간이 이상한 경우 현재 시간으로 설정
+            lastNotiTimeInMillis = currentTimeMillis;
+            Calendar currentCal = Calendar.getInstance();
+            currentCal.setTimeInMillis(lastNotiTimeInMillis);
+            Log.d("KTrader", "[TradeJobService] lastNotiTimeInMillis 초기화 - 현재 시간으로 설정: " + 
+                String.format(Locale.getDefault(), "%02d/%02d %02d:%02d:%02d", 
+                    currentCal.get(Calendar.MONTH) + 1, currentCal.get(Calendar.DATE),
+                    currentCal.get(Calendar.HOUR_OF_DAY), currentCal.get(Calendar.MINUTE), currentCal.get(Calendar.SECOND)));
+        }
 
         Calendar currentTime = Calendar.getInstance();
         log_info("============================================");
@@ -562,14 +590,39 @@ public class TradeJobService extends JobService {
         // 마지막 Noti 이후 발생한 매도/매수에 대해서 Noti를 발송하고, 매수건에 대해서는 이익금을 더해 매도 오더를 발행한다.
         {
             // 마지막 Noti 이후 발생한 매도/매수만 필터링 한 결과를 얻는다.
-            List<TradeData> list = processedOrderManager.getList().stream()
+            List<TradeData> allTrades = processedOrderManager.getList();
+            Log.d("KTrader", "[TradeJobService] 전체 처리된 거래 수: " + allTrades.size());
+            
+            // 각 거래의 시간을 로그로 출력
+            for (TradeData trade : allTrades) {
+                Calendar tradeCal = Calendar.getInstance();
+                tradeCal.setTimeInMillis(trade.getProcessedTime());
+                Log.d("KTrader", "[TradeJobService] 거래 시간: " + 
+                    String.format(Locale.getDefault(), "%02d/%02d %02d:%02d:%02d", 
+                        tradeCal.get(Calendar.MONTH) + 1, tradeCal.get(Calendar.DATE),
+                        tradeCal.get(Calendar.HOUR_OF_DAY), tradeCal.get(Calendar.MINUTE), tradeCal.get(Calendar.SECOND)) + 
+                    ", 타입: " + trade.getType() + ", 가격: " + trade.getPrice());
+            }
+            
+            List<TradeData> list = allTrades.stream()
                     .filter(T -> T.getProcessedTime() > lastNotiTimeInMillis)
                     .collect(Collectors.toList());
+            
+            Log.d("KTrader", "[TradeJobService] 필터링된 새로운 거래 수: " + list.size());
+            
+            Calendar lastNotiCal = Calendar.getInstance();
+            lastNotiCal.setTimeInMillis(lastNotiTimeInMillis);
+            Log.d("KTrader", "[TradeJobService] lastNotiTimeInMillis: " + 
+                String.format(Locale.getDefault(), "%02d/%02d %02d:%02d:%02d", 
+                    lastNotiCal.get(Calendar.MONTH) + 1, lastNotiCal.get(Calendar.DATE),
+                    lastNotiCal.get(Calendar.HOUR_OF_DAY), lastNotiCal.get(Calendar.MINUTE), lastNotiCal.get(Calendar.SECOND)));
 
             // 동일 가격이 여러개로 나눠져 있으면 합친다. (따로 매도 등록 되지 않도록 방지)
             List<TradeData> newList = mergeSamePrice(list);
 
             // 각 항목에 대해 Noti 처리한다.
+            long maxProcessedTime = lastNotiTimeInMillis; // 현재까지의 최대 처리 시간
+            
             for (TradeData pData : newList) {
                 Calendar time = Calendar.getInstance();
                 time.setTimeInMillis(pData.getProcessedTime());
@@ -618,21 +671,35 @@ public class TradeJobService extends JobService {
                             Log.d("KTrader", "[TradeJobService] 매도 주문 시도 - 가격: " + targetPrice + ", 수량: " + unit);
                             JSONObject sellResult = orderManager.addOrder("매수 발생 대응 매도", SELL, unit, targetPrice);
                             if (sellResult == null) {
-                                Log.e("KTrader", "[TradeJobService] 매도 주문 실패");
-                                return;
+                                Log.e("KTrader", "[TradeJobService] 매도 주문 실패 - API 응답이 null");
+                                // isSold는 false로 유지되어 매도 실패 노티가 발생함
+                            } else if (!"0000".equals(sellResult.get("status"))) {
+                                Log.e("KTrader", "[TradeJobService] 매도 주문 실패 - 상태: " + sellResult.get("status") + ", 메시지: " + sellResult.get("message"));
+                                // isSold는 false로 유지되어 매도 실패 노티가 발생함
                             } else {
                                 Log.d("KTrader", "[TradeJobService] 매도 주문 성공: " + sellResult.toString());
-                            }
-                            isSold = true;
-                            availableCoinBalance -= unit;
+                                isSold = true;
+                                availableCoinBalance -= unit;
 
-                            // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
-                            placedOrderManager.add(placedOrderManager.build()
-                                    .setType(SELL)
-                                    .setStatus(PLACED)
-                                    .setUnits(unit)
-                                    .setPrice(targetPrice));
-                            break;
+                                // 매도 대기 정보 업데이트 노티 발생
+                                Calendar sellTime = Calendar.getInstance();
+                                String notificationTitle = "매도 대기 등록";
+                                String notificationText = "매도 대기 : " + String.format(Locale.getDefault(), "%,d", targetPrice) + 
+                                    ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d",
+                                    sellTime.get(Calendar.MONTH) + 1, sellTime.get(Calendar.DATE),
+                                    sellTime.get(Calendar.HOUR_OF_DAY), sellTime.get(Calendar.MINUTE));
+                                
+                                Log.d("KTrader", "[TradeJobService] 매도 대기 등록 노티 발생: " + notificationText);
+                                notificationTrade(notificationTitle, notificationText);
+
+                                // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
+                                placedOrderManager.add(placedOrderManager.build()
+                                        .setType(SELL)
+                                        .setStatus(PLACED)
+                                        .setUnits(unit)
+                                        .setPrice(targetPrice));
+                                break;
+                            }
                         }
                     }
                     if (!isSold) {
@@ -649,9 +716,21 @@ public class TradeJobService extends JobService {
                     log_info("기타 거래 항목: " + pData.getType());
                 }
 
-                // 런타임에 lastNotiTimeInMillis 값이 변경되므로 조건문은 정상적으로 동작함
-                if (pData.getProcessedTime() > lastNotiTimeInMillis)
-                    lastNotiTimeInMillis = pData.getProcessedTime();
+                // 최대 처리 시간 업데이트
+                if (pData.getProcessedTime() > maxProcessedTime) {
+                    maxProcessedTime = pData.getProcessedTime();
+                }
+            }
+            
+            // 모든 노티 처리 완료 후 lastNotiTimeInMillis 업데이트
+            if (maxProcessedTime > lastNotiTimeInMillis) {
+                lastNotiTimeInMillis = maxProcessedTime;
+                Calendar updatedCal = Calendar.getInstance();
+                updatedCal.setTimeInMillis(lastNotiTimeInMillis);
+                Log.d("KTrader", "[TradeJobService] lastNotiTimeInMillis 업데이트 완료: " + 
+                    String.format(Locale.getDefault(), "%02d/%02d %02d:%02d:%02d", 
+                        updatedCal.get(Calendar.MONTH) + 1, updatedCal.get(Calendar.DATE),
+                        updatedCal.get(Calendar.HOUR_OF_DAY), updatedCal.get(Calendar.MINUTE), updatedCal.get(Calendar.SECOND)));
             }
         }
 
@@ -672,18 +751,36 @@ public class TradeJobService extends JobService {
                 boolean oDataCondition = oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
                         (oData != null && isSameSlotOrder(oData, new TradeData().build().setUnits((float)unit), targetPrice)); // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
                 if (oDataCondition) {
-                    if (orderManager.addOrder("이전 실행 매수 발생 대응 매도", SELL, unit, targetPrice) == null) {
+                    JSONObject sellResult = orderManager.addOrder("이전 실행 매수 발생 대응 매도", SELL, unit, targetPrice);
+                    if (sellResult == null) {
+                        Log.e("KTrader", "[TradeJobService] 예외 처리 매도 주문 실패 - API 응답이 null");
                         return;
-                    }
-                    availableCoinBalance -= unit;
+                    } else if (!"0000".equals(sellResult.get("status"))) {
+                        Log.e("KTrader", "[TradeJobService] 예외 처리 매도 주문 실패 - 상태: " + sellResult.get("status") + ", 메시지: " + sellResult.get("message"));
+                        return;
+                    } else {
+                        Log.d("KTrader", "[TradeJobService] 예외 처리 매도 주문 성공: " + sellResult.toString());
+                        availableCoinBalance -= unit;
 
-                    // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
-                    placedOrderManager.add(placedOrderManager.build()
-                            .setType(SELL)
-                            .setStatus(PLACED)
-                            .setUnits((float)unit)
-                            .setPrice(targetPrice));
-                    break;
+                        // 매도 대기 정보 업데이트 노티 발생
+                        Calendar exceptionTime = Calendar.getInstance();
+                        String notificationTitle = "매도 대기 등록";
+                        String notificationText = "매도 대기 : " + String.format(Locale.getDefault(), "%,d", targetPrice) + 
+                            ", " + String.format(Locale.getDefault(), "%02d/%02d %02d:%02d",
+                            exceptionTime.get(Calendar.MONTH) + 1, exceptionTime.get(Calendar.DATE),
+                            exceptionTime.get(Calendar.HOUR_OF_DAY), exceptionTime.get(Calendar.MINUTE));
+                        
+                        Log.d("KTrader", "[TradeJobService] 예외 처리 매도 대기 등록 노티 발생: " + notificationText);
+                        notificationTrade(notificationTitle, notificationText);
+
+                        // 뒤쪽에서 매수 주문 낼 때 위에서 매도낸 금액이랑 똑같은 매수 다시 내지 않도록 리스트에 넣어둔다. (리스트 전체를 다시 갱신하려면 REST API를 한번 더 호출 해야 하니 경제적)
+                        placedOrderManager.add(placedOrderManager.build()
+                                .setType(SELL)
+                                .setStatus(PLACED)
+                                .setUnits((float)unit)
+                                .setPrice(targetPrice));
+                        break;
+                    }
                 }
             }
         }
