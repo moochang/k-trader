@@ -293,12 +293,12 @@ public class TransactionApiService {
                     JSONObject coinKrw = (JSONObject) data.get(coinPair);
                     
                     // API 응답의 모든 필드 로그 출력
-                    android.util.Log.d("[K-TR]", "[TransactionApiService] Available fields in coinKrw: " + coinKrw.keySet());
+                    android.util.Log.d("KTrader", "[TransactionApiService] Available fields in coinKrw: " + coinKrw.keySet());
                     
                     // 전일 대비 등락률 (24시간)
                     if (coinKrw.containsKey("fluctate_rate_24H")) {
                         String rawDailyChange = coinKrw.get("fluctate_rate_24H").toString();
-                        android.util.Log.d("[K-TR]", "[TransactionApiService] Raw daily change (24H): " + rawDailyChange);
+                        android.util.Log.d("KTrader", "[TransactionApiService] Raw daily change (24H): " + rawDailyChange);
                         try {
                             double changeValue = Double.parseDouble(rawDailyChange);
                             if (changeValue >= 0) {
@@ -306,19 +306,19 @@ public class TransactionApiService {
                             } else {
                                 dailyChange = String.format("%.2f%%", changeValue);
                             }
-                            android.util.Log.d("[K-TR]", "[TransactionApiService] Formatted daily change: " + dailyChange);
+                            android.util.Log.d("KTrader", "[TransactionApiService] Formatted daily change: " + dailyChange);
                         } catch (NumberFormatException e) {
-                            android.util.Log.e("[K-TR]", "[TransactionApiService] Error parsing daily change: " + rawDailyChange, e);
+                            android.util.Log.e("KTrader", "[TransactionApiService] Error parsing daily change: " + rawDailyChange, e);
                             dailyChange = "+0.00%";
                         }
                     } else {
-                        android.util.Log.w("[K-TR]", "[TransactionApiService] fluctate_rate_24H not found in coinKrw");
+                        android.util.Log.w("KTrader", "[TransactionApiService] fluctate_rate_24H not found in coinKrw");
                     }
                     
                     // 1시간 대비 등락률 (1시간)
                     if (coinKrw.containsKey("fluctate_rate_1H")) {
                         String rawHourlyChange = coinKrw.get("fluctate_rate_1H").toString();
-                        android.util.Log.d("[K-TR]", "[TransactionApiService] Raw hourly change (1H): " + rawHourlyChange);
+                        android.util.Log.d("KTrader", "[TransactionApiService] Raw hourly change (1H): " + rawHourlyChange);
                         try {
                             double changeValue = Double.parseDouble(rawHourlyChange);
                             if (changeValue >= 0) {
@@ -326,22 +326,22 @@ public class TransactionApiService {
                             } else {
                                 hourlyChange = String.format("%.2f%%", changeValue);
                             }
-                            android.util.Log.d("[K-TR]", "[TransactionApiService] Formatted hourly change: " + hourlyChange);
+                            android.util.Log.d("KTrader", "[TransactionApiService] Formatted hourly change: " + hourlyChange);
                         } catch (NumberFormatException e) {
-                            android.util.Log.e("[K-TR]", "[TransactionApiService] Error parsing hourly change: " + rawHourlyChange, e);
+                            android.util.Log.e("KTrader", "[TransactionApiService] Error parsing hourly change: " + rawHourlyChange, e);
                             hourlyChange = "+0.00%";
                         }
                     } else {
-                        android.util.Log.w("[K-TR]", "[TransactionApiService] fluctate_rate_1H not found, using daily change for hourly");
+                        android.util.Log.w("KTrader", "[TransactionApiService] fluctate_rate_1H not found, using daily change for hourly");
                         // 1시간 대비 등락률이 없으면 전일 대비 등락률을 사용
                         hourlyChange = dailyChange;
                     }
                     
                 } else {
-                    android.util.Log.w("[K-TR]", "[TransactionApiService] coinPair " + coinPair + " not found in data");
+                    android.util.Log.w("KTrader", "[TransactionApiService] coinPair " + coinPair + " not found in data");
                 }
             } else {
-                android.util.Log.w("[K-TR]", "[TransactionApiService] data not found in tickerResponse");
+                android.util.Log.w("KTrader", "[TransactionApiService] data not found in tickerResponse");
             }
             
             // 예상 잔고 추출

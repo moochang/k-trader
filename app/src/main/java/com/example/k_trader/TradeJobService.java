@@ -678,16 +678,16 @@ public class TradeJobService extends JobService {
             com.example.k_trader.data.TransactionData cachedData = dataManager.getCachedData();
             if (cachedData != null && cachedData.getHourlyChange() != null) {
                 String change = cachedData.getHourlyChange();
-                Log.d("[K-TR]", "[TradeJobService] Using cached hourly change (1H): " + change);
+                Log.d("KTrader", "[TradeJobService] Using cached hourly change (1H): " + change);
                 return change;
             }
             
             // 캐시된 데이터가 없으면 기본값 반환
-            Log.w("[K-TR]", "[TradeJobService] No cached hourly change data available");
+            Log.w("KTrader", "[TradeJobService] No cached hourly change data available");
             return "+0.00%";
             
         } catch (Exception e) {
-            Log.e("[K-TR]", "[TradeJobService] Error getting hourly change from API", e);
+            Log.e("KTrader", "[TradeJobService] Error getting hourly change from API", e);
             return "+0.00%";
         }
     }
@@ -705,16 +705,16 @@ public class TradeJobService extends JobService {
             com.example.k_trader.data.TransactionData cachedData = dataManager.getCachedData();
             if (cachedData != null && cachedData.getDailyChange() != null) {
                 String change = cachedData.getDailyChange();
-                Log.d("[K-TR]", "[TradeJobService] Using cached daily change (24H): " + change);
+                Log.d("KTrader", "[TradeJobService] Using cached daily change (24H): " + change);
                 return change;
             }
             
             // 캐시된 데이터가 없으면 기본값 반환
-            Log.w("[K-TR]", "[TradeJobService] No cached daily change data available");
+            Log.w("KTrader", "[TradeJobService] No cached daily change data available");
             return "+0.00%";
             
         } catch (Exception e) {
-            Log.e("[K-TR]", "[TradeJobService] Error getting daily change from API", e);
+            Log.e("KTrader", "[TradeJobService] Error getting daily change from API", e);
             return "+0.00%";
         }
     }
@@ -784,7 +784,7 @@ public class TradeJobService extends JobService {
             intent.putExtra("lastSellPrice", lastSellPrice);
             intent.putExtra("nextBuyPrice", nextBuyPrice);
             
-            Log.d("[K-TR]", "[TradeJobService] Sending card data - Price: " + coinCurrentPrice + ", Change: " + hourlyChange);
+            Log.d("KTrader", "[TradeJobService] Sending card data - Price: " + coinCurrentPrice + ", Change: " + hourlyChange);
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
         } catch (Exception e) {
             Log.e("TradeJobService", "카드 데이터 전송 중 오류 발생", e);
@@ -849,12 +849,12 @@ public class TradeJobService extends JobService {
             
             repository.savePriceInfo(coinType, currentPrice, priceChange)
                 .subscribe(
-                    () -> Log.d("[K-TR]", "[TradeJobService] Price info saved to database successfully"),
-                    throwable -> Log.e("[K-TR]", "[TradeJobService] Error saving price info to database", throwable)
+                    () -> Log.d("KTrader", "[TradeJobService] Price info saved to database successfully"),
+                    throwable -> Log.e("KTrader", "[TradeJobService] Error saving price info to database", throwable)
                 );
                 
         } catch (Exception e) {
-            Log.e("[K-TR]", "[TradeJobService] Error in savePriceInfoToDatabase", e);
+            Log.e("KTrader", "[TradeJobService] Error in savePriceInfoToDatabase", e);
         }
     }
 }

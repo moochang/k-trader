@@ -68,9 +68,9 @@ public class MainActivity extends AppCompatActivity {
         textAppTitle = findViewById(R.id.textAppTitle);
         textLastSyncTime = findViewById(R.id.textLastSyncTime);
         
-        android.util.Log.d("[K-TR]", "[MainActivity] Appbar TextView initialization:");
-        android.util.Log.d("[K-TR]", "[MainActivity] textAppTitle: " + (textAppTitle != null ? "not null" : "null"));
-        android.util.Log.d("[K-TR]", "[MainActivity] textLastSyncTime: " + (textLastSyncTime != null ? "not null" : "null"));
+        android.util.Log.d("KTrader", "[MainActivity] Appbar TextView initialization:");
+        android.util.Log.d("KTrader", "[MainActivity] textAppTitle: " + (textAppTitle != null ? "not null" : "null"));
+        android.util.Log.d("KTrader", "[MainActivity] textLastSyncTime: " + (textLastSyncTime != null ? "not null" : "null"));
         
         // 테마에 따라 Appbar 텍스트 색상 설정
         setAppBarTextColorsByTheme();
@@ -166,64 +166,64 @@ public class MainActivity extends AppCompatActivity {
      * 코인 정보 새로고침
      */
     private void refreshCoinInfo() {
-        android.util.Log.d("[K-TR]", "[MainActivity] refreshCoinInfo() called");
+        android.util.Log.d("KTrader", "[MainActivity] refreshCoinInfo() called");
         try {
             // MainPage Fragment 찾기
             android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
             android.support.v4.app.Fragment fragment = fragmentManager.findFragmentById(android.R.id.content);
             
-            android.util.Log.d("[K-TR]", "[MainActivity] Fragment found: " + (fragment != null ? fragment.getClass().getSimpleName() : "null"));
+            android.util.Log.d("KTrader", "[MainActivity] Fragment found: " + (fragment != null ? fragment.getClass().getSimpleName() : "null"));
             
             if (fragment instanceof MainPage) {
-                android.util.Log.d("[K-TR]", "[MainActivity] Found MainPage fragment, calling refreshCoinData()");
+                android.util.Log.d("KTrader", "[MainActivity] Found MainPage fragment, calling refreshCoinData()");
                 MainPage mainPage = (MainPage) fragment;
                 mainPage.refreshCoinData();
                 Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
             } else {
                 // ViewPager에서 MainPage 찾기
-                android.util.Log.d("[K-TR]", "[MainActivity] Fragment not found directly, searching in ViewPager");
+                android.util.Log.d("KTrader", "[MainActivity] Fragment not found directly, searching in ViewPager");
                 ViewPager viewPager = findViewById(R.id.viewpager);
-                android.util.Log.d("[K-TR]", "[MainActivity] ViewPager found: " + (viewPager != null ? "not null" : "null"));
+                android.util.Log.d("KTrader", "[MainActivity] ViewPager found: " + (viewPager != null ? "not null" : "null"));
                 
                 if (viewPager != null) {
                     android.support.v4.app.FragmentPagerAdapter adapter = (android.support.v4.app.FragmentPagerAdapter) viewPager.getAdapter();
-                    android.util.Log.d("[K-TR]", "[MainActivity] ViewPager adapter found: " + (adapter != null ? "not null" : "null"));
+                    android.util.Log.d("KTrader", "[MainActivity] ViewPager adapter found: " + (adapter != null ? "not null" : "null"));
                     
                     if (adapter != null) {
                         // 현재 활성화된 Fragment 가져오기
                         android.support.v4.app.Fragment currentFragment = getSupportFragmentManager().findFragmentByTag("android:switcher:" + R.id.viewpager + ":" + viewPager.getCurrentItem());
-                        android.util.Log.d("[K-TR]", "[MainActivity] Current fragment from tag: " + (currentFragment != null ? currentFragment.getClass().getSimpleName() : "null"));
+                        android.util.Log.d("KTrader", "[MainActivity] Current fragment from tag: " + (currentFragment != null ? currentFragment.getClass().getSimpleName() : "null"));
                         
                         if (currentFragment instanceof MainPage) {
                             MainPage mainPage = (MainPage) currentFragment;
-                            android.util.Log.d("[K-TR]", "[MainActivity] Found active MainPage fragment, calling refreshCoinData()");
+                            android.util.Log.d("KTrader", "[MainActivity] Found active MainPage fragment, calling refreshCoinData()");
                             try {
                                 mainPage.refreshCoinData();
-                                android.util.Log.d("[K-TR]", "[MainActivity] refreshCoinData() call completed successfully");
+                                android.util.Log.d("KTrader", "[MainActivity] refreshCoinData() call completed successfully");
                                 Toast.makeText(this, "코인 정보를 새로고침합니다.", Toast.LENGTH_SHORT).show();
                             } catch (Exception e) {
-                                android.util.Log.e("[K-TR]", "[MainActivity] Error calling refreshCoinData()", e);
+                                android.util.Log.e("KTrader", "[MainActivity] Error calling refreshCoinData()", e);
                                 Toast.makeText(this, "새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            android.util.Log.w("[K-TR]", "[MainActivity] Current fragment is not MainPage or is null");
+                            android.util.Log.w("KTrader", "[MainActivity] Current fragment is not MainPage or is null");
                             
                             // 대안: adapter.getItem() 방식도 시도
                             MainPage mainPage = (MainPage) adapter.getItem(0);
-                            android.util.Log.d("[K-TR]", "[MainActivity] Trying adapter.getItem(0): " + (mainPage != null ? "not null" : "null"));
+                            android.util.Log.d("KTrader", "[MainActivity] Trying adapter.getItem(0): " + (mainPage != null ? "not null" : "null"));
                             
                             if (mainPage != null) {
-                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment class: " + mainPage.getClass().getSimpleName());
-                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment toString: " + mainPage.toString());
-                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment isAdded: " + mainPage.isAdded());
-                                android.util.Log.d("[K-TR]", "[MainActivity] Fragment isDetached: " + mainPage.isDetached());
+                                android.util.Log.d("KTrader", "[MainActivity] Fragment class: " + mainPage.getClass().getSimpleName());
+                                android.util.Log.d("KTrader", "[MainActivity] Fragment toString: " + mainPage.toString());
+                                android.util.Log.d("KTrader", "[MainActivity] Fragment isAdded: " + mainPage.isAdded());
+                                android.util.Log.d("KTrader", "[MainActivity] Fragment isDetached: " + mainPage.isDetached());
                             }
                         }
                     } else {
-                        android.util.Log.w("[K-TR]", "[MainActivity] ViewPager adapter is null");
+                        android.util.Log.w("KTrader", "[MainActivity] ViewPager adapter is null");
                     }
                 } else {
-                    android.util.Log.w("[K-TR]", "[MainActivity] ViewPager is null");
+                    android.util.Log.w("KTrader", "[MainActivity] ViewPager is null");
                 }
             }
         } catch (Exception e) {
@@ -237,18 +237,18 @@ public class MainActivity extends AppCompatActivity {
      */
     private void launchBithumbApp() {
         try {
-            android.util.Log.d("[K-TR]", "[MainActivity] Attempting to launch Bithumb app");
+            android.util.Log.d("KTrader", "[MainActivity] Attempting to launch Bithumb app");
             
             // 설치된 모든 앱 중에서 빗썸 관련 앱 찾기
-            android.util.Log.d("[K-TR]", "[MainActivity] Searching for installed Bithumb-related apps...");
+            android.util.Log.d("KTrader", "[MainActivity] Searching for installed Bithumb-related apps...");
             java.util.List<android.content.pm.ApplicationInfo> installedApps = getPackageManager().getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA);
             
             for (android.content.pm.ApplicationInfo appInfo : installedApps) {
                 String packageName = appInfo.packageName;
-                android.util.Log.d("[K-TR]", "[MainActivity] Checking package: " + packageName);
+                android.util.Log.d("KTrader", "[MainActivity] Checking package: " + packageName);
                 
                 if (packageName.toLowerCase().contains("bithumb") || packageName.toLowerCase().contains("btc")) {
-                    android.util.Log.d("[K-TR]", "[MainActivity] Found potential Bithumb app: " + packageName);
+                    android.util.Log.d("KTrader", "[MainActivity] Found potential Bithumb app: " + packageName);
                     
                     // 특정 액티비티로 직접 실행 시도
                     Intent specificIntent = new Intent();
@@ -257,17 +257,17 @@ public class MainActivity extends AppCompatActivity {
                     
                     try {
                         startActivity(specificIntent);
-                        android.util.Log.d("[K-TR]", "[MainActivity] Launched Bithumb app with specific activity: " + packageName);
+                        android.util.Log.d("KTrader", "[MainActivity] Launched Bithumb app with specific activity: " + packageName);
                         Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
                         return;
                     } catch (Exception e) {
-                        android.util.Log.w("[K-TR]", "[MainActivity] Failed to launch specific activity for " + packageName + ": " + e.getMessage());
+                        android.util.Log.w("KTrader", "[MainActivity] Failed to launch specific activity for " + packageName + ": " + e.getMessage());
                     }
                     
                     // 일반적인 앱 실행 시도
                     Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
                     if (launchIntent != null) {
-                        android.util.Log.d("[K-TR]", "[MainActivity] Launching Bithumb app with package: " + packageName);
+                        android.util.Log.d("KTrader", "[MainActivity] Launching Bithumb app with package: " + packageName);
                         startActivity(launchIntent);
                         Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
                         return;
@@ -285,12 +285,12 @@ public class MainActivity extends AppCompatActivity {
             
             // 각 패키지명을 시도해보기
             for (String packageName : possiblePackages) {
-                android.util.Log.d("[K-TR]", "[MainActivity] Trying package: " + packageName);
+                android.util.Log.d("KTrader", "[MainActivity] Trying package: " + packageName);
                 
                 // 먼저 런치 인텐트가 있는지 확인
                 Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
                 if (launchIntent != null) {
-                    android.util.Log.d("[K-TR]", "[MainActivity] Package found with launch intent: " + packageName);
+                    android.util.Log.d("KTrader", "[MainActivity] Package found with launch intent: " + packageName);
                     
                     // 특정 액티비티로 직접 실행 시도
                     Intent specificIntent = new Intent();
@@ -299,35 +299,35 @@ public class MainActivity extends AppCompatActivity {
                     
                     try {
                         startActivity(specificIntent);
-                        android.util.Log.d("[K-TR]", "[MainActivity] Launched Bithumb app with specific activity: " + packageName);
+                        android.util.Log.d("KTrader", "[MainActivity] Launched Bithumb app with specific activity: " + packageName);
                         Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
                         return;
                     } catch (Exception e) {
-                        android.util.Log.w("[K-TR]", "[MainActivity] Failed to launch specific activity for " + packageName + ": " + e.getMessage());
+                        android.util.Log.w("KTrader", "[MainActivity] Failed to launch specific activity for " + packageName + ": " + e.getMessage());
                         
                         // 특정 액티비티 실패 시 일반 런치 인텐트 사용
-                        android.util.Log.d("[K-TR]", "[MainActivity] Falling back to launch intent for: " + packageName);
+                        android.util.Log.d("KTrader", "[MainActivity] Falling back to launch intent for: " + packageName);
                         startActivity(launchIntent);
                         Toast.makeText(this, "빗썸 앱을 실행합니다.", Toast.LENGTH_SHORT).show();
                         return;
                     }
                 } else {
-                    android.util.Log.d("[K-TR]", "[MainActivity] No launch intent found for package: " + packageName);
+                    android.util.Log.d("KTrader", "[MainActivity] No launch intent found for package: " + packageName);
                 }
             }
             
             // 모든 방법이 실패한 경우 Play Store로 이동
-            android.util.Log.d("[K-TR]", "[MainActivity] All methods failed, redirecting to Play Store");
+            android.util.Log.d("KTrader", "[MainActivity] All methods failed, redirecting to Play Store");
             Intent playStoreIntent = new Intent(Intent.ACTION_VIEW);
             playStoreIntent.setData(android.net.Uri.parse("market://details?id=com.btckorea.bithumb"));
             
             if (playStoreIntent.resolveActivity(getPackageManager()) != null) {
-                android.util.Log.d("[K-TR]", "[MainActivity] Opening Play Store app");
+                android.util.Log.d("KTrader", "[MainActivity] Opening Play Store app");
                 startActivity(playStoreIntent);
                 Toast.makeText(this, "빗썸 앱을 설치해주세요.", Toast.LENGTH_LONG).show();
             } else {
                 // Play Store 앱이 없는 경우 웹 브라우저로 이동
-                android.util.Log.d("[K-TR]", "[MainActivity] Play Store app not found, opening web browser");
+                android.util.Log.d("KTrader", "[MainActivity] Play Store app not found, opening web browser");
                 Intent webIntent = new Intent(Intent.ACTION_VIEW);
                 webIntent.setData(android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.btckorea.bithumb"));
                 startActivity(webIntent);
@@ -335,7 +335,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            android.util.Log.e("[K-TR]", "[MainActivity] Error launching Bithumb app: " + e.getMessage());
+            android.util.Log.e("KTrader", "[MainActivity] Error launching Bithumb app: " + e.getMessage());
             Toast.makeText(this, "빗썸 앱 실행 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
         }
     }
@@ -576,18 +576,18 @@ public class MainActivity extends AppCompatActivity {
      * Appbar의 마지막 동기화 시간 업데이트
      */
     public void updateLastSyncTime() {
-        android.util.Log.d("[K-TR]", "[MainActivity] updateLastSyncTime() called");
-        android.util.Log.d("[K-TR]", "[MainActivity] textLastSyncTime: " + (textLastSyncTime != null ? "not null" : "null"));
+        android.util.Log.d("KTrader", "[MainActivity] updateLastSyncTime() called");
+        android.util.Log.d("KTrader", "[MainActivity] textLastSyncTime: " + (textLastSyncTime != null ? "not null" : "null"));
         
         if (textLastSyncTime != null) {
             java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
             String currentTime = timeFormat.format(new java.util.Date());
-            android.util.Log.d("[K-TR]", "[MainActivity] Generated time: " + currentTime);
+            android.util.Log.d("KTrader", "[MainActivity] Generated time: " + currentTime);
             
             textLastSyncTime.setText(currentTime);
-            android.util.Log.d("[K-TR]", "[MainActivity] Updated last sync time in Appbar: " + currentTime);
+            android.util.Log.d("KTrader", "[MainActivity] Updated last sync time in Appbar: " + currentTime);
         } else {
-            android.util.Log.w("[K-TR]", "[MainActivity] Cannot update last sync time - textLastSyncTime is null");
+            android.util.Log.w("KTrader", "[MainActivity] Cannot update last sync time - textLastSyncTime is null");
         }
     }
     
@@ -612,56 +612,56 @@ public class MainActivity extends AppCompatActivity {
             textLastSyncTime.setTextColor(textColor);
         }
         
-        android.util.Log.d("[K-TR]", "[MainActivity] Set Appbar text colors - Theme: " + (isLightTheme ? "Light" : "Dark") + ", Color: " + (isLightTheme ? "Black" : "White"));
+        android.util.Log.d("KTrader", "[MainActivity] Set Appbar text colors - Theme: " + (isLightTheme ? "Light" : "Dark") + ", Color: " + (isLightTheme ? "Black" : "White"));
     }
     
     /**
      * 현재 선택된 Fragment에 따라 스크롤 기능 실행
      */
     private void scrollToBottom() {
-        android.util.Log.d("[K-TR]", "[MainActivity] scrollToBottom() called");
+        android.util.Log.d("KTrader", "[MainActivity] scrollToBottom() called");
         
         try {
             if (viewPager != null) {
                 int currentItem = viewPager.getCurrentItem();
-                android.util.Log.d("[K-TR]", "[MainActivity] Current tab: " + currentItem);
+                android.util.Log.d("KTrader", "[MainActivity] Current tab: " + currentItem);
                 
                 // FragmentManager를 통해 현재 Fragment 가져오기
                 android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
                 android.support.v4.app.Fragment currentFragment = fragmentManager.findFragmentByTag("android:switcher:" + R.id.viewpager + ":" + currentItem);
                 
                 if (currentFragment != null) {
-                    android.util.Log.d("[K-TR]", "[MainActivity] Current fragment: " + currentFragment.getClass().getSimpleName());
+                    android.util.Log.d("KTrader", "[MainActivity] Current fragment: " + currentFragment.getClass().getSimpleName());
                     
                     if (currentItem == 0) {
                         // Transaction Item 탭
                         if (currentFragment instanceof TransactionItemFragment) {
                             TransactionItemFragment transactionItemFragment = (TransactionItemFragment) currentFragment;
                             transactionItemFragment.scrollToBottom();
-                            android.util.Log.d("[K-TR]", "[MainActivity] Scrolled TransactionItemFragment to bottom");
+                            android.util.Log.d("KTrader", "[MainActivity] Scrolled TransactionItemFragment to bottom");
                         } else {
-                            android.util.Log.w("[K-TR]", "[MainActivity] Fragment is not TransactionItemFragment");
+                            android.util.Log.w("KTrader", "[MainActivity] Fragment is not TransactionItemFragment");
                         }
                     } else if (currentItem == 1) {
                         // Transaction Log 탭
                         if (currentFragment instanceof TransactionLogFragment) {
                             TransactionLogFragment transactionLogFragment = (TransactionLogFragment) currentFragment;
                             transactionLogFragment.scrollToBottom();
-                            android.util.Log.d("[K-TR]", "[MainActivity] Scrolled TransactionLogFragment to bottom");
+                            android.util.Log.d("KTrader", "[MainActivity] Scrolled TransactionLogFragment to bottom");
                         } else {
-                            android.util.Log.w("[K-TR]", "[MainActivity] Fragment is not TransactionLogFragment");
+                            android.util.Log.w("KTrader", "[MainActivity] Fragment is not TransactionLogFragment");
                         }
                     } else {
-                        android.util.Log.w("[K-TR]", "[MainActivity] Unknown tab: " + currentItem);
+                        android.util.Log.w("KTrader", "[MainActivity] Unknown tab: " + currentItem);
                     }
                 } else {
-                    android.util.Log.w("[K-TR]", "[MainActivity] Current fragment is null");
+                    android.util.Log.w("KTrader", "[MainActivity] Current fragment is null");
                 }
             } else {
-                android.util.Log.w("[K-TR]", "[MainActivity] ViewPager is null");
+                android.util.Log.w("KTrader", "[MainActivity] ViewPager is null");
             }
         } catch (Exception e) {
-            android.util.Log.e("[K-TR]", "[MainActivity] Error in scrollToBottom()", e);
+            android.util.Log.e("KTrader", "[MainActivity] Error in scrollToBottom()", e);
             Toast.makeText(this, "스크롤 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
         }
     }

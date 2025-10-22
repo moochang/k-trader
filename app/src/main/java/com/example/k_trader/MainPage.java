@@ -149,17 +149,17 @@ public class MainPage extends Fragment {
      */
     private void loadInitialDataImmediately() {
         if (databaseOrderManager == null) {
-            Log.w("[K-TR]", "[MainPage] DatabaseOrderManager가 초기화되지 않음");
+            Log.w("KTrader", "[MainPage] DatabaseOrderManager가 초기화되지 않음");
             return;
         }
         
-        Log.d("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 시작");
+        Log.d("KTrader", "[MainPage] 즉시 초기 데이터 로드 시작");
         
         Completable immediateLoad = databaseOrderManager.initializeAndSyncData("MainPage 즉시 초기화")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnComplete(() -> Log.d("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 완료"))
-                .doOnError(error -> Log.e("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 실패", error));
+                .doOnComplete(() -> Log.d("KTrader", "[MainPage] 즉시 초기 데이터 로드 완료"))
+                .doOnError(error -> Log.e("KTrader", "[MainPage] 즉시 초기 데이터 로드 실패", error));
         
         disposables.add(immediateLoad.subscribe());
     }
@@ -212,8 +212,8 @@ public class MainPage extends Fragment {
                     .observeOn(AndroidSchedulers.mainThread())
                     .repeat()
                     .delay(5, java.util.concurrent.TimeUnit.MINUTES)
-                    .doOnComplete(() -> Log.d("[K-TR]", "[MainPage] 주기적 데이터 동기화 완료"))
-                    .doOnError(error -> Log.e("[K-TR]", "[MainPage] 주기적 데이터 동기화 실패", error));
+                    .doOnComplete(() -> Log.d("KTrader", "[MainPage] 주기적 데이터 동기화 완료"))
+                    .doOnError(error -> Log.e("KTrader", "[MainPage] 주기적 데이터 동기화 실패", error));
             
             disposables.add(periodicSync.subscribe());
         }
@@ -237,9 +237,9 @@ public class MainPage extends Fragment {
      * 트레이딩 시작
      */
     private void startTrading() {
-        Log.d("[K-TR]", "[MainPage] Start Trading button clicked");
-        Log.d("[K-TR]", "[MainPage] mainActivity: " + (mainActivity != null ? "not null" : "null"));
-        Log.d("[K-TR]", "[MainPage] component: " + (component != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] Start Trading button clicked");
+        Log.d("KTrader", "[MainPage] mainActivity: " + (mainActivity != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] component: " + (component != null ? "not null" : "null"));
         
         String packageName = mainActivity.getPackageName();
         PowerManager pm = (PowerManager) mainActivity.getSystemService(Context.POWER_SERVICE);
@@ -248,25 +248,25 @@ public class MainPage extends Fragment {
         // Play Store 정책에 따라 적절한 사용 사례임을 명시
         // 트레이딩 앱은 실시간 주문 처리를 위해 백그라운드 실행이 필수적임
         if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-            Log.d("[K-TR]", "[MainPage] Requesting battery optimization exemption");
+            Log.d("KTrader", "[MainPage] Requesting battery optimization exemption");
             Intent i = new Intent();
             i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
             i.setData(Uri.parse("package:" + packageName));
             startActivity(i);
         } else {
-            Log.d("[K-TR]", "[MainPage] Battery optimization already exempted");
+            Log.d("KTrader", "[MainPage] Battery optimization already exempted");
         }
 
         // NetworkOnMainThreadException을 방지하기 위해 thread를 돌린다.
-        Log.d("[K-TR]", "[MainPage] Canceling existing buy orders");
+        Log.d("KTrader", "[MainPage] Canceling existing buy orders");
         new Thread(() -> {
             OrderManager orderManager = new OrderManager();
             orderManager.cancelAllBuyOrders();
-            Log.d("[K-TR]", "[MainPage] Existing buy orders canceled");
+            Log.d("KTrader", "[MainPage] Existing buy orders canceled");
         }).start();
 
         // JOB_ID_REGULAR가 1분 후부터 스케줄링 되기 때문에 1회성으로 한번 더 실행
-        Log.d("[K-TR]", "[MainPage] Creating job schedules");
+        Log.d("KTrader", "[MainPage] Creating job schedules");
         JobInfo firstTradeJob = new JobInfo.Builder(JOB_ID_FIRST, component)
                 .setMinimumLatency(1000) // 1000 ms
                 .build();
@@ -276,36 +276,36 @@ public class MainPage extends Fragment {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .build();
 
-        Log.d("[K-TR]", "[MainPage] Trade interval: " + GlobalSettings.getInstance().getTradeInterval() + " seconds");
+        Log.d("KTrader", "[MainPage] Trade interval: " + GlobalSettings.getInstance().getTradeInterval() + " seconds");
 
         mainActivity.jobScheduler = (JobScheduler) mainActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (mainActivity.jobScheduler != null) {
             int firstJobResult = mainActivity.jobScheduler.schedule(firstTradeJob);
             int regularJobResult = mainActivity.jobScheduler.schedule(tradeJob);
-            Log.d("[K-TR]", "[MainPage] Job scheduling results - First: " + firstJobResult + ", Regular: " + regularJobResult);
+            Log.d("KTrader", "[MainPage] Job scheduling results - First: " + firstJobResult + ", Regular: " + regularJobResult);
         } else {
-            Log.e("[K-TR]", "[MainPage] JobScheduler is null");
+            Log.e("KTrader", "[MainPage] JobScheduler is null");
         }
 
         isTradingStarted = true;
         updateTradingToggleButton(isTradingStarted);
-        Log.d("[K-TR]", "[MainPage] Trading started successfully");
+        Log.d("KTrader", "[MainPage] Trading started successfully");
     }
     
     /**
      * 트레이딩 중지
      */
     private void stopTrading() {
-        Log.d("[K-TR]", "[MainPage] Stop Trading button clicked");
+        Log.d("KTrader", "[MainPage] Stop Trading button clicked");
         
         if (mainActivity.jobScheduler != null) {
             mainActivity.jobScheduler.cancelAll();
-            Log.d("[K-TR]", "[MainPage] All jobs canceled");
+            Log.d("KTrader", "[MainPage] All jobs canceled");
         }
 
         isTradingStarted = false;
         updateTradingToggleButton(isTradingStarted);
-        Log.d("[K-TR]", "[MainPage] Trading stopped successfully");
+        Log.d("KTrader", "[MainPage] Trading stopped successfully");
     }
     
     /**
@@ -331,7 +331,7 @@ public class MainPage extends Fragment {
     public void onResume() {
         super.onResume();
         // SettingsActivity에서 돌아올 때 코인 정보 업데이트
-        Log.d("[K-TR]", "[MainPage] onResume - updating coin info");
+        Log.d("KTrader", "[MainPage] onResume - updating coin info");
         updateCoinInfo();
     }
 
@@ -476,7 +476,7 @@ public class MainPage extends Fragment {
         cardDataReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d("[K-TR]", "[MainPage] BroadcastReceiver received: " + intent.getAction());
+                Log.d("KTrader", "[MainPage] BroadcastReceiver received: " + intent.getAction());
                 
                 // BROADCAST_CARD_DATA, BROADCAST_TRANSACTION_DATA만 처리
                 if (intent.getAction() != null && 
@@ -488,15 +488,15 @@ public class MainPage extends Fragment {
                     String hourlyChange = intent.getStringExtra("hourlyChange");
                     String dailyChange = intent.getStringExtra("dailyChange");
                     
-                    Log.d("[K-TR]", "[MainPage] Received data - Price: " + btcCurrentPrice + ", HourlyChange: " + hourlyChange + ", DailyChange: " + dailyChange);
+                    Log.d("KTrader", "[MainPage] Received data - Price: " + btcCurrentPrice + ", HourlyChange: " + hourlyChange + ", DailyChange: " + dailyChange);
                     
                     // 가격 정보가 null이거나 0인 경우 API를 직접 호출
                     if (btcCurrentPrice == null || btcCurrentPrice.equals("0") || btcCurrentPrice.equals("null")) {
-                        Log.w("[K-TR]", "[MainPage] Price data is null or 0, calling API directly");
+                        Log.w("KTrader", "[MainPage] Price data is null or 0, calling API directly");
                         fetchCurrentPriceFromApi();
                     } else if (textCurrentPrice != null) {
                         textCurrentPrice.setText(btcCurrentPrice);
-                        Log.d("[K-TR]", "[MainPage] Updated current price: " + btcCurrentPrice);
+                        Log.d("KTrader", "[MainPage] Updated current price: " + btcCurrentPrice);
                     }
                     
                     // CoinInfo에는 전일 대비 등락률 표시
@@ -510,7 +510,7 @@ public class MainPage extends Fragment {
                         } else {
                             textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
                         }
-                        Log.d("[K-TR]", "[MainPage] Updated daily price change (CoinInfo): " + dailyChange);
+                        Log.d("KTrader", "[MainPage] Updated daily price change (CoinInfo): " + dailyChange);
                     }
                 }
             }
@@ -522,7 +522,7 @@ public class MainPage extends Fragment {
             filter.addAction(TransactionItemFragment.BROADCAST_CARD_DATA);
             filter.addAction(TransactionItemFragment.BROADCAST_TRANSACTION_DATA);
             android.support.v4.content.LocalBroadcastManager.getInstance(getContext()).registerReceiver(cardDataReceiver, filter);
-            Log.d("[K-TR]", "[MainPage] BroadcastReceiver registered for both actions");
+            Log.d("KTrader", "[MainPage] BroadcastReceiver registered for both actions");
         }
     }
     
@@ -530,25 +530,25 @@ public class MainPage extends Fragment {
      * 코인 데이터 새로고침 (외부에서 호출 가능)
      */
     public void refreshCoinData() {
-        Log.d("[K-TR]", "[MainPage] refreshCoinData() called - Thread: " + Thread.currentThread().getName());
-        Log.d("[K-TR]", "[MainPage] refreshCoinData() - getActivity(): " + (getActivity() != null ? "not null" : "null"));
-        Log.d("[K-TR]", "[MainPage] refreshCoinData() - getContext(): " + (getContext() != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] refreshCoinData() called - Thread: " + Thread.currentThread().getName());
+        Log.d("KTrader", "[MainPage] refreshCoinData() - getActivity(): " + (getActivity() != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] refreshCoinData() - getContext(): " + (getContext() != null ? "not null" : "null"));
         
         if (getActivity() != null) {
-            Log.d("[K-TR]", "[MainPage] refreshCoinData() - scheduling UI thread task");
+            Log.d("KTrader", "[MainPage] refreshCoinData() - scheduling UI thread task");
             getActivity().runOnUiThread(() -> {
-                Log.d("[K-TR]", "[MainPage] refreshCoinData() - UI thread task started");
-                Log.d("[K-TR]", "[MainPage] refreshCoinData() - calling updateCoinInfo()");
+                Log.d("KTrader", "[MainPage] refreshCoinData() - UI thread task started");
+                Log.d("KTrader", "[MainPage] refreshCoinData() - calling updateCoinInfo()");
                 // 코인 정보 업데이트
                 updateCoinInfo();
                 
-                Log.d("[K-TR]", "[MainPage] refreshCoinData() - calling fetchLatestCoinData()");
+                Log.d("KTrader", "[MainPage] refreshCoinData() - calling fetchLatestCoinData()");
                 // API에서 최신 데이터 가져오기
                 fetchLatestCoinData();
-                Log.d("[K-TR]", "[MainPage] refreshCoinData() - UI thread task completed");
+                Log.d("KTrader", "[MainPage] refreshCoinData() - UI thread task completed");
             });
         } else {
-            Log.w("[K-TR]", "[MainPage] refreshCoinData() - getActivity() is null, cannot proceed");
+            Log.w("KTrader", "[MainPage] refreshCoinData() - getActivity() is null, cannot proceed");
         }
     }
     
@@ -567,12 +567,12 @@ public class MainPage extends Fragment {
         databaseOrderManager.periodicSyncData("refresh")
             .subscribe(
                 () -> {
-                    Log.d("[K-TR]", "[MainPage] Coin data refreshed successfully");
+                    Log.d("KTrader", "[MainPage] Coin data refreshed successfully");
                     // 활성 거래 수 다시 업데이트
                     updateActiveOrdersCount();
                 },
                 throwable -> {
-                    Log.e("[K-TR]", "[MainPage] Error refreshing coin data", throwable);
+                    Log.e("KTrader", "[MainPage] Error refreshing coin data", throwable);
                     Toast.makeText(getContext(), "데이터 새로고침 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
                 }
             );
@@ -583,7 +583,7 @@ public class MainPage extends Fragment {
      */
     private void fetchCurrentPriceFromApi() {
         try {
-            Log.d("[K-TR]", "[MainPage] Starting direct API call for price and change data...");
+            Log.d("KTrader", "[MainPage] Starting direct API call for price and change data...");
             
             // OrderManager를 통해 가격과 등락률 정보 가져오기
             com.example.k_trader.base.OrderManager orderManager = new com.example.k_trader.base.OrderManager();
@@ -591,7 +591,7 @@ public class MainPage extends Fragment {
             // 백그라운드에서 API 호출
             new Thread(() -> {
                 try {
-                    Log.d("[K-TR]", "[MainPage] Calling OrderManager APIs...");
+                    Log.d("KTrader", "[MainPage] Calling OrderManager APIs...");
                     
                     // 현재 가격 가져오기
                     JSONObject priceData = orderManager.getCurrentPrice("refresh");
@@ -603,7 +603,7 @@ public class MainPage extends Fragment {
                             String priceStr = (String) firstBid.get("price");
                             if (priceStr != null) {
                                 currentPrice = (int) Double.parseDouble(priceStr);
-                                Log.d("[K-TR]", "[MainPage] Got current price: " + currentPrice);
+                                Log.d("KTrader", "[MainPage] Got current price: " + currentPrice);
                             }
                         }
                     }
@@ -617,7 +617,7 @@ public class MainPage extends Fragment {
                             
                             if (data.containsKey("fluctate_rate_24H")) {
                                 String rawDailyChange = data.get("fluctate_rate_24H").toString();
-                                Log.d("[K-TR]", "[MainPage] Raw daily change: " + rawDailyChange);
+                                Log.d("KTrader", "[MainPage] Raw daily change: " + rawDailyChange);
                                 try {
                                     double changeValue = Double.parseDouble(rawDailyChange);
                                     if (changeValue >= 0) {
@@ -625,14 +625,14 @@ public class MainPage extends Fragment {
                                     } else {
                                         dailyChange = String.format("%.2f%%", changeValue);
                                     }
-                                    Log.d("[K-TR]", "[MainPage] Formatted daily change: " + dailyChange);
+                                    Log.d("KTrader", "[MainPage] Formatted daily change: " + dailyChange);
                                 } catch (NumberFormatException e) {
-                                    Log.e("[K-TR]", "[MainPage] Error parsing daily change: " + rawDailyChange, e);
+                                    Log.e("KTrader", "[MainPage] Error parsing daily change: " + rawDailyChange, e);
                                 }
                             }
                         }
                     } catch (Exception e) {
-                        Log.e("[K-TR]", "[MainPage] Error getting ticker data", e);
+                        Log.e("KTrader", "[MainPage] Error getting ticker data", e);
                     }
                     
                     final int finalCurrentPrice = currentPrice;
@@ -645,7 +645,7 @@ public class MainPage extends Fragment {
                             if (textCurrentPrice != null) {
                                 String formattedPrice = String.format(java.util.Locale.getDefault(), "₩%,d", finalCurrentPrice);
                                 textCurrentPrice.setText(formattedPrice);
-                                Log.d("[K-TR]", "[MainPage] Updated current price: " + formattedPrice);
+                                Log.d("KTrader", "[MainPage] Updated current price: " + formattedPrice);
                             }
                             
                             // 전일 대비 등락률 업데이트 (CoinInfo용)
@@ -660,17 +660,17 @@ public class MainPage extends Fragment {
                                 } else {
                                     textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
                                 }
-                                Log.d("[K-TR]", "[MainPage] Updated daily price change: " + finalDailyChange);
+                                Log.d("KTrader", "[MainPage] Updated daily price change: " + finalDailyChange);
                             }
                             
                             // 마지막 동기화 시간 업데이트
-                            Log.d("[K-TR]", "[MainPage] About to call updateLastSyncTime()");
+                            Log.d("KTrader", "[MainPage] About to call updateLastSyncTime()");
                             updateLastSyncTime();
                         });
                     }
                     
                 } catch (Exception e) {
-                    Log.e("[K-TR]", "[MainPage] Error fetching price and change data", e);
+                    Log.e("KTrader", "[MainPage] Error fetching price and change data", e);
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "가격 정보를 가져올 수 없습니다: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -680,7 +680,7 @@ public class MainPage extends Fragment {
             }).start();
             
         } catch (Exception e) {
-            Log.e("[K-TR]", "Error in fetchCurrentPriceFromApi", e);
+            Log.e("KTrader", "Error in fetchCurrentPriceFromApi", e);
         }
     }
     
@@ -688,14 +688,14 @@ public class MainPage extends Fragment {
      * 가격 정보를 UI에 표시
      */
     private void updatePriceDisplay(int currentPrice) {
-        Log.d("[K-TR]", "Updating price display with: " + currentPrice);
+        Log.d("KTrader", "Updating price display with: " + currentPrice);
         
         if (textCurrentPrice != null) {
             String formattedPrice = String.format(java.util.Locale.getDefault(), "₩%,d", currentPrice);
             textCurrentPrice.setText(formattedPrice);
-            Log.d("[K-TR]", "Updated current price display: " + formattedPrice);
+            Log.d("KTrader", "Updated current price display: " + formattedPrice);
         } else {
-            Log.w("[K-TR]", "textCurrentPrice is null");
+            Log.w("KTrader", "textCurrentPrice is null");
         }
         
         // 등락률은 TransactionInfo에서 전일 대비 등락률로 업데이트됨
@@ -706,9 +706,9 @@ public class MainPage extends Fragment {
      * 코인 정보 업데이트
      */
     private void updateCoinInfo() {
-        Log.d("[K-TR]", "[MainPage] updateCoinInfo() called");
+        Log.d("KTrader", "[MainPage] updateCoinInfo() called");
         if (textCoinType == null) {
-            Log.w("[K-TR]", "[MainPage] updateCoinInfo() - textCoinType is null, returning");
+            Log.w("KTrader", "[MainPage] updateCoinInfo() - textCoinType is null, returning");
             return;
         }
         
@@ -716,7 +716,7 @@ public class MainPage extends Fragment {
         android.content.SharedPreferences sharedPreferences = getContext().getSharedPreferences("settings", android.content.Context.MODE_PRIVATE);
         String coinType = sharedPreferences.getString(com.example.k_trader.base.GlobalSettings.COIN_TYPE_KEY_NAME, com.example.k_trader.base.GlobalSettings.COIN_TYPE_DEFAULT_VALUE);
         
-        Log.d("[K-TR]", "[MainPage] Reading coin type from preferences: " + coinType);
+        Log.d("KTrader", "[MainPage] Reading coin type from preferences: " + coinType);
         
         // GlobalSettings도 업데이트
         com.example.k_trader.base.GlobalSettings.getInstance().setCoinType(coinType);
@@ -733,7 +733,7 @@ public class MainPage extends Fragment {
         }
         
         // 활성 거래 수는 DB에서 가져오기
-        Log.d("[K-TR]", "[MainPage] About to call updateActiveOrdersCount()");
+        Log.d("KTrader", "[MainPage] About to call updateActiveOrdersCount()");
         updateActiveOrdersCount();
     }
     
@@ -741,15 +741,15 @@ public class MainPage extends Fragment {
      * 활성 거래 수 업데이트 (API 직접 호출)
      */
     private void updateActiveOrdersCount() {
-        Log.d("[K-TR]", "[MainPage] updateActiveOrdersCount() called");
-        Log.d("[K-TR]", "[MainPage] textActiveOrders: " + (textActiveOrders != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] updateActiveOrdersCount() called");
+        Log.d("KTrader", "[MainPage] textActiveOrders: " + (textActiveOrders != null ? "not null" : "null"));
         
         if (textActiveOrders == null) {
-            Log.w("[K-TR]", "[MainPage] Cannot update active orders count - textActiveOrders is null");
+            Log.w("KTrader", "[MainPage] Cannot update active orders count - textActiveOrders is null");
             return;
         }
         
-        Log.d("[K-TR]", "[MainPage] Updating active orders count from API...");
+        Log.d("KTrader", "[MainPage] Updating active orders count from API...");
         
         // API에서 직접 활성 주문 조회
         new Thread(() -> {
@@ -779,12 +779,12 @@ public class MainPage extends Fragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         textActiveOrders.setText(formattedText);
-                        Log.d("[K-TR]", "[MainPage] Updated active orders count from API: " + formattedText);
+                        Log.d("KTrader", "[MainPage] Updated active orders count from API: " + formattedText);
                     });
                 }
                 
             } catch (Exception e) {
-                Log.e("[K-TR]", "[MainPage] Error getting active orders from API", e);
+                Log.e("KTrader", "[MainPage] Error getting active orders from API", e);
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         if (textActiveOrders != null) {
@@ -820,17 +820,17 @@ public class MainPage extends Fragment {
      * 실시간 관찰 시작
      */
     private void startReactiveObservations() {
-        Log.d("[K-TR]", "[MainPage] startReactiveObservations() called");
-        Log.d("[K-TR]", "[MainPage] disposables: " + (disposables != null ? "not null" : "null"));
-        Log.d("[K-TR]", "[MainPage] coinPriceInfoRepository: " + (coinPriceInfoRepository != null ? "not null" : "null"));
-        Log.d("[K-TR]", "[MainPage] databaseOrderManager: " + (databaseOrderManager != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] startReactiveObservations() called");
+        Log.d("KTrader", "[MainPage] disposables: " + (disposables != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] coinPriceInfoRepository: " + (coinPriceInfoRepository != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] databaseOrderManager: " + (databaseOrderManager != null ? "not null" : "null"));
         
         if (disposables == null || coinPriceInfoRepository == null || databaseOrderManager == null || transactionInfoRepository == null) {
-            Log.w("[K-TR]", "[MainPage] Cannot start reactive observations - required components are null");
+            Log.w("KTrader", "[MainPage] Cannot start reactive observations - required components are null");
             return;
         }
         
-        Log.d("[K-TR]", "[MainPage] Starting reactive observations");
+        Log.d("KTrader", "[MainPage] Starting reactive observations");
         
         // CoinInfo는 TransactionInfoEntity의 dailyChange만 사용하므로 CoinPriceInfoRepository 관찰 제거
         
@@ -839,11 +839,11 @@ public class MainPage extends Fragment {
             databaseOrderManager.observeActiveSellOrdersCount()
                 .subscribe(
                     sellCount -> {
-                        Log.d("[K-TR]", "[MainPage] SELL orders count updated: " + sellCount);
+                        Log.d("KTrader", "[MainPage] SELL orders count updated: " + sellCount);
                         // BUY 주문 수도 함께 조회하여 업데이트
                         updateActiveOrdersDisplay(sellCount, null);
                     },
-                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing SELL orders count", throwable)
+                    throwable -> Log.e("KTrader", "[MainPage] Error observing SELL orders count", throwable)
                 )
         );
         
@@ -851,11 +851,11 @@ public class MainPage extends Fragment {
             databaseOrderManager.observeActiveBuyOrdersCount()
                 .subscribe(
                     buyCount -> {
-                        Log.d("[K-TR]", "[MainPage] BUY orders count updated: " + buyCount);
+                        Log.d("KTrader", "[MainPage] BUY orders count updated: " + buyCount);
                         // SELL 주문 수도 함께 조회하여 업데이트
                         updateActiveOrdersDisplay(null, buyCount);
                     },
-                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing BUY orders count", throwable)
+                    throwable -> Log.e("KTrader", "[MainPage] Error observing BUY orders count", throwable)
                 )
         );
         
@@ -864,10 +864,10 @@ public class MainPage extends Fragment {
             transactionInfoRepository.observeLatestTransactionInfo()
                 .subscribe(
                     transactionInfo -> {
-                        Log.d("[K-TR]", "[MainPage] Transaction info updated: " + transactionInfo.toString());
+                        Log.d("KTrader", "[MainPage] Transaction info updated: " + transactionInfo.toString());
                         updateUIWithTransactionInfo(transactionInfo);
                     },
-                    throwable -> Log.e("[K-TR]", "[MainPage] Error observing transaction info", throwable)
+                    throwable -> Log.e("KTrader", "[MainPage] Error observing transaction info", throwable)
                 )
         );
     }
@@ -893,7 +893,7 @@ public class MainPage extends Fragment {
                 }
             }
         } catch (Exception e) {
-            Log.w("[K-TR]", "[MainPage] Error parsing current active orders text: " + currentText);
+            Log.w("KTrader", "[MainPage] Error parsing current active orders text: " + currentText);
         }
         
         // 새로운 값으로 업데이트
@@ -902,7 +902,7 @@ public class MainPage extends Fragment {
         
         String newText = "S" + newSell + " : B" + newBuy;
         textActiveOrders.setText(newText);
-        Log.d("[K-TR]", "[MainPage] Updated active orders display: " + newText);
+        Log.d("KTrader", "[MainPage] Updated active orders display: " + newText);
     }
     
     /**
@@ -914,7 +914,7 @@ public class MainPage extends Fragment {
         // 현재 가격 업데이트
         if (textCurrentPrice != null && transactionInfo.getBtcCurrentPrice() != null) {
             textCurrentPrice.setText(transactionInfo.getBtcCurrentPrice());
-            Log.d("[K-TR]", "[MainPage] Updated current price from DB: " + transactionInfo.getBtcCurrentPrice());
+            Log.d("KTrader", "[MainPage] Updated current price from DB: " + transactionInfo.getBtcCurrentPrice());
         }
         
         // 전일 대비 등락률 업데이트 (CoinInfo용)
@@ -929,7 +929,7 @@ public class MainPage extends Fragment {
             } else {
                 textPriceChange.setTextColor(getResources().getColor(android.R.color.black));
             }
-            Log.d("[K-TR]", "[MainPage] Updated daily price change from DB: " + transactionInfo.getDailyChange());
+            Log.d("KTrader", "[MainPage] Updated daily price change from DB: " + transactionInfo.getDailyChange());
         }
     }
     
@@ -938,7 +938,7 @@ public class MainPage extends Fragment {
      */
     private void stopReactiveObservations() {
         if (disposables != null && !disposables.isDisposed()) {
-            Log.d("[K-TR]", "[MainPage] Stopping reactive observations");
+            Log.d("KTrader", "[MainPage] Stopping reactive observations");
             disposables.clear();
         }
     }
@@ -947,15 +947,15 @@ public class MainPage extends Fragment {
      * 마지막 동기화 시간 업데이트 (Appbar에 표시)
      */
     private void updateLastSyncTime() {
-        Log.d("[K-TR]", "[MainPage] updateLastSyncTime() called");
-        Log.d("[K-TR]", "[MainPage] mainActivity: " + (mainActivity != null ? "not null" : "null"));
+        Log.d("KTrader", "[MainPage] updateLastSyncTime() called");
+        Log.d("KTrader", "[MainPage] mainActivity: " + (mainActivity != null ? "not null" : "null"));
         
         if (mainActivity != null) {
-            Log.d("[K-TR]", "[MainPage] Calling mainActivity.updateLastSyncTime()");
+            Log.d("KTrader", "[MainPage] Calling mainActivity.updateLastSyncTime()");
             mainActivity.updateLastSyncTime();
-            Log.d("[K-TR]", "[MainPage] Updated last sync time in Appbar");
+            Log.d("KTrader", "[MainPage] Updated last sync time in Appbar");
         } else {
-            Log.w("[K-TR]", "[MainPage] Cannot update last sync time - mainActivity is null");
+            Log.w("KTrader", "[MainPage] Cannot update last sync time - mainActivity is null");
         }
     }
 }

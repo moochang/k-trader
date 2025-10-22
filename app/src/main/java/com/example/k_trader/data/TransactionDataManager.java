@@ -171,12 +171,12 @@ public class TransactionDataManager {
             
             transactionInfoRepository.saveTransactionInfo(entity)
                 .subscribe(
-                    () -> android.util.Log.d("[K-TR]", "[TransactionDataManager] Transaction data saved to DB successfully"),
-                    throwable -> android.util.Log.e("[K-TR]", "[TransactionDataManager] Error saving transaction data to DB", throwable)
+                    () -> android.util.Log.d("KTrader", "[TransactionDataManager] Transaction data saved to DB successfully"),
+                    throwable -> android.util.Log.e("KTrader", "[TransactionDataManager] Error saving transaction data to DB", throwable)
                 );
                 
         } catch (Exception e) {
-            android.util.Log.e("[K-TR]", "[TransactionDataManager] Error creating TransactionInfoEntity", e);
+            android.util.Log.e("KTrader", "[TransactionDataManager] Error creating TransactionInfoEntity", e);
         }
     }
 
@@ -237,7 +237,7 @@ public class TransactionDataManager {
      * Transaction 데이터를 브로드캐스트로 전송
      */
     private void broadcastTransactionData(TransactionData data, boolean isFromServer) {
-        android.util.Log.d("[K-TR]", "[TransactionDataManager] Broadcasting transaction data - hourlyChange: " + data.getHourlyChange() + ", dailyChange: " + data.getDailyChange());
+        android.util.Log.d("KTrader", "[TransactionDataManager] Broadcasting transaction data - hourlyChange: " + data.getHourlyChange() + ", dailyChange: " + data.getDailyChange());
         
         Intent intent = new Intent(BROADCAST_TRANSACTION_DATA);
         intent.putExtra("transactionTime", data.getTransactionTime());
@@ -253,7 +253,7 @@ public class TransactionDataManager {
         if (KTraderApplication.getAppContext() != null) {
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext())
                     .sendBroadcast(intent);
-            android.util.Log.d("[K-TR]", "[TransactionDataManager] Broadcast sent successfully");
+            android.util.Log.d("KTrader", "[TransactionDataManager] Broadcast sent successfully");
         }
     }
 

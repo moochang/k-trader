@@ -140,6 +140,7 @@ public class OrderManager {
             String logMessage = tag + " : " + type.toString() + " 발행 취소 : " + String.format("%.4f", units) + " : " + "최소 수량 미달";
             log_info(logMessage);
             sendErrorCard("Validation Error", ERR_VALIDATION_001.getDescription());
+            Log.d("KTrader", "Order " + "Validation Error");
             return null;
         }
 
@@ -148,7 +149,7 @@ public class OrderManager {
         while ((requestTime - lastRequestTimeInMillis) < safeIntervalInSec * 1000) {
             Intent intent = new Intent(MainActivity.BROADCAST_PROGRESS_MESSAGE);
 
-//            Log.d("KTrader", "sending progress : " + String.valueOf((15 * 1000) - (requestTime - lastRequestTimeInMillis)));
+            Log.d("KTrader", "Order sending progress : " + String.valueOf((15 * 1000) - (requestTime - lastRequestTimeInMillis)));
 
             intent.putExtra("progress", (int)((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis)));
             if (KTraderApplication.getAppContext() != null)
@@ -206,6 +207,7 @@ public class OrderManager {
 
             if (result == null) {
                 log_info(tag + " : " + "/trade/place : null");
+                Log.d("KTrader", "Order " + "/trade/place : null");
                 return null;
             }
 
@@ -213,6 +215,7 @@ public class OrderManager {
                 String logMessage = tag + " : " + "/trade/place : " + result.toString();
                 log_info(logMessage);
                 sendErrorCard("API Error", ERR_API_005.getDescription());
+                Log.d("KTrader", "Order " + logMessage);
                 return null;
             }
 
@@ -227,11 +230,12 @@ public class OrderManager {
             String logMessage = tag + " : " + "/trade/place : " + e.getMessage();
             log_info(logMessage);
             sendErrorCard("API Error", ERR_API_005.getDescription());
+            Log.d("KTrader", "Order " + logMessage);
             return null;
         }
 
         lastRequestTimeInMillis = Calendar.getInstance().getTimeInMillis();
-
+        Log.d("KTrader", "Order : " + result);
         return result;
     }
 

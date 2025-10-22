@@ -167,7 +167,7 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
     private void updateTransactionCardFromDB(com.example.k_trader.database.TransactionInfoEntity transactionInfo) {
         if (transactionInfo == null || cardAdapter == null) return;
         
-        android.util.Log.d("[K-TR]", "[TransactionItemFragment] Updating TransactionCard from DB: " + transactionInfo.toString());
+        android.util.Log.d("KTrader", "[TransactionItemFragment] Updating TransactionCard from DB: " + transactionInfo.toString());
         
         // TransactionCard 생성
         CardAdapter.TransactionCard card = new CardAdapter.TransactionCard(
@@ -374,7 +374,7 @@ public class TransactionItemFragment extends Fragment implements DatabaseMonitor
                 String nextBuyPrice = intent.getStringExtra("nextBuyPrice");
                 boolean isFromServer = intent.getBooleanExtra("isFromServer", false);
                 
-                android.util.Log.d("[K-TR]", "[TransactionItemFragment] Received transaction data - hourlyChange: " + hourlyChange + ", dailyChange: " + dailyChange);
+                android.util.Log.d("KTrader", "[TransactionItemFragment] Received transaction data - hourlyChange: " + hourlyChange + ", dailyChange: " + dailyChange);
                 
                 CardAdapter.TransactionCard card = new CardAdapter.TransactionCard(
                     transactionTime, btcCurrentPrice, hourlyChange, estimatedBalance,

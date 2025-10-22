@@ -1,6 +1,7 @@
 package com.example.k_trader;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -15,9 +16,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import com.example.k_trader.MainPage;
-import com.example.k_trader.KTraderApplication;
-import com.example.k_trader.TransactionLogFragment;
 import java.util.Locale;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -40,11 +38,9 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 import static com.example.k_trader.base.TradeDataManager.Status.PLACED;
 import static com.example.k_trader.base.TradeDataManager.Type.BUY;
-import static com.example.k_trader.base.TradeDataManager.Type.NONE;
 import static com.example.k_trader.base.TradeDataManager.Type.SELL;
 
 /**
@@ -218,11 +214,17 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
 
         btnBuyWithMarketPrice.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                PopupMenu popup = new PopupMenu(mainActivity.cur_fragment.getContext(), v);
-                popup.setOnMenuItemClickListener(self);
-                MenuInflater inflater = popup.getMenuInflater();
-                inflater.inflate(R.menu.buy_market_price, popup.getMenu());
-                popup.show();
+                Context context = getContext();
+                if (context == null) {
+                    context = v.getContext();
+                }
+                if (context != null) {
+                    PopupMenu popup = new PopupMenu(context, v);
+                    popup.setOnMenuItemClickListener(self);
+                    MenuInflater inflater = popup.getMenuInflater();
+                    inflater.inflate(R.menu.buy_market_price, popup.getMenu());
+                    popup.show();
+                }
             }
         });
 
@@ -231,15 +233,25 @@ public class PlacedOrderPage extends Fragment implements PopupMenu.OnMenuItemCli
 
     private void onSellItemClick(int position) {
         g_position = position;
-        PopupMenu popup = new PopupMenu(this.getContext(), listView);
-        popup.setOnMenuItemClickListener(self);
-        MenuInflater inflater = popup.getMenuInflater();
-        inflater.inflate(R.menu.placed_order_item_shortcut, popup.getMenu());
-        popup.show();
+        Context context = getContext();
+        if (context == null) {
+            context = listView.getContext();
+        }
+        if (context != null) {
+            PopupMenu popup = new PopupMenu(context, listView);
+            popup.setOnMenuItemClickListener(self);
+            MenuInflater inflater = popup.getMenuInflater();
+            inflater.inflate(R.menu.placed_order_item_shortcut, popup.getMenu());
+            popup.show();
+        }
     }
 
     private void onBuyItemClick(int position) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(mainActivity.cur_fragment.getContext());
+        Context context = getContext();
+        if (context == null) {
+            context = mainActivity;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("가격 조정");
         builder.setMessage("현재가 : " + String.format(Locale.getDefault(), "%,d", list.get(position).getData().getPrice()));
         builder.setNegativeButton("UP",
