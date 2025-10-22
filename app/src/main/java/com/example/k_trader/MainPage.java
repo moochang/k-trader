@@ -539,8 +539,9 @@ public class MainPage extends Fragment {
             getActivity().runOnUiThread(() -> {
                 Log.d("KTrader", "[MainPage] refreshCoinData() - UI thread task started");
                 Log.d("KTrader", "[MainPage] refreshCoinData() - calling updateCoinInfo()");
-                // 코인 정보 업데이트
-                updateCoinInfo();
+                
+                // 코인 타입만 업데이트 (가격과 활성 거래 수는 이전 값 유지)
+                updateCoinTypeOnly();
                 
                 Log.d("KTrader", "[MainPage] refreshCoinData() - calling fetchLatestCoinData()");
                 // API에서 최신 데이터 가져오기
@@ -550,6 +551,31 @@ public class MainPage extends Fragment {
         } else {
             Log.w("KTrader", "[MainPage] refreshCoinData() - getActivity() is null, cannot proceed");
         }
+    }
+    
+    /**
+     * 코인 타입만 업데이트 (새로고침 시 깜박임 방지)
+     */
+    private void updateCoinTypeOnly() {
+        Log.d("KTrader", "[MainPage] updateCoinTypeOnly() called");
+        if (textCoinType == null) {
+            Log.w("KTrader", "[MainPage] updateCoinTypeOnly() - textCoinType is null, returning");
+            return;
+        }
+        
+        // SharedPreferences에서 직접 코인 타입 읽어오기
+        android.content.SharedPreferences sharedPreferences = getContext().getSharedPreferences("settings", android.content.Context.MODE_PRIVATE);
+        String coinType = sharedPreferences.getString(com.example.k_trader.base.GlobalSettings.COIN_TYPE_KEY_NAME, com.example.k_trader.base.GlobalSettings.COIN_TYPE_DEFAULT_VALUE);
+        
+        Log.d("KTrader", "[MainPage] Reading coin type from preferences: " + coinType);
+        
+        // GlobalSettings도 업데이트
+        com.example.k_trader.base.GlobalSettings.getInstance().setCoinType(coinType);
+        
+        // 코인 타입만 표시 (가격과 활성 거래 수는 이전 값 유지)
+        textCoinType.setText(coinType);
+        
+        Log.d("KTrader", "[MainPage] Coin type updated, keeping previous price and active orders values");
     }
     
     /**
@@ -641,11 +667,13 @@ public class MainPage extends Fragment {
                     // UI 스레드에서 업데이트
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            // 현재 가격 업데이트
-                            if (textCurrentPrice != null) {
+                            // 현재 가격 업데이트 (깜박임 방지)
+                            if (textCurrentPrice != null && finalCurrentPrice > 0) {
                                 String formattedPrice = String.format(java.util.Locale.getDefault(), "₩%,d", finalCurrentPrice);
                                 textCurrentPrice.setText(formattedPrice);
                                 Log.d("KTrader", "[MainPage] Updated current price: " + formattedPrice);
+                            } else if (finalCurrentPrice <= 0) {
+                                Log.d("KTrader", "[MainPage] Skipping price update - current price is 0 or invalid");
                             }
                             
                             // 전일 대비 등락률 업데이트 (CoinInfo용)
@@ -724,13 +752,9 @@ public class MainPage extends Fragment {
         // 코인 타입 표시
         textCoinType.setText(coinType);
         
-        // 현재 가격은 기본값으로 설정, 등락률은 TransactionInfo에서 전일 대비 등락률로 업데이트됨
-        textCurrentPrice.setText("₩0");
-        
-        // 활성 거래 수 초기값 설정
-        if (textActiveOrders != null) {
-            textActiveOrders.setText("S0 : B0");
-        }
+        // 현재 가격과 활성 거래 수는 이전 값을 유지 (깜박임 방지)
+        // API 호출로 실제 값이 업데이트될 때까지 기존 값 유지
+        Log.d("KTrader", "[MainPage] Keeping previous values to prevent flickering");
         
         // 활성 거래 수는 DB에서 가져오기
         Log.d("KTrader", "[MainPage] About to call updateActiveOrdersCount()");
@@ -747,6 +771,15 @@ public class MainPage extends Fragment {
         if (textActiveOrders == null) {
             Log.w("KTrader", "[MainPage] Cannot update active orders count - textActiveOrders is null");
             return;
+        }
+        
+        // 현재 표시된 값이 없거나 기본값인 경우에만 초기값 설정
+        String currentText = textActiveOrders.getText().toString();
+        if (currentText.isEmpty() || currentText.equals("S0 : B0")) {
+            textActiveOrders.setText("S0 : B0");
+            Log.d("KTrader", "[MainPage] Set initial active orders count: S0 : B0");
+        } else {
+            Log.d("KTrader", "[MainPage] Keeping current active orders count: " + currentText);
         }
         
         Log.d("KTrader", "[MainPage] Updating active orders count from API...");
@@ -785,10 +818,17 @@ public class MainPage extends Fragment {
                 
             } catch (Exception e) {
                 Log.e("KTrader", "[MainPage] Error getting active orders from API", e);
+                // API 호출 실패 시에만 기본값으로 설정 (깜박임 방지)
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         if (textActiveOrders != null) {
-                            textActiveOrders.setText("S0 : B0");
+                            String currentValue = textActiveOrders.getText().toString();
+                            if (currentValue.isEmpty() || currentValue.equals("S0 : B0")) {
+                                textActiveOrders.setText("S0 : B0");
+                                Log.d("KTrader", "[MainPage] Set default active orders count due to API error");
+                            } else {
+                                Log.d("KTrader", "[MainPage] Keeping current value despite API error: " + currentValue);
+                            }
                         }
                     });
                 }
