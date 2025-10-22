@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 눌린 상태 - 글자색 유지 -->
+    <item android:state_pressed="true" android:color="@color/text_primary_modern" />
+    
+    <!-- 포커스 상태 - 글자색 유지 -->
+    <item android:state_focused="true" android:color="@color/text_primary_modern" />
+    
+    <!-- 기본 상태 - 글자색 유지 -->
+    <item android:color="@color/text_primary_modern" />
+</selector>

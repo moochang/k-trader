@@ -15,4 +15,25 @@
     <!-- 테마별 App Bar 색상 -->
     <color name="app_bar_light">#FFFFFF</color>
     <color name="app_bar_dark">#000000</color>
+    
+    <!-- 에러 관련 색상 -->
+    <color name="negative_color">#FF4444</color>
+    <color name="positive_color">#44FF44</color>
+    <color name="network_error_color">#FF6B35</color>
+    <color name="api_error_color">#FF8C42</color>
+    <color name="validation_error_color">#FFB366</color>
+    <color name="auth_error_color">#FF4444</color>
+    <color name="rate_limit_error_color">#FFA500</color>
+    <color name="server_error_color">#DC143C</color>
+    <color name="default_error_color">#808080</color>
+    
+    <!-- 배경 색상 -->
+    <color name="error_background_color">#FFF5F5</color>
+    <color name="error_border_color">#FFE0E0</color>
+    <color name="info_background_color">#F0F8FF</color>
+    <color name="info_border_color">#E0E8FF</color>
+    
+    <!-- Modern UI 색상 (중복 제거) -->
+    <color name="accent_modern">#FF8C42</color>
+    <color name="divider_modern">#E0E0E0</color>
 </resources>

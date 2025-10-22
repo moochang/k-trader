@@ -93,7 +93,11 @@ public class Api_Client {
                 response = request.body();
             } else {
                 response = request.body();
-                logger.error("error : " + request.code() + ", message : "	+ response);
+                if (logger != null) {
+                    logger.error("error : " + request.code() + ", message : "	+ response);
+                } else {
+                    System.err.println("API Error: " + request.code() + ", message: " + response);
+                }
             }
             request.disconnect();
         }

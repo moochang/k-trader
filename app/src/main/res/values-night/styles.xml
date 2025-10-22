@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark 테마용 스타일 오버라이드 -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
+        <item name="colorPrimary">@color/background_modern</item>
+        <item name="colorPrimaryDark">@color/status_bar_dark</item>
+        <item name="android:statusBarColor">@color/status_bar_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Dark 테마용 Custom Popup Menu Style -->
+    <style name="CustomPopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/popup_menu_background_dark</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:elevation">8dp</item>
+    </style>
+
+    <!-- Dark 테마용 Custom Popup Menu Item Style -->
+    <style name="CustomPopupMenuItemStyle" parent="Widget.AppCompat.ListView.DropDown">
+        <item name="android:background">@drawable/popup_menu_item_background_dark</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+</resources>

@@ -2,98 +2,140 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_modern">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
+
+        <!-- 코인 정보 섹션 -->
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="70dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/surface_modern">
 
-            <Button
-                android:id="@+id/button"
-                android:layout_width="0dp"
-                android:layout_height="53dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="4dp"
-                android:checked="true"
-                android:drawableStart="@drawable/ic_play"
-                android:drawablePadding="8dp"
-                android:text="@string/start_trading"
-                android:textAllCaps="false"
-                style="@style/ButtonModernSuccess" />
-
-            <Button
-                android:id="@+id/button2"
-                android:layout_width="0dp"
-                android:layout_height="53dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:drawableStart="@drawable/ic_stop"
-                android:drawablePadding="8dp"
-                android:text="@string/stop_trading"
-                android:textAllCaps="false"
-                style="@style/ButtonModernError" />
-
-            <Button
-                android:id="@+id/imageButtonPreference"
-                android:layout_width="0dp"
-                android:layout_height="53dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="8dp"
-                android:drawableStart="@drawable/ic_settings"
-                android:drawablePadding="8dp"
-                android:text="@string/settings"
-                android:textAllCaps="false"
-                style="@style/ButtonModernSecondary" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="70dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <CheckBox
-                android:id="@+id/checkBox"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="16dp"
-                android:checked="true"
-                android:text="@string/auto_scroll"
-                style="@style/CheckBoxModern" />
+                android:orientation="horizontal"
+                android:padding="12dp">
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+                <!-- 코인 타입 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
 
-            <Button
-                android:id="@+id/button3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:drawableStart="@drawable/ic_scroll_down"
-                android:drawablePadding="4dp"
-                android:text="@string/scroll_to_bottom"
-                android:textAllCaps="false"
-                android:gravity="center_horizontal|center_vertical"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                style="@style/ButtonModernSecondary" />
+                    <TextView
+                        android:id="@+id/textCoinType"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="BTC"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary_modern" />
 
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="코인 타입"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary_modern" />
+
+                </LinearLayout>
+
+                <!-- 현재 가격 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/textCurrentPrice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="₩0"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary_modern" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="현재 가격"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary_modern" />
+
+                </LinearLayout>
+
+                <!-- 등락 퍼센트 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/textPriceChange"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+0.00%"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/success_modern" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="등락률"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary_modern" />
+
+                </LinearLayout>
+
+                <!-- 거래 갯수 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/textActiveOrders"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary_modern" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="활성 거래"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary_modern" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
 
         <!-- TabLayout과 ViewPager -->
         <android.support.design.widget.TabLayout
@@ -114,5 +156,20 @@
             android:layout_weight="1" />
 
     </LinearLayout>
+
+    <!-- Trading 토글 Floating Action Button -->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fabTradingToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_play"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:backgroundTint="@color/success_modern"
+        app:tint="@android:color/white"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp" />
 
 </android.support.constraint.ConstraintLayout>
