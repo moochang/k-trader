@@ -149,17 +149,17 @@ public class MainPage extends Fragment {
      */
     private void loadInitialDataImmediately() {
         if (databaseOrderManager == null) {
-            Log.w("KTrader", "[MainPage] DatabaseOrderManager가 초기화되지 않음");
+            Log.w("[K-TR]", "[MainPage] DatabaseOrderManager가 초기화되지 않음");
             return;
         }
         
-        Log.d("KTrader", "[MainPage] 즉시 초기 데이터 로드 시작");
+        Log.d("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 시작");
         
         Completable immediateLoad = databaseOrderManager.initializeAndSyncData("MainPage 즉시 초기화")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnComplete(() -> Log.d("KTrader", "[MainPage] 즉시 초기 데이터 로드 완료"))
-                .doOnError(error -> Log.e("KTrader", "[MainPage] 즉시 초기 데이터 로드 실패", error));
+                .doOnComplete(() -> Log.d("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 완료"))
+                .doOnError(error -> Log.e("[K-TR]", "[MainPage] 즉시 초기 데이터 로드 실패", error));
         
         disposables.add(immediateLoad.subscribe());
     }
@@ -212,8 +212,8 @@ public class MainPage extends Fragment {
                     .observeOn(AndroidSchedulers.mainThread())
                     .repeat()
                     .delay(5, java.util.concurrent.TimeUnit.MINUTES)
-                    .doOnComplete(() -> Log.d("KTrader", "[MainPage] 주기적 데이터 동기화 완료"))
-                    .doOnError(error -> Log.e("KTrader", "[MainPage] 주기적 데이터 동기화 실패", error));
+                    .doOnComplete(() -> Log.d("[K-TR]", "[MainPage] 주기적 데이터 동기화 완료"))
+                    .doOnError(error -> Log.e("[K-TR]", "[MainPage] 주기적 데이터 동기화 실패", error));
             
             disposables.add(periodicSync.subscribe());
         }

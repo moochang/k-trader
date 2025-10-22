@@ -1,10 +1,12 @@
 package com.example.k_trader;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
+import android.app.AlertDialog;
 import android.app.job.JobScheduler;
+import android.graphics.Color;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +14,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
+import android.os.Build;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -22,12 +26,12 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.k_trader.base.GlobalSettings;
 import com.example.k_trader.database.OrderRepository;
+import com.example.k_trader.dialog.ProgressDialogManager;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -44,12 +48,9 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.TextView textLastSyncTime;
 
     public static final int STORAGE_PERMISSION_REQUEST = 0;
+    public static final int NOTIFICATION_PERMISSION_REQUEST = 1;
 
     public static final String BROADCAST_PROGRESS_MESSAGE = "PROGRESS_MESSAGE";
-    @SuppressWarnings("FieldCanBeLocal") // static 필드로 여러 인스턴스에서 공유됨
-    private static Timer mTimer;
-    @SuppressWarnings({"deprecation", "FieldCanBeLocal"}) // ProgressDialog는 API 26에서 deprecated되었지만 대체할 수 있는 적절한 방법이 없음
-    private static ProgressDialog dialog;
     static int progress;
 
     JobScheduler jobScheduler;
@@ -80,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
         
         // App bar 색상 설정
         setAppBarColorByTheme();
+        
+        // Notification 권한 요청 (Android 13 이상)
+        requestNotificationPermission();
 
 //        int id = 0;
         viewPager = findViewById(R.id.viewpager);
@@ -125,6 +129,64 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "거래를 위해서는 Key와 Secret값 설정이 필요합니다.", Toast.LENGTH_SHORT).show();
             // Launch setting activity
             startActivity(new Intent(this, SettingActivity.class));
+        }
+    }
+    
+    /**
+     * Notification 권한 요청 (Android 13 이상)
+     */
+    private void requestNotificationPermission() {
+        android.util.Log.d("KTrader", "[MainActivity] requestNotificationPermission() 시작");
+        android.util.Log.d("KTrader", "[MainActivity] Android SDK 버전: " + Build.VERSION.SDK_INT);
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            android.util.Log.d("KTrader", "[MainActivity] Android 13+ 감지 - Notification 권한 확인");
+            
+            int permissionStatus = ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS);
+            android.util.Log.d("KTrader", "[MainActivity] 현재 권한 상태: " + permissionStatus);
+            android.util.Log.d("KTrader", "[MainActivity] PERMISSION_GRANTED: " + android.content.pm.PackageManager.PERMISSION_GRANTED);
+            
+            if (permissionStatus != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                android.util.Log.d("KTrader", "[MainActivity] Notification 권한 요청 시작");
+                ActivityCompat.requestPermissions(this, 
+                    new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 
+                    NOTIFICATION_PERMISSION_REQUEST);
+            } else {
+                android.util.Log.d("KTrader", "[MainActivity] Notification 권한 이미 허용됨");
+            }
+        } else {
+            android.util.Log.d("KTrader", "[MainActivity] Android 13 미만 - Notification 권한 불필요");
+        }
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        
+        android.util.Log.d("KTrader", "[MainActivity] onRequestPermissionsResult() 호출");
+        android.util.Log.d("KTrader", "[MainActivity] requestCode: " + requestCode);
+        android.util.Log.d("KTrader", "[MainActivity] NOTIFICATION_PERMISSION_REQUEST: " + NOTIFICATION_PERMISSION_REQUEST);
+        
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST) {
+            android.util.Log.d("KTrader", "[MainActivity] Notification 권한 요청 결과 처리");
+            
+            if (grantResults.length > 0) {
+                android.util.Log.d("KTrader", "[MainActivity] grantResults.length: " + grantResults.length);
+                android.util.Log.d("KTrader", "[MainActivity] grantResults[0]: " + grantResults[0]);
+                android.util.Log.d("KTrader", "[MainActivity] PERMISSION_GRANTED: " + android.content.pm.PackageManager.PERMISSION_GRANTED);
+                
+                if (grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    android.util.Log.d("KTrader", "[MainActivity] Notification 권한 허용됨");
+                    Toast.makeText(this, "알림 권한이 허용되었습니다.", Toast.LENGTH_SHORT).show();
+                } else {
+                    android.util.Log.d("KTrader", "[MainActivity] Notification 권한 거부됨");
+                    Toast.makeText(this, "알림 권한이 거부되었습니다. 거래 알림을 받을 수 없습니다.", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                android.util.Log.e("KTrader", "[MainActivity] grantResults가 비어있음");
+            }
+        } else {
+            android.util.Log.d("KTrader", "[MainActivity] 다른 권한 요청 결과: " + requestCode);
         }
     }
 
@@ -358,36 +420,70 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        
+        android.util.Log.d("KTrader", "[MainActivity] onDestroy() 시작");
 
-        Resources res = getResources();
+        try {
+            Resources res = getResources();
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
+            Intent notificationIntent = new Intent(this, MainActivity.class);
 
-        PendingIntent contentIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent, 
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+            PendingIntent contentIntent = PendingIntent.getActivity(
+                this, 0, notificationIntent, 
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            android.util.Log.d("KTrader", "[MainActivity] PendingIntent 생성 완료");
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "exit_channel");
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "exit_channel");
 
-        builder.setContentTitle("Exit program")
-                .setContentText("OnDestroy is called")
-                .setTicker("OnDestroy is called")
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setLargeIcon(BitmapFactory.decodeResource(res, R.mipmap.ic_launcher))
-                .setContentIntent(contentIntent)
-                .setAutoCancel(true)
-                .setWhen(System.currentTimeMillis())
-                .setDefaults(Notification.DEFAULT_ALL);
+            builder.setContentTitle("Exit program")
+                    .setContentText("OnDestroy is called")
+                    .setTicker("OnDestroy is called")
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setLargeIcon(BitmapFactory.decodeResource(res, R.mipmap.ic_launcher))
+                    .setContentIntent(contentIntent)
+                    .setAutoCancel(true)
+                    .setWhen(System.currentTimeMillis())
+                    .setDefaults(Notification.DEFAULT_ALL);
 
-        builder.setCategory(Notification.CATEGORY_MESSAGE)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVisibility(Notification.VISIBILITY_PUBLIC);
+            builder.setCategory(Notification.CATEGORY_MESSAGE)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC);
 
-        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            android.util.Log.d("KTrader", "[MainActivity] NotificationCompat.Builder 생성 완료");
 
-        if (nm != null)
-            nm.notify((int) System.currentTimeMillis(), builder.build());
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            if (nm != null) {
+                android.util.Log.d("KTrader", "[MainActivity] NotificationManager 획득 성공");
+                
+                // 안드로이드 8.0 이상 노티피케이션을 사용하기 위해서는 하나 이상의 알림 채널을 만들어야한다.
+                NotificationChannel exitChannel = new NotificationChannel("exit_channel", "Exit Notifications", NotificationManager.IMPORTANCE_DEFAULT);
+                exitChannel.setDescription("Exit notification channel");
+                exitChannel.enableLights(true);
+                exitChannel.setLightColor(Color.RED);
+
+                android.util.Log.d("KTrader", "[MainActivity] NotificationChannel 생성 완료 - ID: exit_channel");
+                
+                nm.createNotificationChannel(exitChannel);
+                android.util.Log.d("KTrader", "[MainActivity] NotificationChannel 등록 완료");
+                
+                // 채널 생성 확인
+                NotificationChannel createdChannel = nm.getNotificationChannel("exit_channel");
+                if (createdChannel != null) {
+                    android.util.Log.d("KTrader", "[MainActivity] 채널 생성 확인 성공 - 중요도: " + createdChannel.getImportance());
+                } else {
+                    android.util.Log.e("KTrader", "[MainActivity] 채널 생성 확인 실패");
+                }
+                
+                nm.notify(999, builder.build());
+                android.util.Log.d("KTrader", "[MainActivity] Exit Notification 등록 완료 - ID: 999");
+            } else {
+                android.util.Log.e("KTrader", "[MainActivity] NotificationManager 획득 실패");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("KTrader", "[MainActivity] onDestroy() Notification 오류", e);
+        }
     }
 
     private class adapter extends FragmentPagerAdapter {
@@ -424,33 +520,22 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             progress = intent.getIntExtra("progress", 0);
-//            Log.d("KTrader", "received progress : " + String.valueOf(progress));
+            android.util.Log.d("KTrader", "[MainActivity] received progress : " + String.valueOf(progress));
 
-            mTimer = new Timer();
-            mTimer.schedule(new MyTask(), 0, progress);
-
-            // ProgressDialog는 API 26에서 deprecated되었지만 대체할 수 있는 적절한 방법이 없음
-            @SuppressWarnings("deprecation")
-            ProgressDialog progressDialog = ProgressDialog.show(MainActivity.this, "Wait",
-                    "다음 Request가 허용될 때까지 대기.. 최대 10초", true);
-            dialog = progressDialog;
+            // ProgressDialogManager를 사용하여 다이얼로그 표시
+            ProgressDialogManager.show(MainActivity.this, progress);
         }
     }
 
     static class MyTask extends TimerTask {
         public void run() {
-            // Do what you wish here with the dialog
-            if (dialog != null) {
-                dialog.cancel();
-                dialog.dismiss();
-            }
+            // ProgressDialogManager를 사용하여 다이얼로그 닫기
+            ProgressDialogManager.dismiss();
         }
     }
 
     @Override
     public void onBackPressed() {
-//        Toast.makeText(this, "Back button pressed.", Toast.LENGTH_SHORT).show();
-        // ��׶��� ������ ��ȯ�Ѵ�.
         moveTaskToBack(true);
     }
 

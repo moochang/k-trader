@@ -151,7 +151,7 @@ public class OrderManager {
 
             Log.d("KTrader", "Order sending progress : " + String.valueOf((15 * 1000) - (requestTime - lastRequestTimeInMillis)));
 
-            intent.putExtra("progress", (int)((safeIntervalInSec * 1000) - (requestTime - lastRequestTimeInMillis)));
+            intent.putExtra("progress", (int)((safeIntervalInSec) - (requestTime - lastRequestTimeInMillis)/1000));
             if (KTraderApplication.getAppContext() != null)
                 LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
 
@@ -200,7 +200,10 @@ public class OrderManager {
             }
         }
 
-        log_info(tag + " : " + type.toString() + " 발행 : " + String.format("%.4f", units) + " : " + String.format(Locale.getDefault(), "%,d", price));
+        log_info(tag + " : " + type.toString() + " 발행 시도 : " + String.format("%.4f", units) + " : " + String.format(Locale.getDefault(), "%,d", price));
+        log_info(tag + " : API Key 설정 상태: " + (GlobalSettings.getInstance().getApiKey().isEmpty() ? "비어있음" : "설정됨"));
+        log_info(tag + " : API Secret 설정 상태: " + (GlobalSettings.getInstance().getApiSecret().isEmpty() ? "비어있음" : "설정됨"));
+        log_info(tag + " : 코인 타입: " + getCurrentCoinType());
 
         try {
             result = api.callApi("POST", "/trade/place", rgParams);
@@ -222,6 +225,7 @@ public class OrderManager {
             if (!((String) result.get("status")).equals("0000")) {
                 String logMessage = tag + " : " + "/trade/place : " + result.toString();
                 log_info(logMessage);
+                log_info(tag + " : API 오류 상세 - Status: " + result.get("status") + ", Message: " + result.get("message"));
                 sendErrorCard("API Error", ERR_API_005.getDescription());
                 return null;
             }
@@ -249,6 +253,9 @@ public class OrderManager {
     }
 
     public JSONObject addOrderWithMarketPrice(String tag, TradeDataManager.Type type, float units) {
+        Log.d("KTrader", "[OrderManager] addOrderWithMarketPrice() 시작 - tag: " + tag + ", type: " + type + ", units: " + units);
+        log_info(tag + " : 시장가 주문 시작 - " + type.toString() + " " + String.format("%.4f", units));
+        
         Api_Client api = tradeApiService.getApiService();
         JSONObject result;
         long requestTime = Calendar.getInstance().getTimeInMillis();
@@ -277,33 +284,70 @@ public class OrderManager {
         rgParams.put("units", String.format("%.4f", units));
         rgParams.put("payment_currency", "KRW");
 
-        // 매수 주문인 경우 잔고 확인
+        // 매수 주문인 경우 잔고 확인 (PlacedOrderPage에서 이미 확인했지만 추가 안전장치)
         if (type == BUY) {
+            Log.d("KTrader", "[OrderManager] 매수 주문 - 추가 잔고 확인");
             try {
                 JSONObject balanceData = getBalance("시장가 매수 전 잔고 확인");
+                Log.d("KTrader", "[OrderManager] 잔고 조회 결과: " + (balanceData != null ? "성공" : "실패"));
+                
                 if (balanceData != null) {
                     String totalKrw = (String) balanceData.get("total_krw");
+                    Log.d("KTrader", "[OrderManager] KRW 잔고: " + totalKrw);
+                    
                     if (totalKrw != null) {
                         double krwBalance = Double.parseDouble(totalKrw);
                         // 시장가 매수이므로 현재가를 가져와서 계산
-                        JSONObject currentPriceData = getCurrentPrice("시장가 매수 현재가 확인");
-                        if (currentPriceData != null) {
-                            String currentPriceStr = (String) currentPriceData.get("closing_price");
-                            if (currentPriceStr != null) {
-                                double currentPrice = Double.parseDouble(currentPriceStr);
-                                double requiredAmount = units * currentPrice;
+                        JSONObject tickerData = getTicker("시장가 매수 현재가 확인");
+                        Log.d("KTrader", "[OrderManager] ticker 조회 결과: " + (tickerData != null ? "성공" : "실패"));
+                        
+                        if (tickerData != null) {
+                            JSONObject data = (JSONObject) tickerData.get("data");
+                            if (data != null) {
+                                String currentPriceStr = (String) data.get("closing_price");
+                                Log.d("KTrader", "[OrderManager] 현재가: " + currentPriceStr);
                                 
-                                if (krwBalance < requiredAmount) {
-                                    log_info(tag + " : 잔고 부족으로 시장가 매수 주문을 건너뜁니다. 필요: " + 
-                                        String.format(Locale.getDefault(), "%,.0f", requiredAmount) + 
-                                        "원, 보유: " + String.format(Locale.getDefault(), "%,.0f", krwBalance) + "원");
+                                if (currentPriceStr != null) {
+                                    double currentPrice = Double.parseDouble(currentPriceStr);
+                                    double requiredAmount = units * currentPrice;
+                                    Log.d("KTrader", "[OrderManager] 필요 금액: " + requiredAmount + ", 보유 금액: " + krwBalance);
+                                    
+                                    if (krwBalance < requiredAmount) {
+                                        String message = tag + " : 잔고 부족으로 시장가 매수 주문을 건너뜁니다. 필요: " + 
+                                            String.format(Locale.getDefault(), "%,.0f", requiredAmount) + 
+                                            "원, 보유: " + String.format(Locale.getDefault(), "%,.0f", krwBalance) + "원";
+                                        Log.w("KTrader", "[OrderManager] " + message);
+                                        log_info(message);
+                                        return null;
+                                    }
+                                    Log.d("KTrader", "[OrderManager] 잔고 확인 완료 - 시장가 매수 가능");
+                                } else {
+                                    Log.e("KTrader", "[OrderManager] closing_price 정보가 null");
+                                    log_info(tag + " : 현재가 정보를 가져올 수 없습니다");
                                     return null;
                                 }
+                            } else {
+                                Log.e("KTrader", "[OrderManager] ticker data가 null");
+                                log_info(tag + " : 현재가 데이터를 가져올 수 없습니다");
+                                return null;
                             }
+                        } else {
+                            Log.e("KTrader", "[OrderManager] ticker 조회 실패");
+                            log_info(tag + " : 현재가 조회에 실패했습니다");
+                            return null;
                         }
+                    } else {
+                        Log.e("KTrader", "[OrderManager] KRW 잔고 정보가 null");
+                        log_info(tag + " : KRW 잔고 정보를 가져올 수 없습니다");
+                        return null;
                     }
+                } else {
+                    Log.e("KTrader", "[OrderManager] 잔고 조회 실패");
+                    log_info(tag + " : 잔고 조회에 실패했습니다");
+                    return null;
                 }
             } catch (Exception e) {
+                Log.e("KTrader", "[OrderManager] 잔고 확인 중 오류 발생", e);
                 log_info(tag + " : 시장가 매수 잔고 확인 중 오류 발생: " + e.getMessage());
                 return null;
             }
@@ -312,15 +356,23 @@ public class OrderManager {
         log_info(tag + " : " + type.toString() + " 시장가 발행 : " + String.format("%.4f", units) + " : ");
 
         try {
+            String endpoint = type == BUY ? "/trade/market_buy" : "/trade/market_sell";
+            Log.d("KTrader", "[OrderManager] API 호출 시작 - endpoint: " + endpoint);
+            
             if (type == BUY)
                 result = api.callApi("POST", "/trade/market_buy", rgParams);
             else
                 result = api.callApi("POST", "/trade/market_sell", rgParams);
+                
+            Log.d("KTrader", "[OrderManager] API 호출 완료 - 결과: " + (result != null ? "성공" : "실패"));
 
             if (result == null) {
+                Log.e("KTrader", "[OrderManager] API 응답이 null");
                 log_info(tag + " : " + "/trade/market_(buy/sell) : null");
                 return null;
             }
+            
+            Log.d("KTrader", "[OrderManager] API 응답: " + result.toString());
 
             if (result.get("status") instanceof Long) {
                 String logMessage = tag + " : " + "/trade/market_(buy/sell)1 : " + result.toString();
@@ -332,10 +384,14 @@ public class OrderManager {
             // {"message":"잠시 후 이용해 주십시오.[9900]","status":"5600"}
             if (!((String) result.get("status")).equals("0000")) {
                 String logMessage = tag + " : " + "/trade/market_(buy/sell)2 : " + result.toString();
+                Log.e("KTrader", "[OrderManager] " + logMessage);
                 log_info(logMessage);
+                log_info(tag + " : API 오류 상세 - Status: " + result.get("status") + ", Message: " + result.get("message"));
                 sendErrorCard("API Error", ERR_API_006.getDescription());
                 return null;
             }
+            
+            Log.d("KTrader", "[OrderManager] 시장가 주문 성공");
         } catch (Exception e) {
             e.printStackTrace();
             String logMessage = tag + " : " + "/trade/market_(buy/sell)3 : " + e.getMessage();
@@ -345,6 +401,7 @@ public class OrderManager {
         }
 
         lastRequestTimeInMillis = Calendar.getInstance().getTimeInMillis();
+        Log.d("KTrader", "[OrderManager] addOrderWithMarketPrice() 완료 - 결과: " + result.toString());
 
         return result;
     }

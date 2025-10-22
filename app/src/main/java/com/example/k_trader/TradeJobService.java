@@ -80,6 +80,8 @@ public class TradeJobService extends JobService {
 
     @Override
     public boolean onStartJob(final JobParameters jobParameters) {
+        Log.d("KTrader", "[TradeJobService] onStartJob() 시작 - Job ID: " + jobParameters.getJobId());
+        
         // Foreground Service로 시작
         startForegroundService();
         
@@ -112,44 +114,96 @@ public class TradeJobService extends JobService {
     }
 
     private void createNotificationChannel() {
-        NotificationChannel channel = new NotificationChannel(
-            CHANNEL_ID,
-            "K-Trader Trading Service",
-            NotificationManager.IMPORTANCE_LOW
-        );
-        channel.setDescription("K-Trader 자동 거래 서비스");
-        channel.setShowBadge(false);
-                // 앱바와 동일한 진한 주황색 파스텔 톤 적용
-                channel.setLightColor(Color.parseColor("#FF8C42"));
+        Log.d("KTrader", "[TradeJobService] createNotificationChannel() 시작");
         
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        if (notificationManager != null) {
-            notificationManager.createNotificationChannel(channel);
+        try {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                "K-Trader Trading Service",
+                NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("K-Trader 자동 거래 서비스");
+            channel.setShowBadge(false);
+            // 앱바와 동일한 진한 주황색 파스텔 톤 적용
+            channel.setLightColor(Color.parseColor("#FF8C42"));
+            
+            Log.d("KTrader", "[TradeJobService] NotificationChannel 생성 완료 - ID: " + CHANNEL_ID);
+            
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            if (notificationManager != null) {
+                Log.d("KTrader", "[TradeJobService] NotificationManager 획득 성공");
+                
+                // 기존 채널이 있는지 확인
+                NotificationChannel existingChannel = notificationManager.getNotificationChannel(CHANNEL_ID);
+                if (existingChannel != null) {
+                    Log.d("KTrader", "[TradeJobService] 기존 채널 발견 - 삭제 후 재생성");
+                    notificationManager.deleteNotificationChannel(CHANNEL_ID);
+                }
+                
+                notificationManager.createNotificationChannel(channel);
+                Log.d("KTrader", "[TradeJobService] NotificationChannel 생성 완료");
+                
+                // 채널 생성 확인
+                NotificationChannel createdChannel = notificationManager.getNotificationChannel(CHANNEL_ID);
+                if (createdChannel != null) {
+                    Log.d("KTrader", "[TradeJobService] 채널 생성 확인 성공 - 중요도: " + createdChannel.getImportance());
+                } else {
+                    Log.e("KTrader", "[TradeJobService] 채널 생성 확인 실패");
+                }
+            } else {
+                Log.e("KTrader", "[TradeJobService] NotificationManager 획득 실패");
+            }
+        } catch (Exception e) {
+            Log.e("KTrader", "[TradeJobService] createNotificationChannel() 오류", e);
         }
     }
 
     private void startForegroundService() {
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent, 
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+        Log.d("KTrader", "[TradeJobService] startForegroundService() 시작");
+        
+        try {
+            Intent notificationIntent = new Intent(this, MainActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, notificationIntent, 
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            Log.d("KTrader", "[TradeJobService] PendingIntent 생성 완료");
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("K-Trader 자동 거래")
-            .setContentText("백그라운드에서 자동 거래가 실행 중입니다")
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                    .setColor(getNotificationColorByTheme()); // 테마에 따른 동적 색상 설정
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("K-Trader 자동 거래")
+                .setContentText("백그라운드에서 자동 거래가 실행 중입니다")
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                        .setColor(getNotificationColorByTheme()); // 테마에 따른 동적 색상 설정
 
-        if (Build.VERSION.SDK_INT >= 34) {
-            // Android 14 (API 34) 이상에서는 서비스 타입을 지정해야 함
-            startForeground(FOREGROUND_SERVICE_ID, builder.build(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
-        } else {
-            startForeground(FOREGROUND_SERVICE_ID, builder.build());
+            Log.d("KTrader", "[TradeJobService] NotificationCompat.Builder 생성 완료");
+
+            // 채널 존재 확인
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            if (nm != null) {
+                NotificationChannel channel = nm.getNotificationChannel(CHANNEL_ID);
+                if (channel != null) {
+                    Log.d("KTrader", "[TradeJobService] 채널 확인 성공 - 중요도: " + channel.getImportance());
+                } else {
+                    Log.e("KTrader", "[TradeJobService] 채널 확인 실패 - 채널이 존재하지 않음");
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= 34) {
+                // Android 14 (API 34) 이상에서는 서비스 타입을 지정해야 함
+                Log.d("KTrader", "[TradeJobService] Android 14+ - FOREGROUND_SERVICE_TYPE_DATA_SYNC 사용");
+                startForeground(FOREGROUND_SERVICE_ID, builder.build(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            } else {
+                Log.d("KTrader", "[TradeJobService] Android 13 이하 - 기본 startForeground 사용");
+                startForeground(FOREGROUND_SERVICE_ID, builder.build());
+            }
+            
+            Log.d("KTrader", "[TradeJobService] startForeground() 호출 완료");
+        } catch (Exception e) {
+            Log.e("KTrader", "[TradeJobService] startForegroundService() 오류", e);
         }
     }
 
@@ -184,51 +238,78 @@ public class TradeJobService extends JobService {
 
 
     private void notificationTrade(String title, String text) {
-        Resources res = getResources();
+        Log.d("KTrader", "[TradeJobService] notificationTrade() 시작 - title: " + title + ", text: " + text);
+        
+        try {
+            Resources res = getResources();
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-//        notificationIntent.putExtra("notificationId", "1212"); //전달할 값
-        notificationIntent.setAction(Intent.ACTION_MAIN);
-        notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Intent notificationIntent = new Intent(this, MainActivity.class);
+            notificationIntent.setAction(Intent.ACTION_MAIN);
+            notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+            notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent contentIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent, 
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+            PendingIntent contentIntent = PendingIntent.getActivity(
+                this, 0, notificationIntent, 
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            Log.d("KTrader", "[TradeJobService] PendingIntent 생성 완료");
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "my_channel_id_03");
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "my_channel_id_03");
 
-        builder.setContentTitle(title)
-                .setContentText(text)
-                .setTicker(text)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setLargeIcon(BitmapFactory.decodeResource(res, R.mipmap.ic_launcher))
-                .setContentIntent(contentIntent)
-                .setAutoCancel(true)
-                .setWhen(System.currentTimeMillis())
-                .setDefaults(Notification.DEFAULT_ALL);
+            builder.setContentTitle(title)
+                    .setContentText(text)
+                    .setTicker(text)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setLargeIcon(BitmapFactory.decodeResource(res, R.mipmap.ic_launcher))
+                    .setContentIntent(contentIntent)
+                    .setAutoCancel(true)
+                    .setWhen(System.currentTimeMillis())
+                    .setDefaults(Notification.DEFAULT_ALL);
 
-        builder.setCategory(Notification.CATEGORY_MESSAGE)
-//                .setPriority(Notification.PRIORITY_HIGH)
-                .setVisibility(Notification.VISIBILITY_PUBLIC);
+            builder.setCategory(Notification.CATEGORY_MESSAGE)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC);
 
-        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            Log.d("KTrader", "[TradeJobService] NotificationCompat.Builder 생성 완료");
 
-        // 안드로이드 8.0 이상 노티피케이션을 사용하기 위해서는 하나 이상의 알림 채널을 만들어야한다.
-        NotificationChannel notificationChannel = new NotificationChannel("my_channel_id_03", "My Notifications", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        // Configure the notification channel.
-        notificationChannel.setDescription("Channel description");
-        notificationChannel.enableLights(true);
-        notificationChannel.setLightColor(Color.RED);
-        // 거래 체결시 진동 소리만으로도 다른 Android noti와 구분할 수 있도록 전용 진동 패턴을 사용한다.
-        notificationChannel.setVibrationPattern(new long[]{0, 100, 100, 100, 100, 100});
-        notificationChannel.enableVibration(true);
-        nm.createNotificationChannel(notificationChannel);
+            if (nm != null) {
+                Log.d("KTrader", "[TradeJobService] NotificationManager 획득 성공");
+                
+                // 안드로이드 8.0 이상 노티피케이션을 사용하기 위해서는 하나 이상의 알림 채널을 만들어야한다.
+                NotificationChannel notificationChannel = new NotificationChannel("my_channel_id_03", "K-Trader Trade Notifications", NotificationManager.IMPORTANCE_DEFAULT);
 
-        // NotificationManager는 null을 반환할 수 있음
-        nm.notify((int)System.currentTimeMillis(), builder.build());
+                // Configure the notification channel.
+                notificationChannel.setDescription("K-Trader 거래 알림 채널");
+                notificationChannel.enableLights(true);
+                notificationChannel.setLightColor(Color.parseColor("#FF8C42")); // 앱 테마와 일치하는 주황색
+                // 거래 체결시 진동 소리만으로도 다른 Android noti와 구분할 수 있도록 전용 진동 패턴을 사용한다.
+                notificationChannel.setVibrationPattern(new long[]{0, 100, 100, 100, 100, 100});
+                notificationChannel.enableVibration(true);
+                notificationChannel.setShowBadge(true);
+                
+                Log.d("KTrader", "[TradeJobService] NotificationChannel 생성 완료 - ID: my_channel_id_03");
+                
+                nm.createNotificationChannel(notificationChannel);
+                Log.d("KTrader", "[TradeJobService] NotificationChannel 등록 완료");
+                
+                // 채널 생성 확인
+                NotificationChannel createdChannel = nm.getNotificationChannel("my_channel_id_03");
+                if (createdChannel != null) {
+                    Log.d("KTrader", "[TradeJobService] 채널 생성 확인 성공 - 중요도: " + createdChannel.getImportance());
+                } else {
+                    Log.e("KTrader", "[TradeJobService] 채널 생성 확인 실패");
+                }
+                
+                int notificationId = (int)System.currentTimeMillis();
+                nm.notify(notificationId, builder.build());
+                Log.d("KTrader", "[TradeJobService] Notification 등록 완료 - ID: " + notificationId);
+            } else {
+                Log.e("KTrader", "[TradeJobService] NotificationManager 획득 실패");
+            }
+        } catch (Exception e) {
+            Log.e("KTrader", "[TradeJobService] notificationTrade() 오류", e);
+        }
     }
 
     private TradeDataManager.Type convertSearchType(int search) {
@@ -293,6 +374,8 @@ public class TradeJobService extends JobService {
     }
 
     private void tradeBusinessLogic() throws Exception {
+        Log.d("KTrader", "[TradeJobService] tradeBusinessLogic() 시작");
+        
         // Read settings again if MainActivity has been terminated by Android
         if (GlobalSettings.getInstance().getApiKey() == null) {
             SharedPreferences sharedPreferences = ctx.getSharedPreferences("settings", MODE_PRIVATE);
@@ -532,8 +615,13 @@ public class TradeJobService extends JobService {
                         boolean oDataCondition = oData == null || // Slot이 비어 있다면 해당 Slot에 매도 주문을 넣는다.
                                 (oData != null && isSameSlotOrder(oData, pData, targetPrice)); // 해당 Slot에 이미 Order가 있는 경우라도 분할 매수된 경우라면 동일 가격으로 매도 주문하도록 한다.
                         if (oDataCondition) {
-                            if (orderManager.addOrder("매수 발생 대응 매도", SELL, unit, targetPrice) == null) {
+                            Log.d("KTrader", "[TradeJobService] 매도 주문 시도 - 가격: " + targetPrice + ", 수량: " + unit);
+                            JSONObject sellResult = orderManager.addOrder("매수 발생 대응 매도", SELL, unit, targetPrice);
+                            if (sellResult == null) {
+                                Log.e("KTrader", "[TradeJobService] 매도 주문 실패");
                                 return;
+                            } else {
+                                Log.d("KTrader", "[TradeJobService] 매도 주문 성공: " + sellResult.toString());
                             }
                             isSold = true;
                             availableCoinBalance -= unit;
@@ -602,33 +690,51 @@ public class TradeJobService extends JobService {
 
         // 매수 요청 발행, 어느 시점에서나 active한 매수 오더는 1개만 유지하도록 한다.
         {
+            Log.d("KTrader", "[TradeJobService] 매수 주문 로직 시작 - 현재가: " + currentPrice);
+            Log.d("KTrader", "[TradeJobService] KRW 잔고: " + krwBalance);
+            
             for (int i = 0; i< BUY_SLOT_LOOK_ASIDE_MAX; i++) {
                 int targetPrice = getFloorPrice(currentPrice);
                 targetPrice -= (i * (MainPage.getSlotIntervalPrice(targetPrice)));
+                
+                Log.d("KTrader", "[TradeJobService] 매수 슬롯 " + i + " - 목표가격: " + targetPrice);
 
                 // 해당 가격에 이미 대기중인 매수가 있다면 skip
-                if (placedOrderManager.findByPrice(BUY, targetPrice) != null)
+                TradeData existingBuy = placedOrderManager.findByPrice(BUY, targetPrice);
+                if (existingBuy != null) {
+                    Log.d("KTrader", "[TradeJobService] 이미 대기중인 매수 주문 존재 - 가격: " + targetPrice + ", 수량: " + existingBuy.getUnits());
                     return;
+                }
 
                 // 해당 가격에 이미 대기중인 매도가 있다면 skip
-                if (placedOrderManager.findByPrice(SELL, targetPrice + MainPage.getProfitPrice(targetPrice)) != null)
+                int sellPrice = targetPrice + MainPage.getProfitPrice(targetPrice);
+                TradeData existingSell = placedOrderManager.findByPrice(SELL, sellPrice);
+                if (existingSell != null) {
+                    Log.d("KTrader", "[TradeJobService] 이미 대기중인 매도 주문 존재 - 가격: " + sellPrice + ", 수량: " + existingSell.getUnits());
                     continue;
+                }
 
                 log_info("다음 저점 매수가 : " + String.format(Locale.getDefault(), "%,d", targetPrice));
 
                 // 매수 주문 전 잔고 확인
                 double requiredAmount = getUnitAmount4Price(targetPrice) * targetPrice;
+                Log.d("KTrader", "[TradeJobService] 매수 주문 필요 금액: " + requiredAmount + ", 보유 금액: " + krwBalance);
+                
                 if (krwBalance < requiredAmount) {
                     log_info("잔고 부족으로 매수 주문을 건너뜁니다. 필요: " + 
                         String.format(Locale.getDefault(), "%,.0f", requiredAmount) + 
                         "원, 보유: " + String.format(Locale.getDefault(), "%,.0f", krwBalance) + "원");
+                    Log.d("KTrader", "[TradeJobService] 잔고 부족으로 매수 주문 건너뜀");
                     continue; // 다음 슬롯으로 이동
                 }
 
                 // 체결 되기 어려운 낮은 가격 order는 모두 취소한다.
+                Log.d("KTrader", "[TradeJobService] 기존 매수 주문 취소 시작");
                 for (TradeData tmp : placedOrderManager.getList()) {
                     if (tmp.getType() == BUY) {  // 1000만원 단위 경계에서 buy price가 미세하게 차이나서 data가 null이 되어 들어올 수 있으므로 전체 buy를 취소한다.
+                        Log.d("KTrader", "[TradeJobService] 기존 매수 주문 취소 - 가격: " + tmp.getPrice() + ", 수량: " + tmp.getUnits());
                         if (!orderManager.cancelOrder("체결 안 될 오더", tmp)) {
+                            Log.e("KTrader", "[TradeJobService] 기존 매수 주문 취소 실패");
                             return;
                         }
                     }
@@ -637,6 +743,8 @@ public class TradeJobService extends JobService {
                 // add buy request for targt price
                 if (orderManager.addOrder("저점", BUY, getUnitAmount4Price(targetPrice), targetPrice) == null) {
                     return;
+                } else {
+                    Log.d("KTrader", "[TradeJobService] 매수 주문 성공");
                 }
                 break;
             }
@@ -787,7 +895,7 @@ public class TradeJobService extends JobService {
             Log.d("KTrader", "[TradeJobService] Sending card data - Price: " + coinCurrentPrice + ", Change: " + hourlyChange);
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
         } catch (Exception e) {
-            Log.e("TradeJobService", "카드 데이터 전송 중 오류 발생", e);
+            Log.e("[TradeJobService]", "카드 데이터 전송 중 오류 발생", e);
             
             // 에러 카드 전송
             sendErrorCard("Card Data Send Error", ERR_CARD_DATA_001.getDescription());
@@ -808,7 +916,7 @@ public class TradeJobService extends JobService {
             
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);
         } catch (Exception e) {
-            Log.e("TradeJobService", "에러 카드 전송 중 오류 발생", e);
+            Log.e("[TradeJobService[", "에러 카드 전송 중 오류 발생", e);
         }
     }
     

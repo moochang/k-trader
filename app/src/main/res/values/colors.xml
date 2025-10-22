@@ -32,4 +32,8 @@
     <color name="error_border_color">#FFE0E0</color>
     <color name="info_background_color">#F0F8FF</color>
     <color name="info_border_color">#E0E8FF</color>
+    
+    <!-- Modern UI 색상 (중복 제거) -->
+    <color name="accent_modern">#FF8C42</color>
+    <color name="divider_modern">#E0E0E0</color>
 </resources>
