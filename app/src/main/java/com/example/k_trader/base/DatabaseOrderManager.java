@@ -5,7 +5,8 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.example.k_trader.KTraderApplication;
-import com.example.k_trader.TransactionLogFragment;
+import com.example.k_trader.database.entities.OrderEntity;
+import com.example.k_trader.ui.fragment.TransactionLogPage;
 import com.example.k_trader.bitthumb.lib.Api_Client;
 import com.example.k_trader.database.DatabaseMonitor;
 import com.example.k_trader.database.OrderRepository;
@@ -312,7 +313,7 @@ public class DatabaseOrderManager {
     /**
      * 디버깅용: 모든 활성 주문 조회
      */
-    public io.reactivex.Single<List<com.example.k_trader.database.OrderEntity>> getAllActiveOrders() {
+    public io.reactivex.Single<List<OrderEntity>> getAllActiveOrders() {
         return orderRepository.getAllActiveOrders()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread());
@@ -373,7 +374,7 @@ public class DatabaseOrderManager {
     private void log_info(final String log) {
         if (logger != null)
             logger.info(log);
-        Intent intent = new Intent(TransactionLogFragment.BROADCAST_LOG_MESSAGE);
+        Intent intent = new Intent(TransactionLogPage.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
         if (KTraderApplication.getAppContext() != null)
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);

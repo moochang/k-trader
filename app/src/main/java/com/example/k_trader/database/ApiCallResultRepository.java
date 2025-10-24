@@ -1,6 +1,8 @@
 package com.example.k_trader.database;
 
-import android.arch.persistence.room.RoomDatabase;
+import com.example.k_trader.database.daos.ApiCallResultDao;
+import com.example.k_trader.database.entities.ApiCallResultEntity;
+
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.Completable;

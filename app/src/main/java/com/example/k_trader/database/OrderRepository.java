@@ -3,6 +3,8 @@ package com.example.k_trader.database;
 import android.content.Context;
 
 import com.example.k_trader.base.TradeData;
+import com.example.k_trader.database.daos.OrderDao;
+import com.example.k_trader.database.entities.OrderEntity;
 
 import java.util.List;
 
@@ -61,13 +63,6 @@ public class OrderRepository {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-
-
-
-
-
-
-
     /**
      * 여러 주문 저장
      */
@@ -85,9 +80,6 @@ public class OrderRepository {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
-
-
-
 
     /**
      * 마킹되지 않은 주문들 삭제

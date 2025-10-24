@@ -6,7 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
 
-import com.example.k_trader.MainActivity;
+import com.example.k_trader.ui.activity.MainActivity;
 import com.example.k_trader.KTraderApplication;
 
 import org.apache.log4j.chainsaw.Main;

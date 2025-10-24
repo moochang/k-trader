@@ -8,18 +8,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 import com.example.k_trader.R;
-import com.example.k_trader.TransactionItemFragment;
+import com.example.k_trader.ui.fragment.TransactionStatusPage;
 
 /**
  * ErrorCard 상세 정보를 보여주는 다이얼로그
  */
 public class ErrorDetailDialog extends Dialog {
     
-    private TransactionItemFragment.CardAdapter.ErrorCard errorCard;
+    private TransactionStatusPage.CardAdapter.ErrorCard errorCard;
     private Context context;
 
     public ErrorDetailDialog(@NonNull Context context, 
-                           TransactionItemFragment.CardAdapter.ErrorCard errorCard) {
+                           TransactionStatusPage.CardAdapter.ErrorCard errorCard) {
         super(context);
         this.context = context;
         this.errorCard = errorCard;
@@ -282,7 +282,7 @@ public class ErrorDetailDialog extends Dialog {
      * 정적 팩토리 메서드로 다이얼로그 생성
      */
     public static void show(Context context, 
-                          TransactionItemFragment.CardAdapter.ErrorCard errorCard) {
+                          TransactionStatusPage.CardAdapter.ErrorCard errorCard) {
         ErrorDetailDialog dialog = new ErrorDetailDialog(context, errorCard);
         dialog.show();
     }

@@ -4,14 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import com.example.k_trader.KTraderApplication;
-import com.example.k_trader.TransactionItemFragment;
+import com.example.k_trader.database.entities.ErrorEntity;
+import com.example.k_trader.ui.fragment.TransactionStatusPage;
 import com.example.k_trader.database.ErrorRepository;
 import com.example.k_trader.database.ApiCallResultRepository;
 import com.example.k_trader.database.TransactionInfoRepository;
-import com.example.k_trader.database.TransactionInfoEntity;
-import com.example.k_trader.api.TransactionApiService;
-import com.example.k_trader.api.TransactionApiResult;
-import java.util.concurrent.CompletableFuture;
+import com.example.k_trader.database.entities.TransactionInfoEntity;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,7 +24,6 @@ public class TransactionDataManager {
     private static final String BROADCAST_TRANSACTION_DATA = "com.example.k_trader.TRANSACTION_DATA_UPDATED";
     
     private final TransactionCacheService cacheService;
-    private final TransactionApiService apiService;
     private final ErrorRepository errorRepository;
     private final ApiCallResultRepository apiCallResultRepository;
     private final TransactionInfoRepository transactionInfoRepository;
@@ -43,7 +41,6 @@ public class TransactionDataManager {
 
     private TransactionDataManager(Context context) {
         this.cacheService = TransactionCacheService.getInstance(context);
-        this.apiService = TransactionApiService.getInstance();
         this.errorRepository = ErrorRepository.getInstance(context);
         this.apiCallResultRepository = ApiCallResultRepository.getInstance(
             com.example.k_trader.database.OrderDatabase.getInstance(context).apiCallResultDao());
@@ -74,8 +71,8 @@ public class TransactionDataManager {
         // 1. 캐시된 데이터 즉시 로드
         loadCachedData();
         
-        // 2. 백그라운드에서 서버 데이터 동기화
-        syncWithServer();
+        // 2. 백그라운드에서 서버 데이터 동기화 (삭제된 TransactionApiService로 인해 주석 처리)
+        // syncWithServer();
     }
 
     /**
@@ -106,6 +103,10 @@ public class TransactionDataManager {
     /**
      * 서버에서 최신 데이터를 가져와서 동기화
      */
+    /*
+     * 서버와 동기화 (삭제된 TransactionApiService로 인해 주석 처리)
+     */
+    /*
     private void syncWithServer() {
         // executorService가 종료된 경우 새로 생성
         if (executorService.isShutdown()) {
@@ -151,7 +152,8 @@ public class TransactionDataManager {
             }
         });
     }
-    
+    */
+
     /**
      * Transaction 데이터를 DB에 저장
      */
@@ -180,9 +182,10 @@ public class TransactionDataManager {
         }
     }
 
-    /**
-     * API 호출 결과를 DB에 저장
+    /*
+     * API 호출 결과를 DB에 저장 (삭제된 TransactionApiResult로 인해 주석 처리)
      */
+    /*
     private void saveApiCallResultsToDatabase(TransactionApiResult result) {
         try {
             if (result.getTransactionData() != null && result.getTransactionData().isValid()) {
@@ -258,8 +261,9 @@ public class TransactionDataManager {
     }
 
     /**
-     * API 에러들 처리
+     * API 에러들 처리 (삭제된 TransactionApiResult로 인해 주석 처리)
      */
+    /*
     private void handleApiErrors(TransactionApiResult result) {
         long errorTime = System.currentTimeMillis();
         String errorType = "API Error";
@@ -269,6 +273,7 @@ public class TransactionDataManager {
         // 에러를 DB에 저장 (API 상세 정보 포함)
         saveErrorToDatabaseWithApiDetails(errorTime, errorType, errorMessage, "TransactionDataManager.syncWithServer()", null, apiErrorDetails);
     }
+    */
 
     /**
      * 에러 메시지에서 에러 코드 추출
@@ -385,7 +390,7 @@ public class TransactionDataManager {
         saveErrorToDatabase(errorTime, errorType, errorMessage, "TransactionDataManager.syncWithServer()", e);
         
         // UI에 에러 카드 표시
-        Intent intent = new Intent(TransactionItemFragment.BROADCAST_ERROR_CARD);
+        Intent intent = new Intent(TransactionStatusPage.BROADCAST_ERROR_CARD);
         intent.putExtra("errorTime", String.valueOf(errorTime));
         intent.putExtra("errorType", errorType);
         intent.putExtra("errorMessage", errorMessage);
@@ -400,7 +405,7 @@ public class TransactionDataManager {
      * 수동으로 서버 동기화 실행
      */
     public void refreshData() {
-        syncWithServer();
+        // syncWithServer();
     }
 
     /**
@@ -420,11 +425,13 @@ public class TransactionDataManager {
     }
 
     /**
-     * 네트워크 상태 확인
+     * 네트워크 상태 확인 (삭제된 TransactionApiService로 인해 주석 처리)
      */
+    /*
     public boolean isNetworkAvailable() {
         return apiService.isNetworkAvailable();
     }
+    */
 
     /**
      * 캐시된 데이터가 있는지 확인
@@ -512,14 +519,14 @@ public class TransactionDataManager {
     /**
      * 해결되지 않은 에러들 조회
      */
-    public io.reactivex.Flowable<java.util.List<com.example.k_trader.database.ErrorEntity>> getUnresolvedErrors() {
+    public io.reactivex.Flowable<java.util.List<ErrorEntity>> getUnresolvedErrors() {
         return errorRepository.getUnresolvedErrors();
     }
 
     /**
      * 최근 에러들 조회
      */
-    public io.reactivex.Flowable<java.util.List<com.example.k_trader.database.ErrorEntity>> getRecentErrors() {
+    public io.reactivex.Flowable<java.util.List<ErrorEntity>> getRecentErrors() {
         return errorRepository.getLast24HoursErrors();
     }
 

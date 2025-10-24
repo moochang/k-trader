@@ -138,21 +138,16 @@ public class Api_Client {
 
         strData = strData.substring(0, strData.length()-1);
 
-
-//		System.out.println("1 : " + strData);
-
-        strData = encodeURIComponent(strData);
+        // URL 인코딩 제거 - 빗썸 API v1.2.0에서는 원본 파라미터 문자열 사용
+        // strData = encodeURIComponent(strData);
 
         HashMap<String, String> array = new HashMap<String, String>();
-
 
         String str = endpoint + ";"	+ strData + ";" + nNonce;
         //String str = "/info/balance;order_currency=BTC&payment_currency=KRW&endpoint=%2Finfo%2Fbalance;272184496";
 
         String encoded = asHex(hmacSha512(str, GlobalSettings.getInstance().getApiSecret()));
 
-//		System.out.println("strData was: " + str);
-//		System.out.println("apiSecret was: " + apiSecret);
         array.put("Api-Key", GlobalSettings.getInstance().getApiKey());
         array.put("Api-Sign", encoded);
         array.put("Api-Nonce", String.valueOf(nNonce));

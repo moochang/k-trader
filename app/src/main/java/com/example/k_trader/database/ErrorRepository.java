@@ -1,6 +1,10 @@
 package com.example.k_trader.database;
 
 import android.content.Context;
+
+import com.example.k_trader.database.daos.ErrorDao;
+import com.example.k_trader.database.entities.ErrorEntity;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import io.reactivex.Completable;

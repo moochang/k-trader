@@ -101,7 +101,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="등락률"
+                        android:text="1시간 등락폭"
                         android:textSize="10sp"
                         android:textColor="@color/text_secondary_modern" />
 

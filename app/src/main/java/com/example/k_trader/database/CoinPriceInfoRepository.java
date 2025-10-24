@@ -2,6 +2,9 @@ package com.example.k_trader.database;
 
 import android.content.Context;
 
+import com.example.k_trader.database.daos.CoinPriceInfoDao;
+import com.example.k_trader.database.entities.CoinPriceInfoEntity;
+
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;

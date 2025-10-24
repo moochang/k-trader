@@ -4,10 +4,9 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.example.k_trader.MainActivity;
-import com.example.k_trader.MainPage;
+import com.example.k_trader.ui.activity.MainActivity;
 import com.example.k_trader.KTraderApplication;
-import com.example.k_trader.TransactionLogFragment;
+import com.example.k_trader.ui.fragment.TransactionLogPage;
 import com.example.k_trader.bitthumb.lib.Api_Client;
 
 import org.json.simple.JSONArray;
@@ -246,7 +245,7 @@ public class OrderManager {
     private void log_info(final String log) {
         if (logger != null)
             logger.info(log);
-        Intent intent = new Intent(TransactionLogFragment.BROADCAST_LOG_MESSAGE);
+        Intent intent = new Intent(TransactionLogPage.BROADCAST_LOG_MESSAGE);
         intent.putExtra("log", log);
         if (KTraderApplication.getAppContext() != null)
             LocalBroadcastManager.getInstance(KTraderApplication.getAppContext()).sendBroadcast(intent);

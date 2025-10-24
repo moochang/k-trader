@@ -4,23 +4,22 @@ import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 import com.example.k_trader.R;
-import com.example.k_trader.TransactionItemFragment;
+import com.example.k_trader.ui.fragment.TransactionStatusPage;
 
 /**
  * TransactionCard 상세 정보를 보여주는 다이얼로그
  */
 public class TransactionDetailDialog extends Dialog {
     
-    private TransactionItemFragment.CardAdapter.TransactionCard transactionCard;
+    private TransactionStatusPage.CardAdapter.TransactionCard transactionCard;
     private Context context;
 
     public TransactionDetailDialog(@NonNull Context context, 
-                                TransactionItemFragment.CardAdapter.TransactionCard transactionCard) {
+                                TransactionStatusPage.CardAdapter.TransactionCard transactionCard) {
         super(context);
         this.context = context;
         this.transactionCard = transactionCard;
@@ -110,7 +109,7 @@ public class TransactionDetailDialog extends Dialog {
      * 정적 팩토리 메서드로 다이얼로그 생성
      */
     public static void show(Context context, 
-                          TransactionItemFragment.CardAdapter.TransactionCard transactionCard) {
+                          TransactionStatusPage.CardAdapter.TransactionCard transactionCard) {
         TransactionDetailDialog dialog = new TransactionDetailDialog(context, transactionCard);
         dialog.show();
     }

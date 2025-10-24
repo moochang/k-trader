@@ -5,12 +5,23 @@ import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
 import android.content.Context;
 
+import com.example.k_trader.database.daos.ApiCallResultDao;
+import com.example.k_trader.database.entities.ApiCallResultEntity;
+import com.example.k_trader.database.daos.CoinPriceInfoDao;
+import com.example.k_trader.database.entities.CoinPriceInfoEntity;
+import com.example.k_trader.database.daos.ErrorDao;
+import com.example.k_trader.database.entities.ErrorEntity;
+import com.example.k_trader.database.daos.OrderDao;
+import com.example.k_trader.database.entities.OrderEntity;
+import com.example.k_trader.database.daos.TransactionInfoDao;
+import com.example.k_trader.database.entities.TransactionInfoEntity;
+
 /**
  * Room 데이터베이스 설정
  */
 @Database(
     entities = {OrderEntity.class, ErrorEntity.class, ApiCallResultEntity.class, CoinPriceInfoEntity.class, TransactionInfoEntity.class},
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 public abstract class OrderDatabase extends RoomDatabase {

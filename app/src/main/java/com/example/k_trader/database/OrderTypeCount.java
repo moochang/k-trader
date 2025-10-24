@@ -1,6 +1,7 @@
 package com.example.k_trader.database;
 
 import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Ignore;
 
 /**
  * 주문 타입별 개수를 저장하는 데이터 클래스
@@ -13,6 +14,7 @@ public class OrderTypeCount {
     public OrderTypeCount() {
     }
     
+    @Ignore
     public OrderTypeCount(String type, int count) {
         this.type = type;
         this.count = count;
