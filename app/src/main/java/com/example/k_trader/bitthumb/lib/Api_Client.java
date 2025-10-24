@@ -62,12 +62,12 @@ public class Api_Client {
             request.trustAllHosts();
         }
 
-        if (strMemod.toUpperCase().equals("HEAD")) {
+        if (strMemod.equalsIgnoreCase("HEAD")) {
         } else {
             HttpRequest request = null;
 
             // POST/GET 설정
-            if (strMemod.toUpperCase().equals("POST")) {
+            if (strMemod.equalsIgnoreCase("POST")) {
                 request = new HttpRequest(strHost, "POST");
                 request.readTimeout(10000);
 
@@ -113,13 +113,13 @@ public class Api_Client {
         {
             result = URLEncoder.encode(s, "UTF-8")
                     .replaceAll("\\+", "%20")
-                    .replaceAll("\\%21", "!")
-                    .replaceAll("\\%27", "'")
-                    .replaceAll("\\%28", "(")
-                    .replaceAll("\\%29", ")")
-                    .replaceAll("\\%26", "&")
-                    .replaceAll("\\%3D", "=")
-                    .replaceAll("\\%7E", "~");
+                    .replaceAll("%21", "!")
+                    .replaceAll("%27", "'")
+                    .replaceAll("%28", "(")
+                    .replaceAll("%29", ")")
+                    .replaceAll("%26", "&")
+                    .replaceAll("%3D", "=")
+                    .replaceAll("%7E", "~");
         }
 
         // This exception should never occur.
@@ -138,16 +138,21 @@ public class Api_Client {
 
         strData = strData.substring(0, strData.length()-1);
 
-        // URL 인코딩 제거 - 빗썸 API v1.2.0에서는 원본 파라미터 문자열 사용
-        // strData = encodeURIComponent(strData);
+
+//		System.out.println("1 : " + strData);
+
+        strData = encodeURIComponent(strData);
 
         HashMap<String, String> array = new HashMap<String, String>();
+
 
         String str = endpoint + ";"	+ strData + ";" + nNonce;
         //String str = "/info/balance;order_currency=BTC&payment_currency=KRW&endpoint=%2Finfo%2Fbalance;272184496";
 
         String encoded = asHex(hmacSha512(str, GlobalSettings.getInstance().getApiSecret()));
 
+//		System.out.println("strData was: " + str);
+//		System.out.println("apiSecret was: " + apiSecret);
         array.put("Api-Key", GlobalSettings.getInstance().getApiKey());
         array.put("Api-Sign", encoded);
         array.put("Api-Nonce", String.valueOf(nNonce));
@@ -169,22 +174,17 @@ public class Api_Client {
             mac.init(keySpec);
 
             final byte[] macData = mac.doFinal( value.getBytes( ) );
-            byte[] hex = new Hex().encode( macData );
 
             //return mac.doFinal(value.getBytes(DEFAULT_ENCODING));
-            return hex;
+            return new Hex().encode( macData );
 
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
-        } catch (UnsupportedEncodingException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }
 
     public static String asHex(byte[] bytes){
-        return new String(HttpRequest.Base64.encodeBytes(bytes));
+        return HttpRequest.Base64.encodeBytes(bytes);
     }
 
     public JSONObject callApi(String method, String endpoint, HashMap<String, String> params) {

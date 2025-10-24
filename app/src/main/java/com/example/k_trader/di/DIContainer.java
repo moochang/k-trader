@@ -42,7 +42,7 @@ public class DIContainer {
     private ApiCallResultDao apiCallResultDao;
     
     // API Service
-    private BiThumbApiService bithumbApiService;
+    private BiThumbApiService BiThumbApiService;
     
     // Repository Implementations (기존 구조 사용)
     private OrderRepository orderRepository;
@@ -116,7 +116,7 @@ public class DIContainer {
         Log.d("KTrader", "[DIContainer] API Key: " + (apiKey != null && !apiKey.isEmpty() ? "SET" : "NOT SET"));
         Log.d("KTrader", "[DIContainer] API Secret: " + (apiSecret != null && !apiSecret.isEmpty() ? "SET" : "NOT SET"));
         
-        bithumbApiService = new BiThumbApiService(apiKey, apiSecret);
+        BiThumbApiService = new BiThumbApiService(apiKey, apiSecret);
     }
 
     private void initializeRepositories() {
@@ -222,16 +222,16 @@ public class DIContainer {
     public void printDependencyGraph() {
         Log.d("KTrader", "[DIContainer] Dependency Graph:");
         Log.d("KTrader", "[DIContainer] Database: " + (database != null ? "✓" : "✗"));
-        Log.d("KTrader", "[DIContainer] API Service: " + (bithumbApiService != null ? "✓" : "✗"));
+        Log.d("KTrader", "[DIContainer] API Service: " + (BiThumbApiService != null ? "✓" : "✗"));
         Log.d("KTrader", "[DIContainer] Repositories: " + (orderRepository != null ? "✓" : "✗"));
     }
 
     // Configuration Methods (기존 구조)
     public void updateApiCredentials(String apiKey, String apiSecret) {
         Log.d("KTrader", "[DIContainer] Updating API credentials");
-        // TODO: BithumbApiService에 updateCredentials 메서드 구현 필요
-        // if (bithumbApiService != null) {
-        //     bithumbApiService.updateCredentials(apiKey, apiSecret);
+        // TODO: BiThumbApiService에 updateCredentials 메서드 구현 필요
+        // if (BiThumbApiService != null) {
+        //     BiThumbApiService.updateCredentials(apiKey, apiSecret);
         // }
     }
 
@@ -246,7 +246,7 @@ public class DIContainer {
         try {
             boolean isHealthy = isInitialized() && 
                                database.isOpen() &&
-                               bithumbApiService != null;
+                               BiThumbApiService != null;
             
             Log.d("KTrader", "[DIContainer] Health check result: " + (isHealthy ? "HEALTHY" : "UNHEALTHY"));
             return isHealthy;

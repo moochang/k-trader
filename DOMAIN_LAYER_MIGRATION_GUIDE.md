@@ -124,10 +124,10 @@ public class KTraderApplication extends Application {
 ```java
 // RepositoryImplementations.java 수정 예시
 public class TradeRepositoryImpl implements TradeRepository {
-    private final BithumbApiService apiService;
+    private final BiThumbApiService apiService;
     private final BithumbOrderDao orderDao;
     
-    public TradeRepositoryImpl(BithumbApiService apiService, BithumbOrderDao orderDao) {
+    public TradeRepositoryImpl(BiThumbApiService apiService, BithumbOrderDao orderDao) {
         this.apiService = apiService;
         this.orderDao = orderDao;
     }
@@ -384,3 +384,4 @@ public class TradeDataManager {
 6. **성능 최적화**: 메모리 사용량 및 배터리 사용량 최적화
 
 이 마이그레이션을 통해 K-Trader 앱은 더욱 안정적이고 확장 가능하며 유지보수가 용이한 구조로 발전할 수 있습니다.
+

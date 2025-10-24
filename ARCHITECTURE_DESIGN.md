@@ -425,3 +425,4 @@ public static class ApiCallStatsEntity {
 이 설계는 Clean Architecture와 SRP 원칙을 준수하여 K-Trader 앱의 확장성, 유지보수성, 테스트 용이성을 크게 향상시킵니다. 각 레이어와 컴포넌트가 명확한 책임을 가지며, 느슨한 결합을 통해 시스템의 유연성을 확보했습니다.
 
 빗썸 API v1.2.0의 모든 주요 엔드포인트를 지원하며, Room Database를 활용한 효율적인 로컬 데이터 관리와 RxJava를 통한 반응형 프로그래밍으로 사용자에게 최적의 경험을 제공할 수 있습니다.
+
