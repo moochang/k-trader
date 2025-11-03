@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="24dp"
+    android:background="@drawable/cardview_border_background">
+
+    <!-- 아이콘 -->
+    <ImageView
+        android:id="@+id/iconProgress"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_wait"
+        android:background="@drawable/button_primary_background"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@color/accent_modern" />
+
+    <!-- 제목 -->
+    <TextView
+        android:id="@+id/titleProgress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="대기 중..."
+        android:textColor="@color/text_primary_modern"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/iconProgress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- 메시지 -->
+    <TextView
+        android:id="@+id/messageProgress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="다음 Request가 허용될 때까지 대기 중입니다.\n최대 10초"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary_modern"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        app:layout_constraintTop_toBottomOf="@id/titleProgress"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 프로그레스 바 -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="294dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="24dp"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/accent_modern"
+        android:maxHeight="16dp"
+        android:minHeight="16dp"
+        android:progressBackgroundTint="@color/divider_modern"
+        android:progressTint="@color/accent_modern"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/messageProgress" />
+
+    <!-- 남은 시간 표시 -->
+    <TextView
+        android:id="@+id/timeRemaining"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="남은 시간: 10초"
+        android:textSize="12sp"
+        android:textColor="@color/text_secondary_modern"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/progressBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</android.support.constraint.ConstraintLayout>
